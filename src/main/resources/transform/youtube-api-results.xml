@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xml-stylesheet type="text/xsl" href="./youtube-api-results.xsl"?>
+<root>
+  <kind>youtube#searchListResponse</kind>
+  <etag>&quot;I_8xdZu766_FSaexEaDXTIfEWc0/NSH6znegmN3wlcyHgJjp_gOY4ro&quot;</etag>
+  <nextPageToken>CAUQAA</nextPageToken>
+  <regionCode>US</regionCode>
+  <pageInfo>
+    <totalResults>1000000</totalResults>
+    <resultsPerPage>5</resultsPerPage>
+  </pageInfo>
+  <items>
+    <kind>youtube#searchResult</kind>
+    <etag>&quot;I_8xdZu766_FSaexEaDXTIfEWc0/pvj1aByECz227L36PybdR92-flc&quot;</etag>
+    <id>
+      <kind>youtube#video</kind>
+      <videoId>t1hBNALUk4w</videoId>
+    </id>
+    <snippet>
+      <publishedAt>2016-09-07T19:36:54.000Z</publishedAt>
+      <channelId>UC-AAk4vhWHPzR-cV4o5tLRg</channelId>
+      <title>MASS EFFECT™: ANDROMEDA Official 4K Tech Video</title>
+      <description>Be among the first to get the latest Mass Effect news: http://x.ea.com/16936 The power of 4K on PS4 Pro allows us to bring a whole new galaxy to life with crisper ...</description>
+      <thumbnails>
+        <default>
+          <url>https://i.ytimg.com/vi/t1hBNALUk4w/default.jpg</url>
+          <width>120</width>
+          <height>90</height>
+        </default>
+        <medium>
+          <url>https://i.ytimg.com/vi/t1hBNALUk4w/mqdefault.jpg</url>
+          <width>320</width>
+          <height>180</height>
+        </medium>
+        <high>
+          <url>https://i.ytimg.com/vi/t1hBNALUk4w/hqdefault.jpg</url>
+          <width>480</width>
+          <height>360</height>
+        </high>
+      </thumbnails>
+      <channelTitle>Mass Effect</channelTitle>
+      <liveBroadcastContent>none</liveBroadcastContent>
+    </snippet>
+  </items>
+  <items>
+    <kind>youtube#searchResult</kind>
+    <etag>&quot;I_8xdZu766_FSaexEaDXTIfEWc0/rvOG1xZHRVtoUGexEhV6nFJyNsc&quot;</etag>
+    <id>
+      <kind>youtube#channel</kind>
+      <channelId>UC-AAk4vhWHPzR-cV4o5tLRg</channelId>
+    </id>
+    <snippet>
+      <publishedAt>2009-04-28T23:34:51.000Z</publishedAt>
+      <channelId>UC-AAk4vhWHPzR-cV4o5tLRg</channelId>
+      <title>Mass Effect</title>
+      <description>Welcome to the official YouTube Channel for Mass Effect. Subscribe now to see the latest Mass Effect: Andromeda gameplay videos and trailers. Mass Effect: ...</description>
+      <thumbnails>
+        <default>
+          <url>https://yt3.ggpht.com/-l8h74_q8QY8/AAAAAAAAAAI/AAAAAAAAAAA/EEWrsfpAgY8/s88-c-k-no-mo-rj-c0xffffff/photo.jpg</url>
+        </default>
+        <medium>
+          <url>https://yt3.ggpht.com/-l8h74_q8QY8/AAAAAAAAAAI/AAAAAAAAAAA/EEWrsfpAgY8/s240-c-k-no-mo-rj-c0xffffff/photo.jpg</url>
+        </medium>
+        <high>
+          <url>https://yt3.ggpht.com/-l8h74_q8QY8/AAAAAAAAAAI/AAAAAAAAAAA/EEWrsfpAgY8/s240-c-k-no-mo-rj-c0xffffff/photo.jpg</url>
+        </high>
+      </thumbnails>
+      <channelTitle>Mass Effect</channelTitle>
+      <liveBroadcastContent>none</liveBroadcastContent>
+    </snippet>
+  </items>
+  <items>
+    <kind>youtube#searchResult</kind>
+    <etag>&quot;I_8xdZu766_FSaexEaDXTIfEWc0/F53WU2mDkODRMbXtkuruAzBLxcI&quot;</etag>
+    <id>
+      <kind>youtube#video</kind>
+      <videoId>y2vgHOXeps0</videoId>
+    </id>
+    <snippet>
+      <publishedAt>2016-06-12T20:28:43.000Z</publishedAt>
+      <channelId>UC-AAk4vhWHPzR-cV4o5tLRg</channelId>
+      <title>MASS EFFECT™: ANDROMEDA Official EA Play 2016 Video</title>
+      <description>Be among the first to get the latest Mass Effect news: http://x.ea.com/6767 A whole new galaxy awaits for you to explore. Mass Effect: Andromeda pushes the ...</description>
+      <thumbnails>
+        <default>
+          <url>https://i.ytimg.com/vi/y2vgHOXeps0/default.jpg</url>
+          <width>120</width>
+          <height>90</height>
+        </default>
+        <medium>
+          <url>https://i.ytimg.com/vi/y2vgHOXeps0/mqdefault.jpg</url>
+          <width>320</width>
+          <height>180</height>
+        </medium>
+        <high>
+          <url>https://i.ytimg.com/vi/y2vgHOXeps0/hqdefault.jpg</url>
+          <width>480</width>
+          <height>360</height>
+        </high>
+      </thumbnails>
+      <channelTitle>Mass Effect</channelTitle>
+      <liveBroadcastContent>none</liveBroadcastContent>
+    </snippet>
+  </items>
+  <items>
+    <kind>youtube#searchResult</kind>
+    <etag>&quot;I_8xdZu766_FSaexEaDXTIfEWc0/Y1YEvi7hxjaXrY1HVRrIAjqHqow&quot;</etag>
+    <id>
+      <kind>youtube#video</kind>
+      <videoId>9PrxVPj7tz0</videoId>
+    </id>
+    <snippet>
+      <publishedAt>2016-07-23T22:00:00.000Z</publishedAt>
+      <channelId>UCbu2SsF-Or3Rsn3NxqODImw</channelId>
+      <title>The History of Mass Effect</title>
+      <description>We still don&#x27;t know much about Mass Effect Andromeda, but what we do know has us excited. Jake looks back on the franchise to see what made it so special ...</description>
+      <thumbnails>
+        <default>
+          <url>https://i.ytimg.com/vi/9PrxVPj7tz0/default.jpg</url>
+          <width>120</width>
+          <height>90</height>
+        </default>
+        <medium>
+          <url>https://i.ytimg.com/vi/9PrxVPj7tz0/mqdefault.jpg</url>
+          <width>320</width>
+          <height>180</height>
+        </medium>
+        <high>
+          <url>https://i.ytimg.com/vi/9PrxVPj7tz0/hqdefault.jpg</url>
+          <width>480</width>
+          <height>360</height>
+        </high>
+      </thumbnails>
+      <channelTitle>GameSpot</channelTitle>
+      <liveBroadcastContent>none</liveBroadcastContent>
+    </snippet>
+  </items>
+  <items>
+    <kind>youtube#searchResult</kind>
+    <etag>&quot;I_8xdZu766_FSaexEaDXTIfEWc0/y6AQNmK3Z_IrhROFiMdCjriLT94&quot;</etag>
+    <id>
+      <kind>youtube#video</kind>
+      <videoId>PnbDrjpEZEQ</videoId>
+    </id>
+    <snippet>
+      <publishedAt>2014-10-05T18:30:03.000Z</publishedAt>
+      <channelId>UCiZVMOinTQGb8HQu53VbV4Q</channelId>
+      <title>Mass Effect Game Movie (All Cutscenes) 1080p HD</title>
+      <description>Destiny: Rise of Iron All Cutscenes - https://www.youtube.com/watch?v=vkXdj58BV_E Follow GLP on Twitter - http://twitter.com/glittlep Follow GLP on Instagram ...</description>
+      <thumbnails>
+        <default>
+          <url>https://i.ytimg.com/vi/PnbDrjpEZEQ/default.jpg</url>
+          <width>120</width>
+          <height>90</height>
+        </default>
+        <medium>
+          <url>https://i.ytimg.com/vi/PnbDrjpEZEQ/mqdefault.jpg</url>
+          <width>320</width>
+          <height>180</height>
+        </medium>
+        <high>
+          <url>https://i.ytimg.com/vi/PnbDrjpEZEQ/hqdefault.jpg</url>
+          <width>480</width>
+          <height>360</height>
+        </high>
+      </thumbnails>
+      <channelTitle>Gamer&#x27;s Little Playground</channelTitle>
+      <liveBroadcastContent>none</liveBroadcastContent>
+    </snippet>
+  </items>
+</root>

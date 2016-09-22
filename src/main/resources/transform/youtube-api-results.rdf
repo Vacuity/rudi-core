@@ -1,0 +1,50 @@
+ <rdf:RDF xmlns="http://vacuity.ai/schemas/via#"
+     xml:via="http://vacuity.ai/schemas/via#"
+     xml:ma-ont="http://vacuity.ai/schemas/via"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:sioc="http://rdfs.org/sioc/ns#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ >
+ 
+ 
+ 	<sioc:Site rdf:about="http://www.youtube.com">
+ 		<dc:title>Youtube</dc:title>
+ 	</sioc:Site>
+ 	
+ 	<sioc:Forum rdf:about="http://www.youtube.com/channel/UC-AAk4vhWHPzR-cV4o5tLRg">
+ 		<dc:title>Mass Effect</dc:title>
+		<sioc:has_host rdf:resource="http://www.youtube.com"/>
+ 	</sioc:Forum>
+ 	
+	<ma-ont:VideoTrack rdf:about="http://youtube.com/t1hBNALUk4w">
+	    <dc:title>MASS EFFECT™: ANDROMEDA Official 4K Tech Video</dc:title>
+	    <dc:description>Be among the first to get the latest Mass Effect news: http://x.ea.com/16936 The power of 4K on PS4 Pro allows us to bring a whole new galaxy to life with crisper ...</dc:description>
+		<dbpedia:thumbnail rdf:resource="https://i.ytimg.com/vi/t1hBNALUk4w/default.jpg">
+		<dbpedia:thumbnail rdf:resource="https://i.ytimg.com/vi/t1hBNALUk4w/mqdefault.jpg">
+		<dbpedia:thumbnail rdf:resource="https://i.ytimg.com/vi/t1hBNALUk4w/hqdefault.jpg">
+		<dc:date rdf:parseType="xsd:Date">2016-09-07T19:36:54.000Z</dc:date>
+		<sioc:source rdf:resource="http://www.youtube.com"/>
+		<sioc:has_container rdf:resource="http://www.youtube.com/channel/UC-AAk4vhWHPzR-cV4o5tLRg"/>
+	</ma-ont:VideoTrack>
+
+	<dc:Image rdf:about="https://i.ytimg.com/vi/t1hBNALUk4w/default.jpg"/>
+		<ma-ont:frameWidth>120</ma-ont:frameWidth>
+		<ma-ont:frameHeight>90</ma-ont:frameHeight>
+	</dc:Image>
+	<dc:Image rdf:about="https://i.ytimg.com/vi/t1hBNALUk4w/mqdefault.jpg"/>
+		<ma-ont:frameWidth>320</ma-ont:frameWidth>
+		<ma-ont:frameHeight>180</ma-ont:frameHeight>
+	</dc:Image>
+	<dc:Image rdf:about="https://i.ytimg.com/vi/t1hBNALUk4w/hqdefault.jpg"/>
+		<ma-ont:frameWidth>480</ma-ont:frameWidth>
+		<ma-ont:frameHeight>360</ma-ont:frameHeight>
+	</dc:Image>
+	
+	
+
+
+</rdf:RDF>
