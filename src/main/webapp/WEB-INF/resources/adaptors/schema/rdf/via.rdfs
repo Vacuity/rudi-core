@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ <!DOCTYPE rdf:RDF []>
+ <rdf:RDF xmlns="http://www.vacuity.ai/onto/via/rdfs#"
+     xml:base="http://www.vacuity.ai/onto/via/"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+ >
+
+     <owl:Ontology rdf:about="">
+         <rdfs:comment >Created by Vacuity.</rdfs:comment >
+         <dc:date rdf:datatype="date" >2016-09-23 </dc:date >
+         <owl:versionInfo >RC001</owl:versionInfo >
+     </owl:Ontology>
+     
+      <!-- 
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////
+     -->
+     
+	<owl:DatatypeProperty rdf:about="capture">
+	</owl:DatatypeProperty>
+     
+	<owl:DatatypeProperty rdf:about="capture_all">
+		<rdfs:subPropertyOf rdf:resource="capture"/>
+	</owl:DatatypeProperty>
+	
+	<owl:DatatypeProperty rdf:about="capture_1">
+		<rdfs:subPropertyOf rdf:resource="capture"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="capture_2">
+		<rdfs:subPropertyOf rdf:resource="capture"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="capture_3">
+		<rdfs:subPropertyOf rdf:resource="capture"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="capture_4">
+		<rdfs:subPropertyOf rdf:resource="capture"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="capture_5">
+		<rdfs:subPropertyOf rdf:resource="capture"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="capture_6">
+		<rdfs:subPropertyOf rdf:resource="capture"/>
+	</owl:DatatypeProperty>
+
+	<owl:ObjectProperty rdf:about="serviceReplyType">
+	</owl:ObjectProperty>
+
+	<owl:ObjectProperty rdf:about="json">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+
+	<owl:ObjectProperty rdf:about="xml">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+
+	<owl:ObjectProperty rdf:about="rdf">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+
+	<owl:ObjectProperty rdf:about="gson">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+
+	<owl:ObjectProperty rdf:about="jsonld">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+	
+    <owl:Class rdf:about="Source">
+         <rdfs:comment></rdfs:comment>
+         <rdfs:subClassOf rdf:resource="http://rdfs.org/sioc/ns#"/>
+    </owl:Class>
+     
+             
+ </rdf:RDF>

@@ -2,3 +2,4 @@ TODO Use inferencing to sameAs businesses with the same address or phone number
 TODO Use inferencing to sameAs people with the email address or cell phone number (not numbers that can be shared)
 TODO Channels should support ASK queries only
 TODO Fetch Virtuoso provider jars from maven repo
+TODO Add logging framework (logback, slf4j)

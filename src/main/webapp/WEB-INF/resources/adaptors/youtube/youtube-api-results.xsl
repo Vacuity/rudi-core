@@ -4,7 +4,7 @@
 
 <xsl:template match="/">
  
- <rdf:RDF xmlns="http://www.vacuity.ai/onto/via"
+ <rdf:RDF xml:base="http://www.vacuity.ai/onto/via"
      xmlns:via="http://www.vacuity.ai/onto/via/"
      xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
