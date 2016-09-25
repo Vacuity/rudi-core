@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
+     xmlns:via="http://www.vacuity.ai/onto/via/"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+ >
+ 	<via:TupleQuery rdf:about="#get_adaptor">
+		<rdfs:label>get_adaptor</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+PREFIX via: <http://www.vacuity.ai/onto/via/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+select distinct ?adaptor ?pattern ?i_label ?endpoint ?translator ?log ?replyTypeProp ?call where {
+  
+  ?adaptor rdf:type via:Adaptor .
+  ?adaptor via:i ?input .
+  ?input via:pattern ?pattern .
+  ?input ?c ?i_label .
+  ?c rdfs:subPropertyOf via:capture .
+  ?adaptor via:o ?output .
+  ?output via:endpoint ?endpoint .
+  ?output via:translator ?translator .
+  ?output via:log ?log .
+  ?output ?replyTypeProp ?call .
+  ?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
+
+}
+]]>
+		</via:sparql>
+	</via:TupleQuery>
+ 	<via:TupleQuery rdf:about="#get_adaptor_output">
+		<rdfs:label>get_adaptor_output</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+PREFIX via: <http://www.vacuity.ai/onto/via/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+select distinct ?adaptor ?pattern ?i_label ?endpoint ?translator ?log ?replyTypeProp ?call where {
+  
+  ?adaptor rdf:type via:Adaptor .
+  ?adaptor via:i ?input .
+  ?input via:pattern ?pattern .
+  ?input ?c ?i_label .
+  ?c rdfs:subPropertyOf via:capture .
+  ?adaptor via:o ?output .
+  ?output via:endpoint ?endpoint .
+  ?output via:translator ?translator .
+  ?output via:log ?log .
+  ?output ?replyTypeProp ?call .
+  ?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
+
+}
+]]>
+		</via:sparql>
+	</via:TupleQuery>
+	<via:TupleQuery rdf:about="#get_pattern_labels">
+		<rdfs:label>get_pattern_labels</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+PREFIX via: <http://www.vacuity.ai/onto/via/>
+PREFIX vi: <http://www.vacuity.ai/onto/instances#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+select distinct ?pattern ?i_label where {
+  ?input via:pattern ?pattern .
+  ?input ?c ?i_label .
+  ?c rdfs:subPropertyOf via:capture .
+}
+]]>
+		</via:sparql>
+	</via:TupleQuery>
+	
+	<via:TupleQuery rdf:about="#get_endpoint_labels">
+		<rdfs:label>get_endpoint_labels</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+PREFIX via: <http://www.vacuity.ai/onto/via/>
+PREFIX vi: <http://www.vacuity.ai/onto/instances#>
+select distinct ?x ?y where {
+	?x via:endpoint ?y .
+}
+]]>
+		</via:sparql>
+	</via:TupleQuery>
+	
+	
+	
+	
+	<via:TupleQuery rdf:about="#get_queries">
+		<rdfs:label>get_queries</rdfs:label>
+ 		<via:sparql>
+<![CDATA[ 		
+PREFIX via: <http://www.vacuity.ai/onto/via/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+select distinct ?query ?label ?sparql where {
+  ?query rdf:type via:TupleQuery .
+  ?query rdfs:label ?label .
+  ?query via:sparql ?sparql .
+}
+]]>
+		</via:sparql>
+	</via:TupleQuery>
+
+</rdf:RDF>

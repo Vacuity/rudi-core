@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
+     xmlns:via="http://www.vacuity.ai/onto/via/"
+     xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:sioc="http://rdfs.org/sioc/ns#"
+ >
+ 	
+ 	<via:Adaptor rdf:about="#sponger-adaptor">
+ 		<rdfs:comment>Sponger Adaptor</rdfs:comment>
+ 		<rdfs:label>Sponger Adaptor</rdfs:label>
+ 		<via:i rdf:resource="#url"/>
+		<via:o rdf:resource="#virtuoso-sponger"/>
+ 	</via:Adaptor>
+ 	
+ 	<!-- inputs -->
+ 	
+ 	<via:Input rdf:about="#email">
+ 		<via:pattern>^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$</via:pattern>
+ 		<via:capture_all>Email Address</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#email_cmd">
+ 		<via:pattern>do ${#email}</via:pattern>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#phone_number">
+ 		<via:pattern>^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$</via:pattern>
+ 		<via:capture_all>Phone Number</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#phone_number_cmd">
+ 		<via:pattern>do ${#phone_number}</via:pattern>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#url">
+ 		<via:parseType>url</via:parseType>
+ 		<via:capture_all>URl</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#uri">
+ 		<via:parseType>uri</via:parseType>
+ 		<via:capture_all>URI</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#date">
+ 		<via:parseType>date</via:parseType>
+ 		<via:capture_all>Date or Time</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#address">
+ 		<via:parseType>address</via:parseType>
+ 		<via:capture_all>Address</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#geo">
+ 		<via:parseType>geo</via:parseType>
+ 		<via:capture_all>Geo Coordinates</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#handle">
+ 		<via:pattern>^@\w*</via:pattern>
+ 		<via:capture_all>Handle</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<via:Input rdf:about="#hashtag">
+ 		<via:pattern>^#\w*</via:pattern>
+ 		<via:capture_all>Hashtag</via:capture_all>
+ 	</via:Input>
+ 	
+ 	<!-- Sponger Output -->
+ 	<via:Output rdf:about="#virtuoso-sponger">
+ 		<via:call rdf:resource="http://therudi.io/sparql?default-graph-uri=${1}&amp;query=DESCRIBE %3Chttp%3A%2F%2Ftherudi.io%2Fabout%2Fid%2Fentity%2${1}&amp;output=application/rdf+xml"/>
+ 		<via:log>Collecting hyperdata from ${1} using Virtuoso Sponger</via:log>
+ 		<!-- be sure to add a timestamp before registering the log -->
+ 	</via:Output>
+ 	
+</rdf:RDF>

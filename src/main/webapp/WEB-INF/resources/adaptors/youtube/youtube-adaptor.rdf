@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
+     xmlns:via="http://www.vacuity.ai/onto/via/"
+     xml:ma-ont="http://www.w3.org/ns/ma-ont/"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:sioc="http://rdfs.org/sioc/ns#"
+ >
+ 	
+ 	<via:Adaptor rdf:about="#youtube-url-adaptor">
+ 		<rdfs:comment>Pulls video URL from youtube.com</rdfs:comment>
+ 		<rdfs:label>Youtube Fetch Adaptor</rdfs:label>
+ 		<via:i rdf:resource="#youtube_cmd"/>
+		<via:o rdf:resource="#youtube-fetch-videos"/>
+ 	</via:Adaptor>
+
+ 	<via:Output rdf:about="#youtube-fetch-videos">
+ 		<via:endpoint>youtube.data</via:endpoint>
+ 		<via:json rdf:resource="https://www.googleapis.com/youtube/v3/search?part=snippet&amp;type=video&amp;q=${1}&amp;key=${key}"/>
+		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.xsl"/>
+ 		<via:log>Checking youtube.com for videos about ${1}</via:log>
+ 		<!-- be sure to add a timestamp before registering the log -->
+ 	</via:Output>
+ 	
+ 	<via:Input rdf:about="#youtube_cmd">
+ 		<via:pattern>youtube\s*(\w*)</via:pattern>
+ 		<via:capture_1>Youtube Search Terms</via:capture_1>
+ 	</via:Input>
+ 	 	
+</rdf:RDF>
