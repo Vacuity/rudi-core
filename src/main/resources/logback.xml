@@ -11,7 +11,7 @@
 		</layout>
 	</appender>
 
-	<logger name="com.mkyong.controller" level="debug"
+	<logger name="ai.vacuity.rudi.adaptors.controller" level="debug"
 		additivity="false">
 		<appender-ref ref="STDOUT" />
 	</logger>

@@ -9,15 +9,61 @@
 	<name>RUDI Adaptors Project</name>
 	<url>http://maven.apache.org</url>
 	<properties>
-		<jdk.version>1.7</jdk.version>
+		<jdk.version>1.8</jdk.version>
 		<spring.version>4.1.1.RELEASE</spring.version>
 		<jstl.version>1.2</jstl.version>
 		<junit.version>4.11</junit.version>
 		<logback.version>1.0.13</logback.version>
 		<jcl-over-slf4j.version>1.7.5</jcl-over-slf4j.version>
+		<google.version>1.22.0</google.version>
 	</properties>
-
+	<dependencyManagement>
+	    <dependencies>
+	        <dependency>
+	            <groupId>org.eclipse.rdf4j</groupId>
+	            <artifactId>rdf4j-bom</artifactId>
+	            <version>2.0.1</version>
+	            <type>pom</type>
+	            <scope>import</scope>
+	        </dependency>
+	    </dependencies>
+	</dependencyManagement>
 	<dependencies>
+	
+		<dependency>
+		  <groupId>virtuoso.sesame.driver</groupId>
+		  <artifactId>virtuoso-driver</artifactId>
+		  <version>4</version>
+		</dependency>
+	
+		<dependency>
+		  <groupId>virtuoso.sesame</groupId>
+		  <artifactId>virtuoso-sesame</artifactId>
+		  <version>4</version>
+		</dependency>
+	
+		<!-- rdf4j -->
+		<dependency>
+		  <groupId>org.eclipse.rdf4j</groupId>
+		  <artifactId>rdf4j-runtime</artifactId>
+		</dependency>
+	
+		<!-- Google HTTP libs -->
+		<dependency>
+		  <groupId>com.google.http-client</groupId>
+		  <artifactId>google-http-client</artifactId>
+		  <version>${google.version}</version>
+		</dependency>
+		<dependency>
+		  <groupId>com.google.http-client</groupId>
+		  <artifactId>google-http-client-xml</artifactId>
+		  <version>${google.version}</version>
+		</dependency>
+		<dependency>
+		  <groupId>com.google.http-client</groupId>
+		  <artifactId>google-http-client-jackson2</artifactId>
+		  <version>${google.version}</version>
+		</dependency>
 	
 		<!-- https://mvnrepository.com/artifact/javax.xml/jaxb-api -->
 		<dependency>
@@ -83,6 +129,20 @@
 			<artifactId>jstl</artifactId>
 			<version>${jstl.version}</version>
 		</dependency>
+		
+		
+		<!--  JSON Schema 2 POJO -->		
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.7.0</version>
+        </dependency>		
+		
 
 	</dependencies>
 
@@ -90,6 +150,34 @@
 		<finalName>RUDI Adaptors</finalName>
 
 		<plugins>
+		<!--  JSON Schema 2 POJO -->
+            <plugin>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <version>0.4.26</version>
+                <configuration>
+                    <sourceDirectory>${basedir}/src/main/resources/schema/gson</sourceDirectory>
+                    <targetPackage>ai.vacuity.rudi.adaptors.types</targetPackage>
+                    <removeOldOutput>true</removeOldOutput>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>		
+            
+	        <plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-compiler-plugin</artifactId>
+	            <configuration>
+	                <source>1.8</source>
+	                <target>1.8</target>
+	            </configuration>
+	        </plugin>
+		
 		    <!-- Eclipse project -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><rdf:RDF xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:ma-ont="http://www.w3.org/ns/ma-ont" xmlns:dbpedia="http://dbpedia.org/property/" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#" xmlns:sioc="http://rdfs.org/sioc/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:via="http://www.vacuity.ai/onto/via" xmlns="http://www.vacuity.ai/onto/via">
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCWFKCr40YwOZQx8FHU_ZqqQ">
+<dc:title>JerryRigEverything</dc:title>
+<sioc:has_host rdf:resource="http://www.youtube.com"/>
+</sioc:Forum>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/0vYfAqEyGV0">
+<dc:title>iPhone 7 Scratch test - BEND TEST - Durability video!</dc:title>
+<dc:description>Can the iPhone 7 survive the JerryRigEverything Durability tests? Like always we'll start with the scratch test from Mohs scale of hardness. With this test we can ...</dc:description>
+<dc:date rdf:parseType="xsd:Date">2016-09-16T00:20:00.000Z</dc:date>
+<sioc:source rdf:resource="http://www.youtube.com"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCWFKCr40YwOZQx8FHU_ZqqQ"/>
+</ma-ont:VideoTrack>
+<dc:Image rdf:about="https://i.ytimg.com/vi/0vYfAqEyGV0/default.jpg">
+<ma-ont:frameWidth>120</ma-ont:frameWidth>
+<ma-ont:frameHeight>90</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/0vYfAqEyGV0/hqdefault.jpg">
+<ma-ont:frameWidth>480</ma-ont:frameWidth>
+<ma-ont:frameHeight>360</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/0vYfAqEyGV0/mqdefault.jpg">
+<ma-ont:frameWidth>320</ma-ont:frameWidth>
+<ma-ont:frameHeight>180</ma-ont:frameHeight>
+</dc:Image>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCj34AOIMl_k1fF7hcBkD_dw">
+<dc:title>EverythingApplePro</dc:title>
+<sioc:has_host rdf:resource="http://www.youtube.com"/>
+</sioc:Forum>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/d5ZOpQ5o2Ns">
+<dc:title>iPhone 7 Plus Camera Test - Incredible 4K Video!</dc:title>
+<dc:description>The iPhone 7 Plus Has Incredible Camera Quality. Here's a 4K Video &amp; Camera Test + New Portrait Mode In Depth Review. Song: http://itun.es/us/MgSafb Song ...</dc:description>
+<dc:date rdf:parseType="xsd:Date">2016-09-22T21:13:33.000Z</dc:date>
+<sioc:source rdf:resource="http://www.youtube.com"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCj34AOIMl_k1fF7hcBkD_dw"/>
+</ma-ont:VideoTrack>
+<dc:Image rdf:about="https://i.ytimg.com/vi/d5ZOpQ5o2Ns/default.jpg">
+<ma-ont:frameWidth>120</ma-ont:frameWidth>
+<ma-ont:frameHeight>90</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/d5ZOpQ5o2Ns/hqdefault.jpg">
+<ma-ont:frameWidth>480</ma-ont:frameWidth>
+<ma-ont:frameHeight>360</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/d5ZOpQ5o2Ns/mqdefault.jpg">
+<ma-ont:frameWidth>320</ma-ont:frameWidth>
+<ma-ont:frameHeight>180</ma-ont:frameHeight>
+</dc:Image>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCj34AOIMl_k1fF7hcBkD_dw">
+<dc:title>EverythingApplePro</dc:title>
+<sioc:has_host rdf:resource="http://www.youtube.com"/>
+</sioc:Forum>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/lYEeb4U6ZYs">
+<dc:title>iPhone 7 Water Test! Secretly Waterproof?</dc:title>
+<dc:description>Ultimate iPhone 7 Water Test. How Deep Can It Go? Can You Swim With It? Secretly Waterproof? iPhone 7 DEEP Water Test: http://goo.gl/lkDndu iPhone 7 ...</dc:description>
+<dc:date rdf:parseType="xsd:Date">2016-09-17T02:38:21.000Z</dc:date>
+<sioc:source rdf:resource="http://www.youtube.com"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCj34AOIMl_k1fF7hcBkD_dw"/>
+</ma-ont:VideoTrack>
+<dc:Image rdf:about="https://i.ytimg.com/vi/lYEeb4U6ZYs/default.jpg">
+<ma-ont:frameWidth>120</ma-ont:frameWidth>
+<ma-ont:frameHeight>90</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/lYEeb4U6ZYs/hqdefault.jpg">
+<ma-ont:frameWidth>480</ma-ont:frameWidth>
+<ma-ont:frameHeight>360</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/lYEeb4U6ZYs/mqdefault.jpg">
+<ma-ont:frameWidth>320</ma-ont:frameWidth>
+<ma-ont:frameHeight>180</ma-ont:frameHeight>
+</dc:Image>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCE_M8A5yxnLfW0KghEeajjw">
+<dc:title>Apple</dc:title>
+<sioc:has_host rdf:resource="http://www.youtube.com"/>
+</sioc:Forum>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/Q6dsRpVyyWs">
+<dc:title>Apple – Introducing iPhone 7</dc:title>
+<dc:description>With new camera systems, stereo speakers, and the most powerful chip ever in a smartphone, iPhone 7 and iPhone 7 Plus make the things you do most even ...</dc:description>
+<dc:date rdf:parseType="xsd:Date">2016-09-07T19:07:22.000Z</dc:date>
+<sioc:source rdf:resource="http://www.youtube.com"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCE_M8A5yxnLfW0KghEeajjw"/>
+</ma-ont:VideoTrack>
+<dc:Image rdf:about="https://i.ytimg.com/vi/Q6dsRpVyyWs/default.jpg">
+<ma-ont:frameWidth>120</ma-ont:frameWidth>
+<ma-ont:frameHeight>90</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/Q6dsRpVyyWs/hqdefault.jpg">
+<ma-ont:frameWidth>480</ma-ont:frameWidth>
+<ma-ont:frameHeight>360</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/Q6dsRpVyyWs/mqdefault.jpg">
+<ma-ont:frameWidth>320</ma-ont:frameWidth>
+<ma-ont:frameHeight>180</ma-ont:frameHeight>
+</dc:Image>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCYGjbdDveVI8hGXyQBCeMZQ">
+<dc:title>Krystal Key</dc:title>
+<sioc:has_host rdf:resource="http://www.youtube.com"/>
+</sioc:Forum>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/CYGfu-Endhk">
+<dc:title>iPhone 7 Plus Camera vs iPhone 6s Plus</dc:title>
+<dc:description>The iPhone 7 and iPhone 7 Plus have some big improvents when it comes to their cameras. But are these camera upgrades worth an upgrade from the iPhone ...</dc:description>
+<dc:date rdf:parseType="xsd:Date">2016-09-23T02:11:52.000Z</dc:date>
+<sioc:source rdf:resource="http://www.youtube.com"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCYGjbdDveVI8hGXyQBCeMZQ"/>
+</ma-ont:VideoTrack>
+<dc:Image rdf:about="https://i.ytimg.com/vi/CYGfu-Endhk/default.jpg">
+<ma-ont:frameWidth>120</ma-ont:frameWidth>
+<ma-ont:frameHeight>90</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/CYGfu-Endhk/hqdefault.jpg">
+<ma-ont:frameWidth>480</ma-ont:frameWidth>
+<ma-ont:frameHeight>360</ma-ont:frameHeight>
+</dc:Image>
+<dc:Image rdf:about="https://i.ytimg.com/vi/CYGfu-Endhk/mqdefault.jpg">
+<ma-ont:frameWidth>320</ma-ont:frameWidth>
+<ma-ont:frameHeight>180</ma-ont:frameHeight>
+</dc:Image>
+</rdf:RDF>

@@ -1,0 +1,49 @@
+ <rdf:RDF xmlns="http://www.vacuity.ai/onto/instances"
+     xml:via="http://www.vacuity.ai/onto/via"
+     xml:ma-ont="http://vacuity.ai/schemas/via"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:sioc="http://rdfs.org/sioc/ns#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ >
+ 	
+ 	<via:Adaptor rdf:about="#moz-adaptor">
+ 		<rdfs:comment>Fetches URL backlink data from moz.com</rdfs:comment>
+ 		<rdfs:label>Moz Adaptor</rdfs:label>
+ 		<via:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Resource"/>
+ 		<via:features rdf:resource=""/>
+ 		<via:featured_in rdf:resource=""/>
+ 		<via:i rdf:resource="#moz-cmd"/>
+		<via:o rdf:resource="#moz-get-backlink-stats"/>
+		<via:translator rdf:resource="moz-api-results.xsl"/>
+ 	</via:Adaptor>
+ 	
+ 	<via:Input rdf:about="#moz-cmd">
+ 		<via:pattern>moz \w*</via:pattern>
+ 		<via:pattern>do \w*</via:pattern>
+ 		<via:index>1=Search Term</via:index>
+ 	</via:Input>
+
+ 	
+ 	
+ 	<via:Output rdf:about="#moz-get-backlink-stats">
+ 		<via:call rdf:response="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&Scope=page_to_page&Sort=domains_linking_page&AccessID=${id}&Expires=${expiry}&Signature=%${token}"/>
+ 		
+ 		<!-- the rdfs:range is a via:Template -->
+		<via:merge rdf:resource="#moz-get-url-stats"/>
+ 		<via:log>Fetching backlinks for ${1} from moz.com.</via:log>
+ 		<!-- be sure to add a timestamp before registering the log -->
+ 	</via:Output>
+ 	
+ 	<via:Output rdf:about="#moz-get-url-stats">
+ 		<via:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Resource"/>
+ 		<via:call rdf:response="http://lsapi.seomoz.com/linkscape/url-metrics/${1}?144115188075855876=2048&AccessID=${id}&Expires=${expiry}&Signature=%${token}"/>
+ 		<via:log>Fetching freshness and URL canonical form for ${1} from moz.com.</via:log>
+ 		<!-- be sure to add a timestamp before registering the log -->
+ 	</via:Output>
+ 	
+
+</rdf:RDF>

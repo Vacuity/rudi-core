@@ -1,13 +1,5 @@
 package ai.vacuity.rudi.adaptors.controller;
 
-import java.io.File;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.stream.StreamSource;
-
-import org.json.JSONObject;
-import org.json.XML;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -24,13 +16,15 @@ public class BaseController {
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String welcome(ModelMap model) {
+		
+		return welcomeName("anonymous", model);
 
-		model.addAttribute("message", "Welcome");
-		model.addAttribute("counter", ++counter);
-		logger.debug("[welcome] counter : {}", counter);
-
-		// Spring uses InternalResourceViewResolver and return back index.jsp
-		return VIEW_INDEX;
+//		model.addAttribute("message", "Welcome");
+//		model.addAttribute("counter", ++counter);
+//		logger.debug("[welcome] counter : {}", counter);
+//
+//		// Spring uses InternalResourceViewResolver and return back index.jsp
+//		return VIEW_INDEX;
 
 	}
 
