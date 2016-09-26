@@ -153,20 +153,40 @@ public class GoogleAPISample {
 		}
 	}
 
+	static String xslt = "http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.xsl";
+	static String call = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=iphone&key=AIzaSyAdL9AxLigcHqPqp0sf68bkel4hXQ92KYE";
+
+	public static String getXslt() {
+		return xslt;
+	}
+
+	public static void setXslt(String xslt) {
+		GoogleAPISample.xslt = xslt;
+	}
+
+	public static String getCall() {
+		return call;
+	}
+
+	public static void setCall(String call) {
+		GoogleAPISample.call = call;
+	}
+
 	private static void parseResponse(HttpResponse response) throws IOException {
 		// ActivityFeed feed = response.parseAs(ActivityFeed.class);
 
 		ActivityFeed feed = new ActivityFeed();
 		try {
-			XSLTTransformer.transform(response.parseAsString(),
-					"http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.xsl");
-		} catch (TransformerException e) {
+			XSLTTransformer.transform(response.parseAsString(), xslt);
+		}
+		catch (TransformerException e) {
 			e.printStackTrace();
 		}
 
 		if (feed.getActivities().isEmpty()) {
 			System.out.println("No activities found.");
-		} else {
+		}
+		else {
 			if (feed.getActivities().size() == MAX_RESULTS) {
 				System.out.print("First ");
 			}
@@ -182,7 +202,7 @@ public class GoogleAPISample {
 		}
 	}
 
-	private static void run() throws IOException {
+	public static void run() throws IOException {
 		HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
 			@Override
 			public void initialize(HttpRequest request) {
@@ -192,8 +212,7 @@ public class GoogleAPISample {
 		PlusUrl url = PlusUrl.listPublicActivities(USER_ID).setMaxResults(MAX_RESULTS);
 		url.put("fields", "items(id,url,object(content,plusoners/totalItems))");
 
-		GenericUrl gurl = new GenericUrl(
-				"https://www.googleapis.com/youtube/v3/search?part=snippet&q=iphone&key=AIzaSyAdL9AxLigcHqPqp0sf68bkel4hXQ92KYE");
+		GenericUrl gurl = new GenericUrl(call);
 
 		HttpRequest request = requestFactory.buildGetRequest(gurl);
 		parseResponse(request.execute());
@@ -208,10 +227,12 @@ public class GoogleAPISample {
 			try {
 				run();
 				return;
-			} catch (HttpResponseException e) {
+			}
+			catch (HttpResponseException e) {
 				System.err.println(e.getMessage());
 			}
-		} catch (Throwable t) {
+		}
+		catch (Throwable t) {
 			t.printStackTrace();
 		}
 		System.exit(1);

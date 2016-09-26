@@ -1,14 +1,23 @@
 package ai.vacuity.rudi.adaptors.bo;
 
-import java.net.URL;
-
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 
 public class Output {
 
 	String endpointLabel = null;
 	HttpRequest request = null;
-	URL translator = null;
+	String call = "";
+
+	public String getCall() {
+		return call;
+	}
+
+	public void setCall(String call) {
+		this.call = call;
+	}
+
+	GenericUrl translator = null;
 	String log = "";
 
 	public String getEndpointLabel() {
@@ -27,11 +36,11 @@ public class Output {
 		this.request = request;
 	}
 
-	public URL getTranslator() {
+	public GenericUrl getTranslator() {
 		return translator;
 	}
 
-	public void setTranslator(URL translator) {
+	public void setTranslator(GenericUrl translator) {
 		this.translator = translator;
 	}
 

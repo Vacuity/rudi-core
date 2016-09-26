@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Vector;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.google.api.client.http.GenericUrl;
 
 public class Endpoint {
@@ -38,7 +40,7 @@ public class Endpoint {
 		return endpointIds;
 	}
 
-	public static void load() {
+	public static final void load() {
 		try {
 			ClassLoader cLoader = Endpoint.class.getClassLoader();
 			InputStream is = cLoader.getResourceAsStream(Endpoint.FILENAME_CONFIG);
@@ -47,10 +49,13 @@ public class Endpoint {
 			while (keys.hasMoreElements()) {
 				String urlKey = ((String) keys.nextElement()).toLowerCase();
 				if (urlKey.endsWith(".url")) {
-					String endpointLabel = urlKey.substring(urlKey.lastIndexOf(".url"));
+					String endpointLabel = urlKey.substring(0, urlKey.lastIndexOf(".url"));
 					Endpoint e = Endpoint.add(endpointLabel);
 
-					e.setUrl(new GenericUrl(Endpoint.getConfig().getProperty(urlKey)));
+					String url = Endpoint.getConfig().getProperty(urlKey);
+					if (StringUtils.isNotEmpty(url)) {
+						e.setUrl(new GenericUrl(url));
+					}
 					e.setId(Endpoint.getConfig().getProperty(endpointLabel + ".id"));
 					e.setKey(Endpoint.getConfig().getProperty(endpointLabel + ".key"));
 					e.setToken(Endpoint.getConfig().getProperty(endpointLabel + ".token"));

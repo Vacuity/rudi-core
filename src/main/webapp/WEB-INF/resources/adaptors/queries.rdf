@@ -15,7 +15,7 @@ select distinct ?adaptor ?pattern ?i_label ?endpoint ?translator ?log ?replyType
   
   ?adaptor rdf:type via:Adaptor .
   ?adaptor via:i ?input .
-  ?input via:pattern ?pattern .
+  ?input ?patternType ?pattern .
   ?input ?c ?i_label .
   ?c rdfs:subPropertyOf via:capture .
   ?adaptor via:o ?output .

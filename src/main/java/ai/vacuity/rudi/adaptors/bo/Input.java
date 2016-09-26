@@ -1,6 +1,7 @@
 package ai.vacuity.rudi.adaptors.bo;
 
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
@@ -13,6 +14,15 @@ public class Input {
 	HashMap<Integer, Literal> labelMap = new HashMap<Integer, Literal>();
 
 	Output output = null;
+	Pattern pattern = null;
+
+	public Pattern getPattern() {
+		return pattern;
+	}
+
+	public void setPattern(Pattern pattern) {
+		this.pattern = pattern;
+	}
 
 	public Value getTrigger() {
 		return trigger;
