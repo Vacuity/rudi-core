@@ -1,116 +1,116 @@
 <?xml version="1.0" encoding="UTF-8"?><rdf:RDF xml:base="http://www.vacuity.ai/onto/via" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:ma-ont="http://www.w3.org/ns/ma-ont/" xmlns:dbpedia="http://dbpedia.org/property/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#" xmlns:sioc="http://rdfs.org/sioc/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:via="http://www.vacuity.ai/onto/via/">
-<sioc:Forum rdf:about="http://www.youtube.com/channel/UC2iUwfYi_1FCGGqhOUNx-iA">
-<dc:title>Screen Rant</dc:title>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCtbxTmNfHcXLV5nfpnQxFkw">
+<dc:title>Dan Wahlin</dc:title>
 <sioc:has_host rdf:resource="http://www.youtube.com"/>
 </sioc:Forum>
-<ma-ont:VideoTrack rdf:about="http://youtu.be/_azTj130mLI">
-<dc:title>BATMAN VS BATMAN - Fan Trailer (Ft. Batman, The Joker And More!)</dc:title>
-<dc:description>Here is our epic Batman V Batman fan trailer! (Featuring Suicide Squad, The Dark Knight, Batman V Superman and more!) Subscribe to our channel ...</dc:description>
-<dc:date rdf:parseType="xsd:date">2016-09-23T20:00:01.000Z</dc:date>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/i9MHigUZKEM">
+<dc:title>AngularJS Fundamentals In 60-ish Minutes</dc:title>
+<dc:description>If you like the AngularJS in 60-ish Minutes video you'll love the new AngularJS JumpStart video training course. Check it out at ...</dc:description>
+<dc:date rdf:parseType="xsd:date">2013-04-13T00:08:09.000Z</dc:date>
 <sioc:source rdf:resource="http://www.youtube.com"/>
-<sioc:has_container rdf:resource="http://www.youtube.com/channel/UC2iUwfYi_1FCGGqhOUNx-iA"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCtbxTmNfHcXLV5nfpnQxFkw"/>
 </ma-ont:VideoTrack>
-<dc:Image rdf:about="https://i.ytimg.com/vi/_azTj130mLI/default.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/i9MHigUZKEM/default.jpg">
 <ma-ont:frameWidth>120</ma-ont:frameWidth>
 <ma-ont:frameHeight>90</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/_azTj130mLI/hqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/i9MHigUZKEM/hqdefault.jpg">
 <ma-ont:frameWidth>480</ma-ont:frameWidth>
 <ma-ont:frameHeight>360</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/_azTj130mLI/mqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/i9MHigUZKEM/mqdefault.jpg">
 <ma-ont:frameWidth>320</ma-ont:frameWidth>
 <ma-ont:frameHeight>180</ma-ont:frameHeight>
 </dc:Image>
-<sioc:Forum rdf:about="http://www.youtube.com/channel/UC0M0rxSz3IF0CsSour1iWmw">
-<dc:title>Cinemassacre</dc:title>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCsFmLpSNJuFzpKqdEj5jeHw">
+<dc:title>Tony Alicea</dc:title>
 <sioc:has_host rdf:resource="http://www.youtube.com"/>
 </sioc:Forum>
-<ma-ont:VideoTrack rdf:about="http://youtu.be/HbZBn7RHqXs">
-<dc:title>OUTTAKES: AVGN: BATMAN</dc:title>
-<dc:description>Some quick outtakes from the AVGN Batman episode https://www.youtube.com/watch?v=JFvtk5toGJg Twitter Mike ▻ https://twitter.com/Mike_Matei Twitter ...</dc:description>
-<dc:date rdf:parseType="xsd:date">2016-09-24T08:54:54.000Z</dc:date>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/ejBkOjEG6F0">
+<dc:title>Learn and Understand AngularJS - The First 50 Minutes</dc:title>
+<dc:description>Full 7 hour course on sale for $19! https://www.udemy.com/learn-angularjs/?couponCode=YOUTUBE119 The course for beginners, jQuery users, and all who ...</dc:description>
+<dc:date rdf:parseType="xsd:date">2014-10-09T02:29:56.000Z</dc:date>
 <sioc:source rdf:resource="http://www.youtube.com"/>
-<sioc:has_container rdf:resource="http://www.youtube.com/channel/UC0M0rxSz3IF0CsSour1iWmw"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCsFmLpSNJuFzpKqdEj5jeHw"/>
 </ma-ont:VideoTrack>
-<dc:Image rdf:about="https://i.ytimg.com/vi/HbZBn7RHqXs/default.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/ejBkOjEG6F0/default.jpg">
 <ma-ont:frameWidth>120</ma-ont:frameWidth>
 <ma-ont:frameHeight>90</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/HbZBn7RHqXs/hqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/ejBkOjEG6F0/hqdefault.jpg">
 <ma-ont:frameWidth>480</ma-ont:frameWidth>
 <ma-ont:frameHeight>360</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/HbZBn7RHqXs/mqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/ejBkOjEG6F0/mqdefault.jpg">
 <ma-ont:frameWidth>320</ma-ont:frameWidth>
 <ma-ont:frameHeight>180</ma-ont:frameHeight>
 </dc:Image>
-<sioc:Forum rdf:about="http://www.youtube.com/channel/UCmNshpkVaqUt-Qmo2d0h0Qw">
-<dc:title>JDLX</dc:title>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCHI5xgQujSyqz_UyKdLFaqw">
+<dc:title>.NET Interview Preparation videos</dc:title>
 <sioc:has_host rdf:resource="http://www.youtube.com"/>
 </sioc:Forum>
-<ma-ont:VideoTrack rdf:about="http://youtu.be/hCDyI23P2-0">
-<dc:title>Batman vs Martian Manhunter</dc:title>
-<dc:description>Note: All content belongs to Warner Bros. Animation and its creators, I do not own any rights of The Batman or its characters. No copyright infringement is ...</dc:description>
-<dc:date rdf:parseType="xsd:date">2016-09-24T07:05:28.000Z</dc:date>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/0kmdjqgO9IY">
+<dc:title>Learn Angularjs step by step ( Training video)</dc:title>
+<dc:description>See our other step by step video series below. Learn MVC 5 in 16 hours:- https://goo.gl/dmdakg Learn Design Pattern in 8 hours:- https://goo.gl/eJdn0m Learn ...</dc:description>
+<dc:date rdf:parseType="xsd:date">2016-02-02T09:24:14.000Z</dc:date>
 <sioc:source rdf:resource="http://www.youtube.com"/>
-<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCmNshpkVaqUt-Qmo2d0h0Qw"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCHI5xgQujSyqz_UyKdLFaqw"/>
 </ma-ont:VideoTrack>
-<dc:Image rdf:about="https://i.ytimg.com/vi/hCDyI23P2-0/default.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/0kmdjqgO9IY/default.jpg">
 <ma-ont:frameWidth>120</ma-ont:frameWidth>
 <ma-ont:frameHeight>90</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/hCDyI23P2-0/hqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/0kmdjqgO9IY/hqdefault.jpg">
 <ma-ont:frameWidth>480</ma-ont:frameWidth>
 <ma-ont:frameHeight>360</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/hCDyI23P2-0/mqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/0kmdjqgO9IY/mqdefault.jpg">
 <ma-ont:frameWidth>320</ma-ont:frameWidth>
 <ma-ont:frameHeight>180</ma-ont:frameHeight>
 </dc:Image>
-<sioc:Forum rdf:about="http://www.youtube.com/channel/UCmNshpkVaqUt-Qmo2d0h0Qw">
-<dc:title>JDLX</dc:title>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCDJVbKWW-ThFTraRklmF1IQ">
+<dc:title>Zenva</dc:title>
 <sioc:has_host rdf:resource="http://www.youtube.com"/>
 </sioc:Forum>
-<ma-ont:VideoTrack rdf:about="http://youtu.be/iRyh6OHlaP0">
-<dc:title>Batman vs Superwoman</dc:title>
-<dc:description>Note: All content belongs to Warner Bros. Animation and its creators, I do not own any rights of Justice League: Crisis on Two Earths or its characters.</dc:description>
-<dc:date rdf:parseType="xsd:date">2016-09-17T20:20:06.000Z</dc:date>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/nmFaZ6dVkt4">
+<dc:title>How Does AngularJS Work? Beginners Angular Tutorial</dc:title>
+<dc:description>Access the entire course in Zenva Academy: ...</dc:description>
+<dc:date rdf:parseType="xsd:date">2014-11-20T04:39:19.000Z</dc:date>
 <sioc:source rdf:resource="http://www.youtube.com"/>
-<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCmNshpkVaqUt-Qmo2d0h0Qw"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCDJVbKWW-ThFTraRklmF1IQ"/>
 </ma-ont:VideoTrack>
-<dc:Image rdf:about="https://i.ytimg.com/vi/iRyh6OHlaP0/default.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/nmFaZ6dVkt4/default.jpg">
 <ma-ont:frameWidth>120</ma-ont:frameWidth>
 <ma-ont:frameHeight>90</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/iRyh6OHlaP0/hqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/nmFaZ6dVkt4/hqdefault.jpg">
 <ma-ont:frameWidth>480</ma-ont:frameWidth>
 <ma-ont:frameHeight>360</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/iRyh6OHlaP0/mqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/nmFaZ6dVkt4/mqdefault.jpg">
 <ma-ont:frameWidth>320</ma-ont:frameWidth>
 <ma-ont:frameHeight>180</ma-ont:frameHeight>
 </dc:Image>
-<sioc:Forum rdf:about="http://www.youtube.com/channel/UCc-2P5tCezbxegb7gxp6EXg">
-<dc:title>HobbyKidsTV</dc:title>
+<sioc:Forum rdf:about="http://www.youtube.com/channel/UCwRXb5dUK4cvsHbx-rGzSgw">
+<dc:title>Derek Banas</dc:title>
 <sioc:has_host rdf:resource="http://www.youtube.com"/>
 </sioc:Forum>
-<ma-ont:VideoTrack rdf:about="http://youtu.be/vitSZJPdXz0">
-<dc:title>Biggest BATMAN Adventure HUNT! Find The BAT Cave + Toy SURPRISES Scavenger Clues with HobbyKidsTV</dc:title>
-<dc:description>Go on a mini adventure journey with the HobbyKids! Climb Tarantula Hill and find several clues to Batman's awesome Bat Cave. Ao much fun along the way.</dc:description>
-<dc:date rdf:parseType="xsd:date">2016-09-17T10:00:05.000Z</dc:date>
+<ma-ont:VideoTrack rdf:about="http://youtu.be/OPxeCiy0RdY">
+<dc:title>AngularJS Tutorial</dc:title>
+<dc:description>Get the Code Here : http://goo.gl/yvDpi1 Best AngularJS Book : http://amzn.to/1PhNVPT Support me on Patreon : https://www.patreon.com/derekbanas In this ...</dc:description>
+<dc:date rdf:parseType="xsd:date">2016-02-09T00:05:00.000Z</dc:date>
 <sioc:source rdf:resource="http://www.youtube.com"/>
-<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCc-2P5tCezbxegb7gxp6EXg"/>
+<sioc:has_container rdf:resource="http://www.youtube.com/channel/UCwRXb5dUK4cvsHbx-rGzSgw"/>
 </ma-ont:VideoTrack>
-<dc:Image rdf:about="https://i.ytimg.com/vi/vitSZJPdXz0/default.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/OPxeCiy0RdY/default.jpg">
 <ma-ont:frameWidth>120</ma-ont:frameWidth>
 <ma-ont:frameHeight>90</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/vitSZJPdXz0/hqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/OPxeCiy0RdY/hqdefault.jpg">
 <ma-ont:frameWidth>480</ma-ont:frameWidth>
 <ma-ont:frameHeight>360</ma-ont:frameHeight>
 </dc:Image>
-<dc:Image rdf:about="https://i.ytimg.com/vi/vitSZJPdXz0/mqdefault.jpg">
+<dc:Image rdf:about="https://i.ytimg.com/vi/OPxeCiy0RdY/mqdefault.jpg">
 <ma-ont:frameWidth>320</ma-ont:frameWidth>
 <ma-ont:frameHeight>180</ma-ont:frameHeight>
 </dc:Image>

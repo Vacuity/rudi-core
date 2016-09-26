@@ -53,6 +53,17 @@ public class QuadStore {
 	private static final int MAX_INPUTS = 100000;
 	private static final Input[] inputs = new Input[QuadStore.MAX_INPUTS];
 
+	static {
+		QuadStore.getRepository().initialize();
+		QuadStore.loadRepository(); // load rdf demo instance data, patterns,
+									// and schema
+		QuadStore.load(QuadStore.QUERY_GET_ADAPTOR); // load adaptors
+		// QuadStore.load(QuadStore.QUERY_GET_ADAPTOR_OUTPUT);
+		// QuadStore.load(QuadStore.QUERY_GET_ENDPOINT_LABELS);
+		// QuadStore.load(QuadStore.QUERY_GET_PATTERN_LABELS);
+		// QuadStore.load(QuadStore.QUERY_GET_QUERIES);
+	}
+
 	public static Input[] getInputs() {
 		return inputs;
 	}
@@ -209,27 +220,6 @@ public class QuadStore {
 								// totalTime + "ms.");
 								getInputs()[getInputsCursor()] = i;
 								incrementInputsCursor();
-
-								for (Input input : getInputs()) {
-									if (input == null) break;
-									Matcher matcher = input.getPattern().matcher("youtube batman");
-									System.out.println("Match: " + input.getTrigger().stringValue());
-									String call = input.getOutput().getCall();
-									while (matcher.find()) {
-										int groups = matcher.groupCount();
-										for (int gp = 1; gp <= groups; gp++) {
-											System.out.println("group " + gp + ": " + matcher.group(gp));
-											call = call.replace("${" + gp + "}", matcher.group(gp));
-										}
-									}
-									if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasKey()) call = call.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());
-									if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasId()) call = call.replace("${id}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getId());
-									if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasToken()) call = call.replace("${token}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getToken());
-									GoogleAPISample goog = new GoogleAPISample();
-									GoogleAPISample.setCall(call);
-									GoogleAPISample.setXslt(input.getOutput().getTranslator().build());
-									goog.run();
-								}
 							}
 						}
 						catch (QueryEvaluationException qex) {
@@ -296,17 +286,45 @@ public class QuadStore {
 		}
 	}
 
+	public static void processInput(String str) throws IOException {
+		for (Input input : getInputs()) {
+			if (input == null) break;
+			Matcher matcher = input.getPattern().matcher(str);
+			System.out.println("Match: " + input.getTrigger().stringValue());
+			String call = input.getOutput().getCall();
+			while (matcher.find()) {
+				int groups = matcher.groupCount();
+				for (int gp = 1; gp <= groups; gp++) {
+					System.out.println("group " + gp + ": " + matcher.group(gp));
+					call = call.replace("${" + gp + "}", matcher.group(gp));
+				}
+				call = call.replace("${0}", matcher.group());
+			}
+			if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasKey()) call = call.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());
+			if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasId()) call = call.replace("${id}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getId());
+			if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasToken()) call = call.replace("${token}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getToken());
+			GoogleAPISample goog = new GoogleAPISample();
+			GoogleAPISample.setCall(call);
+			GoogleAPISample.setXslt(input.getOutput().getTranslator().build());
+			GoogleAPISample.run();
+		}
+	}
+
 	public static void main(String[] args) {
 		// repo.initialize();
 
-		QuadStore.getRepository().initialize();
-
 		// File file = new File("/path/to/example.rdf");
 		// String baseURI = "http://example.org/example/local";
+
+		// catch (IOException e) {
+		// // handle io exception
+		// }
+	}
+
+	private static void loadRepository() {
 		ValueFactory vf = QuadStore.getRepository().getValueFactory();
 		try {
 			try (RepositoryConnection con = getConnection()) {
-
 				String baseDir = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/";
 				String[] extensions = new String[] { "rdf", "rdfs" };
 				IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
@@ -333,16 +351,6 @@ public class QuadStore {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		// QuadStore.load(QuadStore.QUERY_GET_ADAPTOR);
-		// QuadStore.load(QuadStore.QUERY_GET_ADAPTOR_OUTPUT);
-		// QuadStore.load(QuadStore.QUERY_GET_ENDPOINT_LABELS);
-		// QuadStore.load(QuadStore.QUERY_GET_PATTERN_LABELS);
-		// QuadStore.load(QuadStore.QUERY_GET_QUERIES);
-		// catch (IOException e) {
-		// // handle io exception
-		// }
-
 	}
 
 }

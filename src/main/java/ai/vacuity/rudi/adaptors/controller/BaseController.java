@@ -1,11 +1,16 @@
 package ai.vacuity.rudi.adaptors.controller;
 
+import java.io.IOException;
+
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import ai.vacuity.rudi.adaptors.data.QuadStore;
 
 @Controller
 public class BaseController {
@@ -15,23 +20,29 @@ public class BaseController {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(BaseController.class);
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public String welcome(ModelMap model) {
-		
-		return welcomeName("anonymous", model);
+	public String welcome(@RequestParam("q") String query, ModelMap model) {
+		try {
+			QuadStore.processInput(query);
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 
-//		model.addAttribute("message", "Welcome");
-//		model.addAttribute("counter", ++counter);
-//		logger.debug("[welcome] counter : {}", counter);
-//
-//		// Spring uses InternalResourceViewResolver and return back index.jsp
-//		return VIEW_INDEX;
+		return welcomeName("<a href=\"http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.rdf\">API Response</a>", model);
+
+		// model.addAttribute("message", "Welcome");
+		// model.addAttribute("counter", ++counter);
+		// logger.debug("[welcome] counter : {}", counter);
+		//
+		// // Spring uses InternalResourceViewResolver and return back index.jsp
+		// return VIEW_INDEX;
 
 	}
 
 	@RequestMapping(value = "/{name}", method = RequestMethod.GET)
 	public String welcomeName(@PathVariable String name, ModelMap model) {
 
-		model.addAttribute("message", "Welcome " + name);
+		model.addAttribute("message", name);
 		model.addAttribute("counter", ++counter);
 		logger.debug("[welcomeName] counter : {}", counter);
 		return VIEW_INDEX;

@@ -183,6 +183,7 @@ public class GoogleAPISample {
 			e.printStackTrace();
 		}
 
+		if (feed.getActivities() == null) return;
 		if (feed.getActivities().isEmpty()) {
 			System.out.println("No activities found.");
 		}
