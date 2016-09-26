@@ -1,13 +1,12 @@
  <rdf:RDF xmlns="http://www.vacuity.ai/onto/instances"
-     xml:via="http://www.vacuity.ai/onto/via"
-     xml:ma-ont="http://vacuity.ai/schemas/via"
+     xmlns:via="http://www.vacuity.ai/onto/via/"
+     xmlns:ma-ont="http://vacuity.ai/schemas/via"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
      xmlns:sioc="http://rdfs.org/sioc/ns#"
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
  >
  	
  	<via:Adaptor rdf:about="#moz-adaptor">
@@ -30,7 +29,7 @@
  	
  	
  	<via:Output rdf:about="#moz-get-backlink-stats">
- 		<via:call rdf:response="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&Scope=page_to_page&Sort=domains_linking_page&AccessID=${id}&Expires=${expiry}&Signature=%${token}"/>
+ 		<via:call rdf:response="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&amp;Scope=page_to_page&Sort=domains_linking_page&amp;AccessID=${id}&Expires=${expiry}&Signature=%${token}"/>
  		
  		<!-- the rdfs:range is a via:Template -->
 		<via:merge rdf:resource="#moz-get-url-stats"/>

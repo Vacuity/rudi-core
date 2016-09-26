@@ -24,6 +24,18 @@ public class Endpoint {
 	final static Properties config = new Properties();
 	final static Vector<String> endpointIds = new Vector<String>();
 
+	public boolean hasId() {
+		return StringUtils.isNotBlank(getId());
+	}
+
+	public boolean hasToken() {
+		return StringUtils.isNotBlank(getToken());
+	}
+
+	public boolean hasKey() {
+		return StringUtils.isNotBlank(getKey());
+	}
+
 	public GenericUrl getUrl() {
 		return url;
 	}

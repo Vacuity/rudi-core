@@ -222,9 +222,9 @@ public class QuadStore {
 											call = call.replace("${" + gp + "}", matcher.group(gp));
 										}
 									}
-									call = call.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());
-									call = call.replace("${id}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getId());
-									call = call.replace("${token}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getToken());
+									if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasKey()) call = call.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());
+									if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasId()) call = call.replace("${id}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getId());
+									if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasToken()) call = call.replace("${token}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getToken());
 									GoogleAPISample goog = new GoogleAPISample();
 									GoogleAPISample.setCall(call);
 									GoogleAPISample.setXslt(input.getOutput().getTranslator().build());
@@ -334,7 +334,7 @@ public class QuadStore {
 			e.printStackTrace();
 		}
 
-		QuadStore.load(QuadStore.QUERY_GET_ADAPTOR);
+		// QuadStore.load(QuadStore.QUERY_GET_ADAPTOR);
 		// QuadStore.load(QuadStore.QUERY_GET_ADAPTOR_OUTPUT);
 		// QuadStore.load(QuadStore.QUERY_GET_ENDPOINT_LABELS);
 		// QuadStore.load(QuadStore.QUERY_GET_PATTERN_LABELS);

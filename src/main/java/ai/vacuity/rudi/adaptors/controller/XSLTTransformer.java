@@ -58,12 +58,10 @@ public class XSLTTransformer {
 	}
 
 	public static String transform(String json) {
-		return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" + "<root>\n" + XML.toString(new JSONObject(json))
-				+ "</root>\n";
+		return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" + "<root>\n" + XML.toString(new JSONObject(json)) + "</root>\n";
 	}
 
-	public static void transform(String json, String xslt)
-			throws TransformerConfigurationException, TransformerException, IOException {
+	public static void transform(String json, String xslt) throws TransformerConfigurationException, TransformerException, IOException {
 
 		String xml = transform(json);
 		System.out.println("The generated XML file is:\n" + xml);
@@ -76,11 +74,9 @@ public class XSLTTransformer {
 		Transformer transformer = factory.newTransformer(xslStream);
 		StringReader srxml = new StringReader(xml);
 
-		String fileStr = xslt.replace(".xsl", ".rdf").replace("http://localhost:8080/rudi-adaptors/a/",
-				"/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/");
+		String fileStr = xslt.replace(".xsl", ".rdf").replace("http://localhost:8080/rudi-adaptors/a/", "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/");
 		File f = new File(fileStr);
-		if (!f.getParentFile().exists())
-			f.getParentFile().mkdirs();
+		if (!f.getParentFile().exists()) f.getParentFile().mkdirs();
 		StreamSource in = new StreamSource(srxml);
 		StreamResult out = new StreamResult(f);
 		System.out.println("The generated RDF file is:\n");

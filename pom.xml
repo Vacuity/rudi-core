@@ -29,6 +29,29 @@
 	    </dependencies>
 	</dependencyManagement>
 	<dependencies>
+		
+		
+		<!--  JSON Schema 2 POJO -->		
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.7.0</version>
+        </dependency>		
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.7.0</version>
+        </dependency>		
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.7.0</version>
+        </dependency>		
 	
 		<dependency>
 		  <groupId>virtuoso.sesame.driver</groupId>
@@ -130,24 +153,11 @@
 			<version>${jstl.version}</version>
 		</dependency>
 		
-		
-		<!--  JSON Schema 2 POJO -->		
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.7.0</version>
-        </dependency>		
-		
 
 	</dependencies>
 
 	<build>
-		<finalName>RUDI Adaptors</finalName>
+		<finalName>rudi-adaptors</finalName>
 
 		<plugins>
 		<!--  JSON Schema 2 POJO -->
