@@ -9,23 +9,14 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
      xmlns:sioc="http://rdfs.org/sioc/ns#"
+     xmlns:foaf="http://xmlns.com/foaf/0.1/"
  >
-
-  	<sioc:Site rdf:about="{/root/uu/text()}">
- 		<dc:date rdf:parseType="unixEpoch"><xsl:value-of select="{ulc/text()}"/></dc:date>
- 	</sioc:Site>
- 
-<xsl:for-each select="/root/row">
-
-  	<sioc:Forum rdf:about="{uu/text()}">
-<xsl:if test="ut/text()">
- 		<dc:title><xsl:value-of select="{ut/text()}"/></dc:title>
-</xsl:if>
- 		<sioc:links_to rdf:resource="${1}"/>
- 		<foaf:logo rdf:resource="http://richannel.org/favicon.ico"/>
- 		<sioc:has_host rdf:resource="{/root/uu/text()}"/>
- 	</sioc:Forum>
- 	
+<xsl:for-each select="/root/items">
+  	<sioc:Site rdf:about="{uu/text()}">
+ 		<dc:date rdf:parseType="unixEpoch"><xsl:value-of select="ulc"/></dc:date>
+ 		<dc:title><xsl:value-of select="ut"/></dc:title>
+		<sioc:source rdf:resource="http://www.moz.com"/>
+ 	</sioc:Site> 	
 </xsl:for-each>
 
 </rdf:RDF> 

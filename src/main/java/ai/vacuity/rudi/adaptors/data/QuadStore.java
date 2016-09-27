@@ -26,15 +26,17 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.slf4j.LoggerFactory;
 
 import com.google.api.client.http.GenericUrl;
 
 import ai.vacuity.rudi.adaptors.bo.Endpoint;
 import ai.vacuity.rudi.adaptors.bo.Input;
 import ai.vacuity.rudi.adaptors.bo.Output;
-import ai.vacuity.rudi.adaptors.controller.GoogleAPISample;
+import ai.vacuity.rudi.adaptors.controller.APIClient;
 
 public class QuadStore {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(QuadStore.class);
 
 	// static String sparqlEndpoint = "http://www.tryrudi.io/sparql";
 	// static Repository repo = new SPARQLRepository(sparqlEndpoint);
@@ -138,18 +140,18 @@ public class QuadStore {
 					Value q = bindingSet.getValue("q");
 					Value label = bindingSet.getValue("l");
 					Value sparql = bindingSet.getValue("s");
-					System.out.println("Value: " + q.stringValue());
-					System.out.println("Label: " + label.stringValue());
-					System.out.println("SPARQL: " + sparql.stringValue());
+					logger.debug("Value: " + q.stringValue());
+					logger.debug("Label: " + label.stringValue());
+					logger.debug("SPARQL: " + sparql.stringValue());
 					// do something interesting with the values here...
 				}
 			}
 			catch (QueryEvaluationException qex) {
-				qex.printStackTrace();
+				logger.error(qex.getMessage(), qex);
 			}
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+		catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 		}
 	}
 
@@ -164,9 +166,9 @@ public class QuadStore {
 					Value q = bindingSet.getValue("q");
 					Value label = bindingSet.getValue("l");
 					Value sparql = bindingSet.getValue("s");
-					System.out.println("Value: " + q.stringValue());
-					System.out.println("Label: " + label.stringValue());
-					System.out.println("SPARQL: " + sparql.stringValue());
+					logger.debug("Value: " + q.stringValue());
+					logger.debug("Label: " + label.stringValue());
+					logger.debug("SPARQL: " + sparql.stringValue());
 
 					TupleQuery data = con.prepareTupleQuery(QueryLanguage.SPARQL, sparql.stringValue());
 					switch (queryLabel) {
@@ -175,14 +177,14 @@ public class QuadStore {
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
-								System.out.println("\nAdaptor: " + bs2.getValue("adaptor"));
-								System.out.println("Pattern: " + bs2.getValue("pattern"));
-								System.out.println("Label: " + bs2.getValue("i_label"));
-								System.out.println("Endpoint: " + bs2.getValue("endpoint"));
-								System.out.println("Translator: " + bs2.getValue("translator"));
-								System.out.println("Log: " + bs2.getValue("log"));
-								System.out.println("Reply Type Property: " + bs2.getValue("replyTypeProp"));
-								System.out.println("Call: " + bs2.getValue("call"));
+								logger.debug("\nAdaptor: " + bs2.getValue("adaptor"));
+								logger.debug("Pattern: " + bs2.getValue("pattern"));
+								logger.debug("Label: " + bs2.getValue("i_label"));
+								logger.debug("Endpoint: " + bs2.getValue("endpoint"));
+								logger.debug("Translator: " + bs2.getValue("translator"));
+								logger.debug("Log: " + bs2.getValue("log"));
+								logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
+								logger.debug("Call: " + bs2.getValue("call"));
 
 								Input i = new Input();
 								i.setLabel((Literal) bs2.getValue("i_label"));
@@ -223,49 +225,49 @@ public class QuadStore {
 							}
 						}
 						catch (QueryEvaluationException qex) {
-							qex.printStackTrace();
+							logger.error(qex.getMessage(), qex);
 						}
 						break;
 					case QuadStore.QUERY_GET_ADAPTOR_OUTPUT:
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
-								System.out.println("Value: " + bs2.getValue("adaptor"));
-								System.out.println("Pattern: " + bs2.getValue("pattern"));
-								System.out.println("Label: " + bs2.getValue("i_label"));
-								System.out.println("Endpoint: " + bs2.getValue("endpoint"));
-								System.out.println("Translator: " + bs2.getValue("translator"));
-								System.out.println("Log: " + bs2.getValue("log"));
-								System.out.println("Reply Type Property: " + bs2.getValue("replyTypeProp"));
-								System.out.println("Call: " + bs2.getValue("call"));
+								logger.debug("Value: " + bs2.getValue("adaptor"));
+								logger.debug("Pattern: " + bs2.getValue("pattern"));
+								logger.debug("Label: " + bs2.getValue("i_label"));
+								logger.debug("Endpoint: " + bs2.getValue("endpoint"));
+								logger.debug("Translator: " + bs2.getValue("translator"));
+								logger.debug("Log: " + bs2.getValue("log"));
+								logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
+								logger.debug("Call: " + bs2.getValue("call"));
 							}
 						}
 						catch (QueryEvaluationException qex) {
-							qex.printStackTrace();
+							logger.error(qex.getMessage(), qex);
 						}
 						break;
 					case QuadStore.QUERY_GET_ENDPOINT_LABELS:
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
-								System.out.println("X: " + bs2.getValue("x"));
-								System.out.println("Y: " + bs2.getValue("y"));
+								logger.debug("X: " + bs2.getValue("x"));
+								logger.debug("Y: " + bs2.getValue("y"));
 							}
 						}
 						catch (QueryEvaluationException qex) {
-							qex.printStackTrace();
+							logger.error(qex.getMessage(), qex);
 						}
 						break;
 					case QuadStore.QUERY_GET_PATTERN_LABELS:
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
-								System.out.println("Pattern: " + bs2.getValue("pattern"));
-								System.out.println("Label: " + bs2.getValue("i_label"));
+								logger.debug("Pattern: " + bs2.getValue("pattern"));
+								logger.debug("Label: " + bs2.getValue("i_label"));
 							}
 						}
 						catch (QueryEvaluationException qex) {
-							qex.printStackTrace();
+							logger.error(qex.getMessage(), qex);
 						}
 						break;
 					case QuadStore.QUERY_GET_QUERIES:
@@ -276,38 +278,66 @@ public class QuadStore {
 				}
 			}
 			catch (QueryEvaluationException qex) {
-				qex.printStackTrace();
+				logger.error(qex.getMessage(), qex);
 			}
 		}
 		catch (
 
 		Exception e) {
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 	}
 
-	public static void processInput(String str) throws IOException {
-		for (Input input : getInputs()) {
+	public static void processInput(String target) throws IOException {
+		find_matches: for (Input input : getInputs()) {
 			if (input == null) break;
-			Matcher matcher = input.getPattern().matcher(str);
-			System.out.println("Match: " + input.getTrigger().stringValue());
 			String call = input.getOutput().getCall();
-			while (matcher.find()) {
-				int groups = matcher.groupCount();
-				for (int gp = 1; gp <= groups; gp++) {
-					System.out.println("group " + gp + ": " + matcher.group(gp));
-					call = call.replace("${" + gp + "}", matcher.group(gp));
-				}
-				call = call.replace("${0}", matcher.group());
-			}
-			if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasKey()) call = call.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());
-			if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasId()) call = call.replace("${id}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getId());
-			if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasToken()) call = call.replace("${token}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getToken());
-			GoogleAPISample goog = new GoogleAPISample();
-			GoogleAPISample.setCall(call);
-			GoogleAPISample.setXslt(input.getOutput().getTranslator().build());
-			GoogleAPISample.run();
+			String log = input.getOutput().getLog();
+
+			call = processTemplate(input, input.getPattern().matcher(target), call);
+			if (call == null) continue find_matches;
+			log = processTemplate(input, input.getPattern().matcher(target), log);
+
+			logger.debug("[Rudi]: " + log);
+
+			// if (call.indexOf("?") > 0) {
+			// String path = call;
+			// String params = "";
+			// path = call.substring(0, call.indexOf("?"));
+			// params = URLEncoder.encode(call.substring(call.indexOf("?") + 1), java.nio.charset.StandardCharsets.UTF_8.toString());
+			// call = path + "?" + params;
+			// }
+			APIClient.setCall(call);
+			APIClient.setXslt(input.getOutput().getTranslator().build());
+			APIClient.run();
 		}
+	}
+
+	private static String processTemplate(Input input, Matcher matcher, String template) {
+		// 1. swap captured groups' placeholders first
+		boolean found = false;
+		while (matcher.find()) {
+			if (!found) {
+				logger.debug("Match: " + input.getTrigger().stringValue());
+				found = true;
+			}
+			int groups = matcher.groupCount();
+			for (int gp = 1; gp <= groups; gp++) {
+				logger.debug("group " + gp + ": " + matcher.group(gp));
+				template = template.replace("${" + gp + "}", matcher.group(gp));
+			}
+			template = template.replace("${0}", matcher.group());
+		}
+		if (!found) return null;
+
+		// 2. run the call processor (give customer processors priority over system processor)
+		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasProcessor()) template = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().process(template);
+
+		// 3. swap any remaining reserved placed holders
+		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasKey()) template = template.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());
+		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasId()) template = template.replace("${id}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getId());
+		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasToken()) template = template.replace("${token}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getToken());
+		return template;
 	}
 
 	public static void main(String[] args) {
@@ -341,15 +371,38 @@ public class QuadStore {
 				}
 				con.commit();
 			}
-			catch (IOException e) {
-				e.printStackTrace();
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
 			}
 		}
 		catch (RDF4JException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
+		}
+	}
+
+	public static void addToRepository(String filePathStr, String contextStr) {
+		ValueFactory vf = QuadStore.getRepository().getValueFactory();
+		try {
+			try (RepositoryConnection con = getConnection()) {
+				Resource context = vf.createIRI(contextStr);
+				con.clear(context);
+				con.begin();
+				File f = new File(filePathStr);
+				con.add(f, null, RDFFormat.RDFXML, context);
+				con.commit();
+			}
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+		catch (RDF4JException e) {
+			logger.error(e.getMessage(), e);
+		}
+		catch (Exception e) {
+			logger.error(e.getMessage(), e);
 		}
 	}
 

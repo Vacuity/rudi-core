@@ -29,7 +29,14 @@
 	    </dependencies>
 	</dependencyManagement>
 	<dependencies>
-		
+
+	
+		<!-- OAuth tokens -->
+		<dependency>
+		    <groupId>org.zalando.stups</groupId>
+		    <artifactId>tokens</artifactId>
+		    <version>0.9.9</version>
+		</dependency>
 		
 		<!--  JSON Schema 2 POJO -->		
         <dependency>

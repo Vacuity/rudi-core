@@ -21,7 +21,7 @@
  		<via:endpoint>youtube.data</via:endpoint>
  		<via:json rdf:resource="https://www.googleapis.com/youtube/v3/search?part=snippet&amp;type=video&amp;q=${1}&amp;key=${key}"/>
 		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.xsl"/>
- 		<via:log>Checking youtube.com for videos about ${1}</via:log>
+ 		<via:log>Checking youtube.com for videos about '${1}'</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:Output>
  	

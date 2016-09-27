@@ -11,7 +11,12 @@
 		</layout>
 	</appender>
 
-	<logger name="ai.vacuity.rudi.adaptors.controller" level="debug"
+	<logger name="ai.vacuity.rudi.adaptors" level="debug"
+		additivity="false">
+		<appender-ref ref="STDOUT" />
+	</logger>
+	
+	<logger name="com.seomoz.api.authentication" level="debug"
 		additivity="false">
 		<appender-ref ref="STDOUT" />
 	</logger>

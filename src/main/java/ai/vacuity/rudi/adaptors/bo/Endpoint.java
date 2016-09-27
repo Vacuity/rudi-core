@@ -8,10 +8,14 @@ import java.util.Properties;
 import java.util.Vector;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.LoggerFactory;
 
 import com.google.api.client.http.GenericUrl;
 
+import ai.vacuity.rudi.adaptors.interfaces.TemplateProcessor;
+
 public class Endpoint {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Endpoint.class);
 
 	private static final String FILENAME_CONFIG = "api.config";
 
@@ -19,6 +23,7 @@ public class Endpoint {
 	private String id = "";
 	private String token = "";
 	private GenericUrl url = null;
+	private TemplateProcessor templateProcessor = null;
 
 	final static HashMap<String, Endpoint> endpointMap = new HashMap<String, Endpoint>();
 	final static Properties config = new Properties();
@@ -26,6 +31,10 @@ public class Endpoint {
 
 	public boolean hasId() {
 		return StringUtils.isNotBlank(getId());
+	}
+
+	public boolean hasProcessor() {
+		return getTemplateProcessor() != null;
 	}
 
 	public boolean hasToken() {
@@ -71,6 +80,23 @@ public class Endpoint {
 					e.setId(Endpoint.getConfig().getProperty(endpointLabel + ".id"));
 					e.setKey(Endpoint.getConfig().getProperty(endpointLabel + ".key"));
 					e.setToken(Endpoint.getConfig().getProperty(endpointLabel + ".token"));
+					String cpStr = Endpoint.getConfig().getProperty(endpointLabel + ".processor");
+					if (StringUtils.isNotBlank(cpStr)) {
+						try {
+							Class clazz = Class.forName(cpStr);
+							TemplateProcessor cp = (TemplateProcessor) clazz.newInstance();
+							e.setTemplateProcessor(cp);
+						}
+						catch (ClassNotFoundException cnfex) {
+							logger.error(cnfex.getMessage(), cnfex);
+						}
+						catch (InstantiationException iex) {
+							logger.error(iex.getMessage(), iex);
+						}
+						catch (IllegalAccessException iaex) {
+							logger.error(iaex.getMessage(), iaex);
+						}
+					}
 				}
 			}
 		}
@@ -125,6 +151,14 @@ public class Endpoint {
 
 	public void setLimit(int[][] limit) {
 		this.limit = limit;
+	}
+
+	public TemplateProcessor getTemplateProcessor() {
+		return templateProcessor;
+	}
+
+	public void setTemplateProcessor(TemplateProcessor processor) {
+		this.templateProcessor = processor;
 	}
 
 }

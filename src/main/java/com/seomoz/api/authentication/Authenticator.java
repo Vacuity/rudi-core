@@ -10,56 +10,69 @@ import java.util.Properties;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.LoggerFactory;
+
+import ai.vacuity.rudi.adaptors.bo.Endpoint;
+import ai.vacuity.rudi.adaptors.interfaces.TemplateProcessor;
 
 /**
  * The authentication class which is used to generate the authentication string
  * 
- * @author Radeep Solutions 
+ * @author Radeep Solutions
  */
-public class Authenticator 
-{
+public class Authenticator implements TemplateProcessor {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Authenticator.class);
 	private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
-	
+
 	/**
 	 * accessID The user's Access ID
 	 */
 	private String accessID;
-	
+
 	/**
-	 * secretKey The user's Secret Key 
+	 * secretKey The user's Secret Key
 	 */
 	private String secretKey;
-	
-	private final static String ACCESS_ID ="mozscape-4f31302ed0";
-	private final static String SECRET_KEY ="5d6681e7ae03b517fe5fbf1afcda5a36";
-	
+
 	/**
-	 * expiresInterval The interval after which the authentication string expires
-	 * Default 300s 
+	 * expiresInterval The interval after which the authentication string expires Default 300s
 	 */
-	private long expiresInterval = 300; 
-	
-	public Authenticator()
-	{
-		
-	}
-	
-	public static void main(String[] args){
+	private long expiresInterval = 300;
+
+	public Authenticator() {
 		Properties p = new Properties();
 		String resourceName = "api.config"; // could also be a constant
 		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		try(InputStream resourceStream = loader.getResourceAsStream(resourceName)) {
-		    p.load(resourceStream);
-			Authenticator a = new Authenticator();
-			a.setAccessID(Authenticator.ACCESS_ID);
-			a.setSecretKey(Authenticator.SECRET_KEY);	
-			System.out.println("Auth String: " + a.getAuthenticationStr());
+		try (InputStream resourceStream = loader.getResourceAsStream(resourceName)) {
+			p.load(resourceStream);
+			this.accessID = p.getProperty("moz.id");
+			this.secretKey = p.getProperty("moz.key");
+			if (Endpoint.getEndpointmap() != null && Endpoint.getEndpointmap().containsKey("moz")) {
+				this.accessID = (Endpoint.getEndpointmap().get("moz").hasId()) ? Endpoint.getEndpointmap().get("moz").getId() : p.getProperty("moz.id");
+				this.secretKey = (Endpoint.getEndpointmap().get("moz").hasKey()) ? Endpoint.getEndpointmap().get("moz").getKey() : p.getProperty("moz.key");
+			}
 		}
-		catch(Exception ex){
-			ex.printStackTrace();
+		catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+		}
+
+	}
+
+	public static void main(String[] args) {
+		Properties p = new Properties();
+		String resourceName = "api.config"; // could also be a constant
+		ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		try (InputStream resourceStream = loader.getResourceAsStream(resourceName)) {
+			p.load(resourceStream);
+			Authenticator a = new Authenticator();
+			String[] oa = a.getAuthenticationMaterial();
+			logger.debug("Auth String: " + "AccessID=" + a.accessID + "&Expires=" + oa[0] + "&Signature=" + oa[2]);
+		}
+		catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
 		}
 	}
-	
+
 	/**
 	 * Constructor to set all the variables
 	 * 
@@ -67,17 +80,15 @@ public class Authenticator
 	 * @param secretKey
 	 * @param expiresInterval
 	 */
-	public Authenticator(String accessID, String secretKey, long expiresInterval)
-	{
+	public Authenticator(String accessID, String secretKey, long expiresInterval) {
 		this.accessID = accessID;
 		this.secretKey = secretKey;
 		this.expiresInterval = expiresInterval;
 	}
-	
+
 	/**
 	 * 
-	 * This method calculates the authentication String based on the 
-	 * user's credentials.
+	 * This method calculates the authentication String based on the user's credentials.
 	 * 
 	 * Set the user credentials before calling this method
 	 * 
@@ -86,30 +97,26 @@ public class Authenticator
 	 * @see #setAccessID(String)
 	 * @see #setSecretKey(String)
 	 */
-	public String getAuthenticationStr()
-	{
-		long expires = ((new Date()).getTime())/1000 + expiresInterval;
-		
+	public String[] getAuthenticationMaterial() {
+		long expires = ((new Date()).getTime()) / 1000 + expiresInterval;
+
 		String stringToSign = accessID + "\n" + expires;
-		
+
 		SecretKeySpec signingKey = new SecretKeySpec(secretKey.getBytes(), HMAC_SHA1_ALGORITHM);
 
 		// get an hmac_sha1 Mac instance and initialize with the signing key
 		Mac mac = null;
-		try 
-		{
+		try {
 			mac = Mac.getInstance(HMAC_SHA1_ALGORITHM);
 			mac.init(signingKey);
-		} 
-		catch (NoSuchAlgorithmException e) 
-		{
-			e.printStackTrace();
-			return "";
 		}
-		catch (InvalidKeyException e) 
-		{
-			e.printStackTrace();
-			return "";
+		catch (NoSuchAlgorithmException e) {
+			logger.error(e.getMessage(), e);
+			return new String[] {};
+		}
+		catch (InvalidKeyException e) {
+			logger.error(e.getMessage(), e);
+			return new String[] {};
 		}
 
 		// compute the hmac on input data bytes
@@ -117,20 +124,21 @@ public class Authenticator
 
 		// base64-encode the hmac
 		String urlSafeSignature = URLEncoder.encode(EncodeBase64(rawHmac));
-		
-		String authenticationStr = "AccessID=" + accessID + "&Expires=" + expires + "&Signature=" + urlSafeSignature;
 
-		return authenticationStr;
+		// String authenticationStr = "AccessID=" + accessID + "&Expires=" + expires + "&Signature=" + urlSafeSignature;
+		//
+		// return authenticationStr;
+
+		return new String[] { expires + "", EncodeBase64(rawHmac), urlSafeSignature };
 	}
-	
+
 	/**
 	 * Encodes the rawdata in Base64 format
 	 * 
 	 * @param rawData
 	 * @return
 	 */
-	public String EncodeBase64(byte[] rawData) 
-	{
+	public String EncodeBase64(byte[] rawData) {
 		return Base64.encodeBytes(rawData);
 	}
 
@@ -142,7 +150,8 @@ public class Authenticator
 	}
 
 	/**
-	 * @param accessID the accessID to set
+	 * @param accessID
+	 *            the accessID to set
 	 */
 	public void setAccessID(String accessID) {
 		this.accessID = accessID;
@@ -156,7 +165,8 @@ public class Authenticator
 	}
 
 	/**
-	 * @param secretKey the secretKey to set
+	 * @param secretKey
+	 *            the secretKey to set
 	 */
 	public void setSecretKey(String secretKey) {
 		this.secretKey = secretKey;
@@ -170,9 +180,20 @@ public class Authenticator
 	}
 
 	/**
-	 * @param expiresInterval the expiresInterval to set
+	 * @param expiresInterval
+	 *            the expiresInterval to set
 	 */
 	public void setExpiresInterval(long expiresInterval) {
 		this.expiresInterval = expiresInterval;
+	}
+
+	@Override
+	public String process(String s) {
+		String[] oa = getAuthenticationMaterial();
+		s = s.replace("${id}", getAccessID());
+		s = s.replace("${expiry}", oa[0]);
+		s = s.replace("${token}", oa[2]);
+		logger.debug("Authentication String: " + s);
+		return s;
 	}
 }
