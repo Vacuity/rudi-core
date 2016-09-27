@@ -187,13 +187,26 @@ public class Authenticator implements TemplateProcessor {
 		this.expiresInterval = expiresInterval;
 	}
 
+	private String template = null;
+	private String target = null;
+
 	@Override
-	public String process(String s) {
+	public void process(String template, String target) {
 		String[] oa = getAuthenticationMaterial();
-		s = s.replace("${id}", getAccessID());
-		s = s.replace("${expiry}", oa[0]);
-		s = s.replace("${token}", oa[2]);
-		logger.debug("Authentication String: " + s);
-		return s;
+		this.template = template;
+		this.template = this.template.replace("${id}", getAccessID());
+		this.template = this.template.replace("${expiry}", oa[0]);
+		this.template = this.template.replace("${token}", oa[2]);
+		logger.debug("Authentication String: " + this.template);
+	}
+
+	@Override
+	public String getTemplate() {
+		return this.template;
+	}
+
+	@Override
+	public String getTarget() {
+		return this.target;
 	}
 }

@@ -1,26 +1,31 @@
 package ai.vacuity.rudi.adaptors.bo;
 
 import java.util.HashMap;
-import java.util.regex.Pattern;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 
+import ai.vacuity.rudi.adaptors.data.QuadStore;
+
 public class Input {
 
+	public final static IRI PARSE_TYPE_REGEX = QuadStore.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/Regex");
+
 	Value trigger = null;
+	IRI dataType = null;
 
 	Literal label = null;
 	HashMap<Integer, Literal> labelMap = new HashMap<Integer, Literal>();
 
 	Output output = null;
-	Pattern pattern = null;
+	Object pattern = null;
 
-	public Pattern getPattern() {
+	public Object getPattern() {
 		return pattern;
 	}
 
-	public void setPattern(Pattern pattern) {
+	public void setPattern(Object pattern) {
 		this.pattern = pattern;
 	}
 
@@ -54,5 +59,13 @@ public class Input {
 
 	public void setOutput(Output output) {
 		this.output = output;
+	}
+
+	public IRI getDataType() {
+		return dataType;
+	}
+
+	public void setDataType(IRI dataType) {
+		this.dataType = dataType;
 	}
 }

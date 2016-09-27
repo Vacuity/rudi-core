@@ -52,7 +52,32 @@
 	</xsl:for-each>
 	</xsl:for-each>
 	
+<!--
 
+unicode("foo")
+	<rdf:Description>
+		<foo:value>foo</foo:value>
+	</rdf:Description>
+langstring("foo", "fr")
+	<rdf:Description>
+		<foo:value xml:lang="fr">foo</foo:value>
+	</rdf:Description>
+date(2001-09-01)
+	<rdf:Description>
+		<foo:value rdf:parseType="xsd:Date">2001-09-01</foo:value>
+	</rdf:Description>
+number(12)
+	<rdf:Description>
+		<foo:value rdf:parseType="bar:Number">12</foo:value>
+	</rdf:Description>
+uri(http://www.w3.org/)
+	<rdf:Description>
+		<foo:value rdf:parseType="xsd:URI">http://www.w3.org/</foo:value>
+	</rdf:Description>
+
+http://www.vacuity.ai/onto/via/RegEx
+
+-->
 </xsl:if>	
 </xsl:for-each> 	
 

@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE rdf:RDF [
+	<!ENTITY via "http://www.vacuity.ai/onto/via/">
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
 <rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
      xmlns:via="http://www.vacuity.ai/onto/via/"
      xml:ma-ont="http://www.w3.org/ns/ma-ont/"
@@ -26,7 +30,7 @@
  	</via:Output>
  	
  	<via:Input rdf:about="#youtube_cmd">
- 		<via:pattern>youtube\s*(.*)</via:pattern>
+ 		<via:pattern rdf:datatype="&via;Regex">^youtube\s*(.*)</via:pattern>
  		<via:capture_1>Youtube Search Terms</via:capture_1>
  	</via:Input>
  	 	

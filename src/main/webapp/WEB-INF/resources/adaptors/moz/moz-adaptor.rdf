@@ -1,4 +1,9 @@
- <rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE rdf:RDF [
+	<!ENTITY via "http://www.vacuity.ai/onto/via/">
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
      xmlns:via="http://www.vacuity.ai/onto/via/"
      xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -20,8 +25,8 @@
  		<via:features rdf:resource="nil"/>
  		<via:featured_in rdf:resource="nil"/>
  		<via:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Resource"/>
- 		<via:pattern>moz\s*(.*)</via:pattern>
- 		<via:pattern>do\s*(.*)</via:pattern>
+ 		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)</via:pattern>
+ 		<via:pattern rdf:datatype="&via;Regex">^do\s*(.*)</via:pattern>
  		<via:capture_1>Web URL</via:capture_1>
  	</via:Input>
  	

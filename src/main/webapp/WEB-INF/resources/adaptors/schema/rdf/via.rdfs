@@ -65,6 +65,18 @@
 		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
 	</owl:ObjectProperty>
 
+	<owl:ObjectProperty rdf:about="n3">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+
+	<owl:ObjectProperty rdf:about="nt">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+
+	<owl:ObjectProperty rdf:about="ttl">
+		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+	</owl:ObjectProperty>
+
 	<owl:ObjectProperty rdf:about="rdf">
 		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
 	</owl:ObjectProperty>

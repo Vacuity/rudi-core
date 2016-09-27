@@ -2,6 +2,9 @@ package ai.vacuity.rudi.adaptors.data;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -12,6 +15,7 @@ import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
@@ -173,7 +177,7 @@ public class QuadStore {
 					TupleQuery data = con.prepareTupleQuery(QueryLanguage.SPARQL, sparql.stringValue());
 					switch (queryLabel) {
 					case QuadStore.QUERY_GET_ADAPTOR:
-						data.setBinding("patternType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
+						data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
@@ -187,13 +191,16 @@ public class QuadStore {
 								logger.debug("Call: " + bs2.getValue("call"));
 
 								Input i = new Input();
+								Literal pattern = (Literal) bs2.getValue("pattern");
 								i.setLabel((Literal) bs2.getValue("i_label"));
-								i.setTrigger(bs2.getValue("pattern"));
-								i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
+								i.setTrigger(pattern);
+								i.setDataType(pattern.getDatatype());
+								if (pattern.getDatatype().equals(Input.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
+								else i.setPattern(i.getTrigger());
 								Output o = new Output();
 								o.setEndpointLabel(bs2.getValue("endpoint").stringValue());
 								o.setLog(bs2.getValue("log").stringValue());
-								o.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
+								if (bs2.getValue("translator") != null) o.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
 								o.setCall(bs2.getValue("call").stringValue());
 								i.setOutput(o);
 								// long startTime = System.currentTimeMillis();
@@ -288,15 +295,15 @@ public class QuadStore {
 		}
 	}
 
-	public static void processInput(String target) throws IOException {
+	public static void processInput(String target) throws IOException, IllegalArgumentException {
 		find_matches: for (Input input : getInputs()) {
 			if (input == null) break;
 			String call = input.getOutput().getCall();
 			String log = input.getOutput().getLog();
 
-			call = processTemplate(input, input.getPattern().matcher(target), call);
+			call = processTemplate(input, call, target);
 			if (call == null) continue find_matches;
-			log = processTemplate(input, input.getPattern().matcher(target), log);
+			log = processTemplate(input, log, target);
 
 			logger.debug("[Rudi]: " + log);
 
@@ -308,35 +315,84 @@ public class QuadStore {
 			// call = path + "?" + params;
 			// }
 			APIClient.setCall(call);
-			APIClient.setXslt(input.getOutput().getTranslator().build());
+			if (input.getOutput().hasTranslator()) APIClient.setXslt(input.getOutput().getTranslator().build());
 			APIClient.run();
 		}
 	}
 
-	private static String processTemplate(Input input, Matcher matcher, String template) {
+	private static String processTemplate(Input input, String template, String target) {
 		// 1. swap captured groups' placeholders first
+		// FIRST MATCH GATE
 		boolean found = false;
-		while (matcher.find()) {
-			if (!found) {
-				logger.debug("Match: " + input.getTrigger().stringValue());
+		if (input.getDataType().equals(Input.PARSE_TYPE_REGEX) && input.getPattern() instanceof Pattern) {
+			Matcher matcher = ((Pattern) input.getPattern()).matcher(target);
+			while (matcher.find()) {
+				if (!found) {
+					logger.debug("Match: " + input.getTrigger().stringValue());
+					found = true;
+				}
+				int groups = matcher.groupCount();
+				for (int gp = 1; gp <= groups; gp++) {
+					logger.debug("group " + gp + ": " + matcher.group(gp));
+					template = template.replace("${" + gp + "}", matcher.group(gp));
+				}
+				template = template.replace("${0}", matcher.group());
+			}
+		}
+
+		// SECOND MATCH GATE
+		if (input.getDataType().equals(getValueFactory().createIRI("http://www.vacuity.ai/onto/via/URL"))) {
+			try {
+				new URL(target);
 				found = true;
 			}
-			int groups = matcher.groupCount();
-			for (int gp = 1; gp <= groups; gp++) {
-				logger.debug("group " + gp + ": " + matcher.group(gp));
-				template = template.replace("${" + gp + "}", matcher.group(gp));
+			catch (MalformedURLException mfuex) {
+				return null;
 			}
-			template = template.replace("${0}", matcher.group());
 		}
+		if (input.getDataType().equals(getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
+			try {
+				getValueFactory().createIRI(target);
+				found = true;
+			}
+			catch (IllegalArgumentException iaex) {
+				return null;
+			}
+		}
+		if (input.getDataType().equals(getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
+			try {
+				Integer.parseInt(target);
+				found = true;
+			}
+			catch (NumberFormatException nfex) {
+				return null;
+			}
+		}
+		if (input.getDataType().equals(getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#dateTime"))) {
+			try {
+				// for type dateTime, the value is the date format
+				new SimpleDateFormat(((Value) input.getPattern()).stringValue());
+				found = true;
+			}
+			catch (NumberFormatException nfex) {
+				return null;
+			}
+		}
+
 		if (!found) return null;
 
 		// 2. run the call processor (give customer processors priority over system processor)
-		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasProcessor()) template = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().process(template);
+		// TODO should the log include the unprocessed placeholder value?
+		Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().process(template, target);
+		template = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().getTemplate();
+		target = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().getTarget();
+		if (StringUtils.isNotBlank(template)) template = template.replace("${0}", target);
 
 		// 3. swap any remaining reserved placed holders
 		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasKey()) template = template.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());
 		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasId()) template = template.replace("${id}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getId());
 		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasToken()) template = template.replace("${token}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getToken());
+
 		return template;
 	}
 

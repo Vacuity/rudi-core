@@ -44,6 +44,10 @@ public class Output {
 		this.translator = translator;
 	}
 
+	public boolean hasTranslator() {
+		return this.translator != null;
+	}
+
 	public String getLog() {
 		return log;
 	}

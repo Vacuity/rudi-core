@@ -14,10 +14,13 @@
 
 package ai.vacuity.rudi.adaptors.controller;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
+import java.util.UUID;
 
 import javax.xml.transform.TransformerException;
 
@@ -153,8 +156,8 @@ public class APIClient {
 		}
 	}
 
-	static String xslt = "http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.xsl";
-	static String call = "https://www.googleapis.com/youtube/v3/search?part=snippet&q=iphone&key=AIzaSyAdL9AxLigcHqPqp0sf68bkel4hXQ92KYE";
+	static String xslt = null;
+	static String call = null;
 
 	public static String getXslt() {
 		return xslt;
@@ -176,11 +179,22 @@ public class APIClient {
 		// ActivityFeed feed = response.parseAs(ActivityFeed.class);
 
 		ActivityFeed feed = new ActivityFeed();
-		try {
-			XSLTTransformer.transform(response.parseAsString(), xslt);
+		if (xslt == null) {
+			UUID uuid = UUID.randomUUID();
+			String fxmlStr = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/" + response.getRequest().getUrl().getHost() + "-" + uuid + ".rdf";
+			File fxml = new File(fxmlStr);
+			fxml.createNewFile();
+			FileWriter fw = new FileWriter(fxml);
+			fw.write(response.parseAsString());
+			fw.close();
 		}
-		catch (TransformerException e) {
-			e.printStackTrace();
+		else {
+			try {
+				XSLTTransformer.transform(response.parseAsString(), xslt);
+			}
+			catch (TransformerException tex) {
+				logger.debug(tex.getMessage(), tex);
+			}
 		}
 
 		if (feed.getActivities() == null) return;

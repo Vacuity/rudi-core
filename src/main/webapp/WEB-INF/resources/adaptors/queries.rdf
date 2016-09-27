@@ -15,15 +15,16 @@ select distinct ?adaptor ?pattern ?i_label ?endpoint ?translator ?log ?replyType
   
   ?adaptor rdf:type via:Adaptor .
   ?adaptor via:i ?input .
-  ?input ?patternType ?pattern .
   ?input ?c ?i_label .
+  ?input ?patternPropertyType ?pattern .
   ?c rdfs:subPropertyOf via:capture .
   ?adaptor via:o ?output .
   ?output via:endpoint ?endpoint .
-  ?output via:translator ?translator .
+  OPTIONAL {?output via:translator ?translator .}
   ?output via:log ?log .
   ?output ?replyTypeProp ?call .
   ?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
+  
 
 }
 ]]>
