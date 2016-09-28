@@ -26,7 +26,7 @@
 	<owl:DatatypeProperty rdf:about="label">
 	</owl:DatatypeProperty>
      
-	<owl:DatatypeProperty rdf:about="label_all">
+	<owl:DatatypeProperty rdf:about="label_0">
 		<rdfs:subPropertyOf rdf:resource="label"/>
 	</owl:DatatypeProperty>
 	
@@ -57,7 +57,7 @@
 	<owl:DatatypeProperty rdf:about="capture">
 	</owl:DatatypeProperty>
      
-	<owl:DatatypeProperty rdf:about="capture_all">
+	<owl:DatatypeProperty rdf:about="capture_0">
 		<rdfs:subPropertyOf rdf:resource="capture"/>
 	</owl:DatatypeProperty>
 	

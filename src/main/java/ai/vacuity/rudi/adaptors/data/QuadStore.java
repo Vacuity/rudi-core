@@ -356,7 +356,7 @@ public class QuadStore {
 					logger.debug("group " + gp + ": " + matcher.group(gp));
 					template = template.replace("${" + gp + "}", matcher.group(gp));
 				}
-				template = template.replace("${" + input.getCaptureIndex() + "}", matcher.group());
+				template = template.replace("${0}", matcher.group());
 			}
 		}
 

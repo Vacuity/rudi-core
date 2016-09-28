@@ -25,7 +25,7 @@
  	
  	<via:Input rdf:about="#email">
  		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$</via:pattern>
- 		<via:label_all>Email Address</via:label_all>
+ 		<via:label_0>Email Address</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#email_cmd">
@@ -34,7 +34,7 @@
  	
  	<via:Input rdf:about="#phone_number">
  		<via:pattern rdf:datatype="&via;Regex">^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$</via:pattern>
- 		<via:label_all>Phone Number</via:label_all>
+ 		<via:label_0>Phone Number</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#phone_number_cmd">
@@ -43,37 +43,37 @@
  	
  	<via:Input rdf:about="#url">
  		<via:pattern rdf:datatype="&via;URL">http://example.com</via:pattern>
- 		<via:label_all>URl</via:label_all>
+ 		<via:label_0>URL</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#uri">
  		<via:pattern rdf:datatype="&xsd;anyURI">http://example.com</via:pattern>
- 		<via:label_all>URI</via:label_all>
+ 		<via:label_0>URI</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#date">
  		<via:pattern rdf:datatype="&xsd;dateTime">date</via:pattern>
- 		<via:label_all>Date or Time</via:label_all>
+ 		<via:label_0>Date or Time</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#address">
  		<via:pattern rdf:datatype="&via;address">address</via:pattern>
- 		<via:label_all>Address</via:label_all>
+ 		<via:label_0>Address</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#geo">
  		<via:pattern rdf:datatype="&via;geo">-32.715, -77.03201</via:pattern>
- 		<via:label_all>Geo Coordinates</via:label_all>
+ 		<via:label_0>Geo Coordinates</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#handle">
  		<via:pattern>^@\w*</via:pattern>
- 		<via:label_all>Handle</via:label_all>
+ 		<via:label_0>Handle</via:label_0>
  	</via:Input>
  	
  	<via:Input rdf:about="#hashtag">
  		<via:pattern>^#\w*</via:pattern>
- 		<via:label_all>Hashtag</via:label_all>
+ 		<via:label_0>Hashtag</via:label_0>
  	</via:Input>
  	
  	<!-- Sponger Output -->
