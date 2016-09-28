@@ -16,20 +16,46 @@ select distinct ?adaptor ?pattern ?i_label ?endpoint ?translator ?log ?replyType
   ?adaptor rdf:type via:Adaptor .
   ?adaptor via:i ?input .
   ?input ?c ?i_label .
-  ?input ?patternPropertyType ?pattern .
-  ?c rdfs:subPropertyOf via:capture .
+  ?input via:pattern ?pattern .
+  ?c rdfs:subPropertyOf via:label .
   ?adaptor via:o ?output .
   ?output via:endpoint ?endpoint .
   OPTIONAL {?output via:translator ?translator .}
   ?output via:log ?log .
   ?output ?replyTypeProp ?call .
   ?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
-  
 
 }
 ]]>
 		</via:sparql>
 	</via:TupleQuery>
+	
+ 	<via:TupleQuery rdf:about="#get_adaptor_with_capture">
+		<rdfs:label>get_adaptor_with_capture</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+PREFIX via: <http://www.vacuity.ai/onto/via/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+select distinct ?adaptor ?pattern ?i_label ?capturePropertyType ?endpoint ?translator ?log ?replyTypeProp ?call where {
+  
+  ?adaptor rdf:type via:Adaptor .
+  ?adaptor via:i ?input .
+  ?input ?c ?i_label .
+  ?input ?capturePropertyType ?pattern .
+  ?capturePropertyType rdfs:subPropertyOf via:capture .
+  ?c rdfs:subPropertyOf via:label .
+  ?adaptor via:o ?output .
+  ?output via:endpoint ?endpoint .
+  OPTIONAL {?output via:translator ?translator .}
+  ?output via:log ?log .
+  ?output ?replyTypeProp ?call .
+  ?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
+
+}
+]]>
+		</via:sparql>
+	</via:TupleQuery>	
+	
  	<via:TupleQuery rdf:about="#get_adaptor_output">
 		<rdfs:label>get_adaptor_output</rdfs:label>
  		<via:sparql>

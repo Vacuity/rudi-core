@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.api.client.http.GenericUrl;
 
+import ai.vacuity.rudi.adaptors.interfaces.ResponseProcessor;
 import ai.vacuity.rudi.adaptors.interfaces.TemplateProcessor;
 
 public class Endpoint {
@@ -24,17 +25,28 @@ public class Endpoint {
 	private String token = "";
 	private GenericUrl url = null;
 	private TemplateProcessor templateProcessor = null;
+	private ResponseProcessor responseProcessor = null;
 
 	final static HashMap<String, Endpoint> endpointMap = new HashMap<String, Endpoint>();
 	final static Properties config = new Properties();
 	final static Vector<String> endpointIds = new Vector<String>();
 
+	static final String PROPERTY_SUFFIX_ID = "id";
+	static final String PROPERTY_SUFFIX_KEY = "key";
+	static final String PROPERTY_SUFFIX_TOKEN = "token";
+	static final String PROPERTY_SUFFIX_TEMPLATE_PROCESSOR = "tp";
+	static final String PROPERTY_SUFFIX_RESPONSE_PROCESSOR = "rp";
+
 	public boolean hasId() {
 		return StringUtils.isNotBlank(getId());
 	}
 
-	public boolean hasProcessor() {
+	public boolean hasTemplateProcessor() {
 		return getTemplateProcessor() != null;
+	}
+
+	public boolean hasResponseProcessor() {
+		return getResponseProcessor() != null;
 	}
 
 	public boolean hasToken() {
@@ -77,15 +89,20 @@ public class Endpoint {
 					if (StringUtils.isNotEmpty(url)) {
 						e.setUrl(new GenericUrl(url));
 					}
-					e.setId(Endpoint.getConfig().getProperty(endpointLabel + ".id"));
-					e.setKey(Endpoint.getConfig().getProperty(endpointLabel + ".key"));
-					e.setToken(Endpoint.getConfig().getProperty(endpointLabel + ".token"));
-					String cpStr = Endpoint.getConfig().getProperty(endpointLabel + ".processor");
-					if (StringUtils.isNotBlank(cpStr)) {
+					e.setId(Endpoint.getConfig().getProperty(endpointLabel + "." + Endpoint.PROPERTY_SUFFIX_ID));
+					e.setKey(Endpoint.getConfig().getProperty(endpointLabel + "." + Endpoint.PROPERTY_SUFFIX_KEY));
+					e.setToken(Endpoint.getConfig().getProperty(endpointLabel + "." + Endpoint.PROPERTY_SUFFIX_TOKEN));
+					String tpStr = Endpoint.getConfig().getProperty(endpointLabel + "." + Endpoint.PROPERTY_SUFFIX_TEMPLATE_PROCESSOR);
+					String rpStr = Endpoint.getConfig().getProperty(endpointLabel + "." + Endpoint.PROPERTY_SUFFIX_RESPONSE_PROCESSOR);
+					if (StringUtils.isNotBlank(tpStr)) {
 						try {
-							Class clazz = Class.forName(cpStr);
-							TemplateProcessor cp = (TemplateProcessor) clazz.newInstance();
-							e.setTemplateProcessor(cp);
+							Class clazz = Class.forName(tpStr);
+							TemplateProcessor tp = (TemplateProcessor) clazz.newInstance();
+							e.setTemplateProcessor(tp);
+
+							clazz = Class.forName(rpStr);
+							ResponseProcessor rp = (ResponseProcessor) clazz.newInstance();
+							e.setResponseProcessor(rp);
 						}
 						catch (ClassNotFoundException cnfex) {
 							logger.error(cnfex.getMessage(), cnfex);
@@ -159,6 +176,14 @@ public class Endpoint {
 
 	public void setTemplateProcessor(TemplateProcessor processor) {
 		this.templateProcessor = processor;
+	}
+
+	public ResponseProcessor getResponseProcessor() {
+		return responseProcessor;
+	}
+
+	public void setResponseProcessor(ResponseProcessor responseProcessor) {
+		this.responseProcessor = responseProcessor;
 	}
 
 }

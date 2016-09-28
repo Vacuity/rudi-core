@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="xml" version="1.0" encoding="UTF-8" indent="yes" omit-xml-declaration="no" />
 
@@ -11,11 +12,12 @@
      xmlns:sioc="http://rdfs.org/sioc/ns#"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
  >
+
 <xsl:for-each select="/root/items">
   	<sioc:Site rdf:about="{uu/text()}">
- 		<dc:date rdf:parseType="unixEpoch"><xsl:value-of select="ulc"/></dc:date>
+ 		<dc:date rdf:datatype="http://vacuity.ai/schemas/via/unixEpoch"><xsl:value-of select="ulc"/></dc:date>
  		<dc:title><xsl:value-of select="ut"/></dc:title>
-		<sioc:source rdf:resource="http://www.moz.com"/>
+		<sioc:links_to rdf:resource="{/root/items/subject/text()}"/>
  	</sioc:Site> 	
 </xsl:for-each>
 

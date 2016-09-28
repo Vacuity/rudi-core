@@ -21,6 +21,18 @@ public class Input {
 	Output output = null;
 	Object pattern = null;
 
+	// by setting the default value to 0, all datatype patterns will default to zero.
+	// see QuadStore.processTemplate()
+	int captureIndex = 0;
+
+	public int getCaptureIndex() {
+		return captureIndex;
+	}
+
+	public void setCaptureIndex(int captureIndex) {
+		this.captureIndex = captureIndex;
+	}
+
 	public Object getPattern() {
 		return pattern;
 	}

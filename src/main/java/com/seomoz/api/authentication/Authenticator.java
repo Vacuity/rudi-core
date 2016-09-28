@@ -13,14 +13,14 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Endpoint;
-import ai.vacuity.rudi.adaptors.interfaces.TemplateProcessor;
+import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateProcessor;
 
 /**
  * The authentication class which is used to generate the authentication string
  * 
  * @author Radeep Solutions
  */
-public class Authenticator implements TemplateProcessor {
+public class Authenticator extends AbstractTemplateProcessor {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Authenticator.class);
 	private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
 
@@ -187,13 +187,10 @@ public class Authenticator implements TemplateProcessor {
 		this.expiresInterval = expiresInterval;
 	}
 
-	private String template = null;
-	private String target = null;
-
 	@Override
 	public void process(String template, String target) {
+		super.process(template, target);
 		String[] oa = getAuthenticationMaterial();
-		this.template = template;
 		this.template = this.template.replace("${id}", getAccessID());
 		this.template = this.template.replace("${expiry}", oa[0]);
 		this.template = this.template.replace("${token}", oa[2]);

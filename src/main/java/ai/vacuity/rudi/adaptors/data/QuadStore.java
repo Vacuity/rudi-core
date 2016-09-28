@@ -17,6 +17,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.RDF4JException;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -37,7 +38,7 @@ import com.google.api.client.http.GenericUrl;
 import ai.vacuity.rudi.adaptors.bo.Endpoint;
 import ai.vacuity.rudi.adaptors.bo.Input;
 import ai.vacuity.rudi.adaptors.bo.Output;
-import ai.vacuity.rudi.adaptors.controller.APIClient;
+import ai.vacuity.rudi.adaptors.controller.Call;
 
 public class QuadStore {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(QuadStore.class);
@@ -52,6 +53,7 @@ public class QuadStore {
 	static final HashMap<String, TupleQuery> queries = new HashMap<String, TupleQuery>();
 
 	static final String QUERY_GET_ADAPTOR = "get_adaptor";
+	static final String QUERY_GET_ADAPTOR_WITH_CAPTURE = "get_adaptor_with_capture";
 	static final String QUERY_GET_ADAPTOR_OUTPUT = "get_adaptor_output";
 	static final String QUERY_GET_PATTERN_LABELS = "get_pattern_labels";
 	static final String QUERY_GET_ENDPOINT_LABELS = "get_endpoint_labels";
@@ -64,6 +66,7 @@ public class QuadStore {
 		QuadStore.loadRepository(); // load rdf demo instance data, patterns,
 									// and schema
 		QuadStore.load(QuadStore.QUERY_GET_ADAPTOR); // load adaptors
+		QuadStore.load(QuadStore.QUERY_GET_ADAPTOR_WITH_CAPTURE); // load adaptors
 		// QuadStore.load(QuadStore.QUERY_GET_ADAPTOR_OUTPUT);
 		// QuadStore.load(QuadStore.QUERY_GET_ENDPOINT_LABELS);
 		// QuadStore.load(QuadStore.QUERY_GET_PATTERN_LABELS);
@@ -177,7 +180,7 @@ public class QuadStore {
 					TupleQuery data = con.prepareTupleQuery(QueryLanguage.SPARQL, sparql.stringValue());
 					switch (queryLabel) {
 					case QuadStore.QUERY_GET_ADAPTOR:
-						data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
+						// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
@@ -203,30 +206,46 @@ public class QuadStore {
 								if (bs2.getValue("translator") != null) o.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
 								o.setCall(bs2.getValue("call").stringValue());
 								i.setOutput(o);
-								// long startTime = System.currentTimeMillis();
-								//
-								// for (inputsCursor = 0; getInputsCursor() <
-								// QuadStore.MAX_INPUTS;
-								// incrementInputsCursor()) {
-								// Input store = new Input();
-								// store.setLabel((Literal)
-								// bs2.getValue("i_label"));
-								// store.setTrigger(bs2.getValue("pattern"));
-								// store.setPattern(Pattern.compile(i.getTrigger().stringValue()));
-								// Output store_out = new Output();
-								// store_out.setEndpointLabel(bs2.getValue("endpoint").stringValue());
-								// store_out.setLog(bs2.getValue("log").stringValue());
-								// store_out.setTranslator(new
-								// GenericUrl(bs2.getValue("translator").stringValue()));
-								// store_out.setCall(bs2.getValue("call").stringValue());
-								// store.setOutput(store_out);
-								// getInputs()[getInputsCursor()] = store;
-								// }
-								// long endTime = System.currentTimeMillis();
-								// long totalTime = endTime - startTime;
-								// System.out.println("Total load time [" +
-								// QuadStore.MAX_INPUTS + " patterns]: " +
-								// totalTime + "ms.");
+								getInputs()[getInputsCursor()] = i;
+								incrementInputsCursor();
+							}
+						}
+						catch (QueryEvaluationException qex) {
+							logger.error(qex.getMessage(), qex);
+						}
+						break;
+					case QuadStore.QUERY_GET_ADAPTOR_WITH_CAPTURE:
+						// data.setBinding("capturePropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/capture"));
+						try (TupleQueryResult r2 = data.evaluate()) {
+							while (r2.hasNext()) {
+								BindingSet bs2 = r2.next();
+								logger.debug("\nAdaptor: " + bs2.getValue("adaptor"));
+								logger.debug("Pattern: " + bs2.getValue("pattern"));
+								logger.debug("Label: " + bs2.getValue("i_label"));
+								logger.debug("Endpoint: " + bs2.getValue("endpoint"));
+								logger.debug("Translator: " + bs2.getValue("translator"));
+								logger.debug("Log: " + bs2.getValue("log"));
+								logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
+								logger.debug("Call: " + bs2.getValue("call"));
+
+								Input i = new Input();
+								Literal pattern = (Literal) bs2.getValue("pattern");
+								i.setLabel((Literal) bs2.getValue("i_label"));
+								i.setTrigger(pattern);
+								i.setDataType(pattern.getDatatype());
+								if (pattern.getDatatype().equals(Input.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
+								else i.setPattern(i.getTrigger());
+
+								String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
+								int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
+								i.setCaptureIndex(captureIndex);
+
+								Output o = new Output();
+								o.setEndpointLabel(bs2.getValue("endpoint").stringValue());
+								o.setLog(bs2.getValue("log").stringValue());
+								if (bs2.getValue("translator") != null) o.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
+								o.setCall(bs2.getValue("call").stringValue());
+								i.setOutput(o);
 								getInputs()[getInputsCursor()] = i;
 								incrementInputsCursor();
 							}
@@ -314,9 +333,10 @@ public class QuadStore {
 			// params = URLEncoder.encode(call.substring(call.indexOf("?") + 1), java.nio.charset.StandardCharsets.UTF_8.toString());
 			// call = path + "?" + params;
 			// }
-			APIClient.setCall(call);
-			if (input.getOutput().hasTranslator()) APIClient.setXslt(input.getOutput().getTranslator().build());
-			APIClient.run();
+			Call.setCall(call);
+			Call.setInputProtocols(input);
+			Call.setInput(target);
+			Call.run();
 		}
 	}
 
@@ -336,7 +356,7 @@ public class QuadStore {
 					logger.debug("group " + gp + ": " + matcher.group(gp));
 					template = template.replace("${" + gp + "}", matcher.group(gp));
 				}
-				template = template.replace("${0}", matcher.group());
+				template = template.replace("${" + input.getCaptureIndex() + "}", matcher.group());
 			}
 		}
 
@@ -383,10 +403,12 @@ public class QuadStore {
 
 		// 2. run the call processor (give customer processors priority over system processor)
 		// TODO should the log include the unprocessed placeholder value?
-		Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().process(template, target);
-		template = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().getTemplate();
-		target = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().getTarget();
-		if (StringUtils.isNotBlank(template)) template = template.replace("${0}", target);
+		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasTemplateProcessor()) {
+			Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().process(template, target);
+			template = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().getTemplate();
+			target = Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getTemplateProcessor().getTarget();
+		}
+		if (StringUtils.isNotBlank(template)) template = template.replace("${" + input.getCaptureIndex() + "}", target);
 
 		// 3. swap any remaining reserved placed holders
 		if (Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).hasKey()) template = template.replace("${key}", Endpoint.getEndpointmap().get(input.getOutput().getEndpointLabel()).getKey());

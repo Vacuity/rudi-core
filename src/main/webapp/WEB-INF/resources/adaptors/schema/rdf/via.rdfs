@@ -22,7 +22,38 @@
     //
     ///////////////////////////////////////////////////////////////////////////
      -->
+      
+	<owl:DatatypeProperty rdf:about="label">
+	</owl:DatatypeProperty>
      
+	<owl:DatatypeProperty rdf:about="label_all">
+		<rdfs:subPropertyOf rdf:resource="label"/>
+	</owl:DatatypeProperty>
+	
+	<owl:DatatypeProperty rdf:about="label_1">
+		<rdfs:subPropertyOf rdf:resource="label"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="label_2">
+		<rdfs:subPropertyOf rdf:resource="label"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="label_3">
+		<rdfs:subPropertyOf rdf:resource="label"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="label_4">
+		<rdfs:subPropertyOf rdf:resource="label"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="label_5">
+		<rdfs:subPropertyOf rdf:resource="label"/>
+	</owl:DatatypeProperty>
+
+	<owl:DatatypeProperty rdf:about="label_6">
+		<rdfs:subPropertyOf rdf:resource="label"/>
+	</owl:DatatypeProperty>
+    
 	<owl:DatatypeProperty rdf:about="capture">
 	</owl:DatatypeProperty>
      

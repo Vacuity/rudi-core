@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE rdf:RDF [
 	<!ENTITY via "http://www.vacuity.ai/onto/via/">
+	<!ENTITY vi "http://www.vacuity.ai/onto/instances#">
     <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
 ]>
 <rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
@@ -27,7 +28,8 @@
  		<via:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Resource"/>
  		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)</via:pattern>
  		<via:pattern rdf:datatype="&via;Regex">^do\s*(.*)</via:pattern>
- 		<via:capture_1>Web URL</via:capture_1>
+ 		<via:label_1>Web URL</via:label_1>
+ 		<via:capture_1 rdf:datatype="&via;URL">http://example.com</via:capture_1>
  	</via:Input>
  	
  	<via:Output rdf:about="#moz-get-backlink-stats">
@@ -41,7 +43,7 @@
  	
  	<via:Output rdf:about="#moz-get-url-stats">
  		<via:endpoint>moz</via:endpoint>
- 		<via:call rdf:resource="http://lsapi.seomoz.com/linkscape/url-metrics/${1}?144115188075855876=2048&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=%${token}"/>
+ 		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/url-metrics/${1}?144115188075855876=2048&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=%${token}"/>
  		<via:log>Fetching freshness and URL canonical form for '${1}' from moz.com.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:Output>

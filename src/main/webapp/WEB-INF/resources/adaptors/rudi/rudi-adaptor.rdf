@@ -25,7 +25,7 @@
  	
  	<via:Input rdf:about="#email">
  		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$</via:pattern>
- 		<via:capture_all>Email Address</via:capture_all>
+ 		<via:label_all>Email Address</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#email_cmd">
@@ -34,7 +34,7 @@
  	
  	<via:Input rdf:about="#phone_number">
  		<via:pattern rdf:datatype="&via;Regex">^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$</via:pattern>
- 		<via:capture_all>Phone Number</via:capture_all>
+ 		<via:label_all>Phone Number</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#phone_number_cmd">
@@ -43,45 +43,67 @@
  	
  	<via:Input rdf:about="#url">
  		<via:pattern rdf:datatype="&via;URL">http://example.com</via:pattern>
- 		<via:capture_all>URl</via:capture_all>
+ 		<via:label_all>URl</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#uri">
  		<via:pattern rdf:datatype="&xsd;anyURI">http://example.com</via:pattern>
- 		<via:capture_all>URI</via:capture_all>
+ 		<via:label_all>URI</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#date">
  		<via:pattern rdf:datatype="&xsd;dateTime">date</via:pattern>
- 		<via:capture_all>Date or Time</via:capture_all>
+ 		<via:label_all>Date or Time</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#address">
  		<via:pattern rdf:datatype="&via;address">address</via:pattern>
- 		<via:capture_all>Address</via:capture_all>
+ 		<via:label_all>Address</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#geo">
  		<via:pattern rdf:datatype="&via;geo">-32.715, -77.03201</via:pattern>
- 		<via:capture_all>Geo Coordinates</via:capture_all>
+ 		<via:label_all>Geo Coordinates</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#handle">
  		<via:pattern>^@\w*</via:pattern>
- 		<via:capture_all>Handle</via:capture_all>
+ 		<via:label_all>Handle</via:label_all>
  	</via:Input>
  	
  	<via:Input rdf:about="#hashtag">
  		<via:pattern>^#\w*</via:pattern>
- 		<via:capture_all>Hashtag</via:capture_all>
+ 		<via:label_all>Hashtag</via:label_all>
  	</via:Input>
  	
  	<!-- Sponger Output -->
  	<via:Output rdf:about="#virtuoso-sponger">
  		<via:endpoint>uriburner</via:endpoint>
- 		<via:rdf rdf:resource="http://linkeddata.uriburner.com/about/data/xml/${0}"/>
+ 		<via:rdf rdf:resource="http://linkeddata.uriburner.com/sparql?default-graph-uri=${0}&amp;query=DESCRIBE%20%3Chttp%3A%2F%2Flinkeddata.uriburner.com%2Fabout%2Fid%2Fentity%2F${0}%3E&amp;output=application%2Frdf%2Bxml"/>
  		<via:log>Collecting hyperdata from '${0}' using Virtuoso Sponger</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:Output>
+ 	
+ 	<!--
+/(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/ 	
+ 	-->
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
+ 	
  	
 </rdf:RDF>
