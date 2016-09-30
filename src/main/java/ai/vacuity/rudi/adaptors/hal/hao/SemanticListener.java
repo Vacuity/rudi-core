@@ -133,7 +133,7 @@ public class SemanticListener implements RepositoryConnectionListener {
 	public static final void register(IndexableQuery q) {
 		SPARQLParserFactory factory = new SPARQLParserFactory();
 		QueryParser parser = factory.getParser();
-		ParsedQuery parsedQuery = parser.parseQuery(q.getQuery().toString(), null);
+		ParsedQuery parsedQuery = parser.parseQuery(q.getDelegate().toString(), null);
 
 		StatementPatternCollector collector = new StatementPatternCollector();
 		TupleExpr tupleExpr = parsedQuery.getTupleExpr();
@@ -203,7 +203,7 @@ public class SemanticListener implements RepositoryConnectionListener {
 				}
 				queryQueueRQFile.createNewFile();
 				ArrayList<String> al = new ArrayList<String>();
-				al.add(query.getQuery().toString());
+				al.add(query.getDelegate().toString());
 				writeBuffered(al, queryQueueRQFile, (int) MEG);
 
 				renew(query.getId());
@@ -282,6 +282,7 @@ public class SemanticListener implements RepositoryConnectionListener {
 						logger.debug("Match found: " + queryLabelHashFile + " for value '" + value.stringValue() + "'");
 						File queryQueueRQFile = new File(queueDir + queryLabelHashFile.getName() + ".rq"); // fetch the query and run it'
 						int qhash = Integer.parseInt(queryLabelHashFile.getName());
+
 						try {
 							DispatchService.dispatch(qhash);
 						}

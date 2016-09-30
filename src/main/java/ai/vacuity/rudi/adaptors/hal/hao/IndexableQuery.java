@@ -1,5 +1,6 @@
 package ai.vacuity.rudi.adaptors.hal.hao;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.Dataset;
@@ -7,46 +8,47 @@ import org.eclipse.rdf4j.query.Query;
 
 public class IndexableQuery implements Query {
 
-	Query q = null;
+	Query delegate = null;
 	int id = 0;
 	String label = "";
+	IRI iri = null;
 
-	public IndexableQuery(Query q) {
-		this.q = q;
+	public IndexableQuery(Query delegate) {
+		this.delegate = delegate;
 	}
 
-	public Query getQuery() {
-		return q;
+	public Query getDelegate() {
+		return delegate;
 	}
 
 	@Override
 	public void setBinding(String name, Value value) {
-		this.q.setBinding(name, value);
+		this.delegate.setBinding(name, value);
 	}
 
 	@Override
 	public void removeBinding(String name) {
-		this.q.removeBinding(name);
+		this.delegate.removeBinding(name);
 	}
 
 	@Override
 	public void clearBindings() {
-		this.q.clearBindings();
+		this.delegate.clearBindings();
 	}
 
 	@Override
 	public BindingSet getBindings() {
-		return this.q.getBindings();
+		return this.delegate.getBindings();
 	}
 
 	@Override
 	public void setDataset(Dataset dataset) {
-		this.q.setDataset(dataset);
+		this.delegate.setDataset(dataset);
 	}
 
 	@Override
 	public Dataset getDataset() {
-		return this.q.getDataset();
+		return this.delegate.getDataset();
 	}
 
 	@Override
@@ -56,23 +58,23 @@ public class IndexableQuery implements Query {
 
 	@Override
 	public boolean getIncludeInferred() {
-		return this.q.getIncludeInferred();
+		return this.delegate.getIncludeInferred();
 	}
 
 	@Override
 	public void setMaxExecutionTime(int maxExecTime) {
-		this.q.setMaxExecutionTime(maxExecTime);
+		this.delegate.setMaxExecutionTime(maxExecTime);
 	}
 
 	@Override
 	public int getMaxExecutionTime() {
-		return this.q.getMaxExecutionTime();
+		return this.delegate.getMaxExecutionTime();
 	}
 
 	@Override
 	@Deprecated
 	public void setMaxQueryTime(int maxQueryTime) {
-		this.q.setMaxQueryTime(maxQueryTime);
+		this.delegate.setMaxQueryTime(maxQueryTime);
 	}
 
 	@Override
@@ -94,6 +96,14 @@ public class IndexableQuery implements Query {
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	public IRI getIri() {
+		return iri;
+	}
+
+	public void setIri(IRI iri) {
+		this.iri = iri;
 	}
 
 }

@@ -6,7 +6,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.common.net.MediaType;
 
-public class ResponseProtocol {
+public class EventHandler {
 
 	String configLabel = null;
 	HttpRequest request = null;

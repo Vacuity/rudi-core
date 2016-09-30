@@ -15,12 +15,12 @@
      xmlns:sioc="http://rdfs.org/sioc/ns#"
  >
  	
- 	<via:Adaptor rdf:about="#sponger-adaptor">
- 		<rdfs:comment>Sponger Adaptor</rdfs:comment>
- 		<rdfs:label>Sponger Adaptor</rdfs:label>
- 		<via:i rdf:resource="#url"/>
-		<via:o rdf:resource="#virtuoso-sponger-sparql"/>
- 	</via:Adaptor>
+ 	<via:Listener rdf:about="#sponge-req-listener">
+ 		<rdfs:comment>Sponger Request Listener</rdfs:comment>
+ 		<rdfs:label>Sponger Request Listener</rdfs:label>
+ 		<via:event rdf:resource="#url"/>
+		<via:notify rdf:resource="#virtuoso-sponger-sparql"/>
+ 	</via:Listener>
  	
  	<!-- IPs -->
  	
@@ -78,20 +78,20 @@
  	</via:Input>
  	
  	<!-- Sponger Output -->
- 	<via:Output rdf:about="#virtuoso-sponger">
+ 	<via:EventHandler rdf:about="#virtuoso-sponger">
  		<via:config>uriburner</via:config>
  		<via:rdf rdf:resource="http://linkeddata.uriburner.com/sparql?default-graph-uri=${0}&amp;query=DESCRIBE%20%3Chttp%3A%2F%2Flinkeddata.uriburner.com%2Fabout%2Fid%2FentIPy%2F${0}%3E&amp;output=application%2Frdf%2Bxml"/>
  		<via:log>Collecting hyperdata for '${0}' using Virtuoso Sponger</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
- 	</via:Output>
+ 	</via:EventHandler>
  	
- 	<via:Output rdf:about="#virtuoso-sponger-sparql">
+ 	<via:EventHandler rdf:about="#virtuoso-sponger-sparql">
  		<via:config>uriburner</via:config>
  		<via:log>Collecting hyperdata for '${0}' using Virtuoso Sponger SPARQL endpoint</via:log> 		
  		<via:rdf rdf:resource="http://linkeddata.uriburner.com/sparql"/>
  		<via:query rdf:resource="#describe"/>
  		<!-- be sure to add a timestamp before registering the log -->
- 	</via:Output>
+ 	</via:EventHandler>
  	
  	<!--
 /(http|https|ftp|ftps)\:\/\/[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(\/\S*)?/ 	
@@ -100,17 +100,12 @@
 
 
 
- 	<via:Adaptor rdf:about="#listening-adaptor">
- 		<rdfs:comment>Listener example</rdfs:comment>
- 		<rdfs:label>Listener example</rdfs:label>
- 		<via:i rdf:resource="#listener"/>
-		<via:o rdf:resource="#moz-get-backlink-stats"/>
- 	</via:Adaptor>
- 	
- 	<via:Input rdf:about="#listener">
- 		<via:query rdf:resource="&vi;get_videos"/>
- 		<via:label_1>Listen for new Youtube vids submitted to the Index</via:label_1>
- 	</via:Input>
+ 	<via:Listener rdf:about="#test-query-listener">
+ 		<rdfs:comment>SPARQL Listener example</rdfs:comment>
+ 		<rdfs:label>SPARQL Listener example</rdfs:label>
+ 		<via:event rdf:resource="#get_videos"/>
+		<via:notify rdf:resource="#moz-get-backlink-stats"/>
+ 	</via:Listener>
 	
 	<via:TupleQuery rdf:about="#get_videos">
 		<rdfs:label>get videos</rdfs:label>
@@ -122,6 +117,7 @@ select ?1 where {
 }
 ]]>
 		</via:sparql>
+ 		<via:label_1>Listen for new Youtube vids submitted to the Index</via:label_1>
 	</via:TupleQuery> 	
  	
  	

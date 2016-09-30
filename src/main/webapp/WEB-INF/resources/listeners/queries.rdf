@@ -5,16 +5,16 @@
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
  >
- 	<via:TupleQuery rdf:about="#get_adaptor">
-		<rdfs:label>get_adaptor</rdfs:label>
+ 	<via:TupleQuery rdf:about="#get_listener">
+		<rdfs:label>get_listener</rdfs:label>
  		<via:sparql>
 <![CDATA[
 PREFIX via: <http://www.vacuity.ai/onto/via/1.0/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select distinct ?adaptor ?input ?pattern ?i_label ?i_query ?i_query_label ?capturePropertyType ?config ?translator ?log ?replyTypeProp ?call ?mediaType ?query where {
+select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?capturePropertyType ?config ?translator ?log ?replyTypeProp ?call ?mediaType ?query where {
   
-  ?adaptor rdf:type via:Adaptor .
-  ?adaptor via:i ?input .
+  ?listener rdf:type via:Listener .
+  ?listener via:event ?input .
   ?input ?c ?i_label .
   OPTIONAL {?input via:pattern ?pattern .}
   OPTIONAL {
@@ -22,7 +22,7 @@ select distinct ?adaptor ?input ?pattern ?i_label ?i_query ?i_query_label ?captu
 	  ?capturePropertyType rdfs:subPropertyOf via:capture .
   }
   ?c rdfs:subPropertyOf via:label .
-  ?adaptor via:o ?output .
+  ?listener via:notify ?output .
   ?output via:config ?config .
   OPTIONAL {?output via:translator ?translator .}
   ?output via:log ?log .
@@ -32,7 +32,12 @@ select distinct ?adaptor ?input ?pattern ?i_label ?i_query ?i_query_label ?captu
   
   
   OPTIONAL {?output via:query ?query .}
-  OPTIONAL {?input via:query ?i_query . ?i_query rdfs:label ?i_query_label .}
+  OPTIONAL {
+  	?listener via:event ?i_query . 
+  	?i_query rdf:type ?qtype .
+  	?qtype rdfs:subClassOf via:Query .
+  	?i_query rdfs:label ?i_query_label .
+  }
 
 }
 ]]>

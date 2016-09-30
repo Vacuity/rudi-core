@@ -37,8 +37,8 @@ import com.google.api.client.http.GenericUrl;
 import com.google.common.net.MediaType;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
+import ai.vacuity.rudi.adaptors.bo.EventHandler;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
-import ai.vacuity.rudi.adaptors.bo.ResponseProtocol;
 
 public class SparqlHAO extends AbstractHAO {
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(SparqlHAO.class);
@@ -53,7 +53,7 @@ public class SparqlHAO extends AbstractHAO {
 	final static SemanticListener listener = new SemanticListener();
 	static final HashMap<String, TupleQuery> queries = new HashMap<String, TupleQuery>();
 
-	static final String QUERY_GET_ADAPTOR = "get_adaptor";
+	static final String QUERY_GET_LISTENER = "get_listener";
 	static final String QUERY_GET_ADAPTOR_WITH_CAPTURE = "get_adaptor_with_capture";
 	static final String QUERY_GET_ADAPTOR_OUTPUT = "get_adaptor_output";
 	static final String QUERY_GET_PATTERN_LABELS = "get_pattern_labels";
@@ -66,7 +66,7 @@ public class SparqlHAO extends AbstractHAO {
 		SparqlHAO.getRepository().initialize();
 		SparqlHAO.loadRepository(); // load rdf demo instance data, patterns,
 									// and schema
-		SparqlHAO.load(SparqlHAO.QUERY_GET_ADAPTOR); // load adaptors
+		SparqlHAO.load(SparqlHAO.QUERY_GET_LISTENER); // load adaptors
 		SparqlHAO.load(SparqlHAO.QUERY_GET_ADAPTOR_WITH_CAPTURE); // load adaptors
 
 		SparqlHAO.getRepository().addRepositoryConnectionListener(listener);
@@ -168,7 +168,7 @@ public class SparqlHAO extends AbstractHAO {
 
 	@Override
 	public void run() {
-		Query q = getInputProtocol().getResponseProtocol().getRepository().getConnection().prepareQuery(QueryLanguage.SPARQL, getCall());
+		Query q = getInputProtocol().getEventHandler().getRepository().getConnection().prepareQuery(QueryLanguage.SPARQL, getCall());
 		if (q instanceof TupleQuery) {
 			try (TupleQueryResult result = ((TupleQuery) q).evaluate()) {
 				while (result.hasNext()) { // iterate over the result
@@ -229,13 +229,13 @@ public class SparqlHAO extends AbstractHAO {
 
 					TupleQuery data = con.prepareTupleQuery(QueryLanguage.SPARQL, sparql.stringValue());
 					switch (queryLabel) {
-					case SparqlHAO.QUERY_GET_ADAPTOR:
+					case SparqlHAO.QUERY_GET_LISTENER:
 						// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
 						try (TupleQueryResult r2 = data.evaluate()) {
 							Vector<Exception> err = new Vector<Exception>();
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
-								logger.debug("Adaptor: " + bs2.getValue("adaptor"));
+								logger.debug("Listener: " + bs2.getValue("listener"));
 								logger.debug("Pattern: " + bs2.getValue("pattern"));
 								logger.debug("Label: " + bs2.getValue("i_label"));
 								logger.debug("Input Query: " + bs2.getValue("i_query"));
@@ -251,6 +251,12 @@ public class SparqlHAO extends AbstractHAO {
 								// TODO a hack validator in lieu of a better query semantics
 								if (bs2.getValue("pattern") == null && bs2.getValue("i_query") == null && bs2.getValue("i_label") == null) {
 									IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("input") + ". via:Input must contain a via:pattern, via:capture_*, or via:query predicate.");
+									logger.error(ilaex.getMessage(), ilaex);
+									continue;
+								}
+
+								if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
+									IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
 									logger.error(ilaex.getMessage(), ilaex);
 									continue;
 								}
@@ -271,14 +277,14 @@ public class SparqlHAO extends AbstractHAO {
 									i.setCaptureIndex(captureIndex);
 								}
 
-								// response protocols are loaded only if they are called by an input protocol
-								ResponseProtocol o = new ResponseProtocol();
-								o.setConfigLabel(bs2.getValue("config").stringValue());
-								o.setLog(bs2.getValue("log").stringValue());
-								o.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
-								if (bs2.getValue("translator") != null) o.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
-								o.setCall(bs2.getValue("call").stringValue());
-								i.setResponseProtocol(o);
+								// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
+								EventHandler handler = new EventHandler();
+								handler.setConfigLabel(bs2.getValue("config").stringValue());
+								handler.setLog(bs2.getValue("log").stringValue());
+								handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
+								if (bs2.getValue("translator") != null) handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
+								handler.setCall(bs2.getValue("call").stringValue());
+								i.setEventHandler(handler);
 
 								// if sparql
 								// Create a new Repo, set its URL to the value o.getCall()
@@ -294,6 +300,7 @@ public class SparqlHAO extends AbstractHAO {
 											IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
 											iq.setId(bs2.getValue("i_query").stringValue().hashCode());
 											iq.setLabel(bs2.getValue("i_query_label").stringValue());
+											iq.setIri((IRI) bs2.getValue("i_query"));
 											SemanticListener.register(iq);
 											i.setQuery(iq);
 											i.hasSparqlQuery(true);
@@ -311,9 +318,9 @@ public class SparqlHAO extends AbstractHAO {
 									try (TupleQueryResult r3 = rpQuery.evaluate()) {
 										if (r3.hasNext()) { // expect a single result
 											BindingSet bs3 = r3.next();
-											o.setSparql(bs3.getValue("s").stringValue());
-											o.setRepository(new SPARQLRepository(o.getCall()));
-											o.hasSparqlQuery(true);
+											handler.setSparql(bs3.getValue("s").stringValue());
+											handler.setRepository(new SPARQLRepository(handler.getCall()));
+											handler.hasSparqlQuery(true);
 										}
 									}
 									catch (QueryEvaluationException qex) {
@@ -481,7 +488,7 @@ public class SparqlHAO extends AbstractHAO {
 		ValueFactory vf = SparqlHAO.getRepository().getValueFactory();
 		try {
 			try (RepositoryConnection con = getConnection()) {
-				String baseDir = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/";
+				String baseDir = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/";
 				String[] extensions = new String[] { "rdf", "rdfs" };
 				IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
 				Iterator<File> iter = FileUtils.iterateFiles(new File(baseDir), filter, DirectoryFileFilter.DIRECTORY);

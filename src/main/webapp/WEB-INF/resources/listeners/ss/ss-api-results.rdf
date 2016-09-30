@@ -15,25 +15,25 @@
      xmlns:sioc="http://rdfs.org/sioc/ns#"
  >
  	
- 	<via:Adaptor rdf:about="#moz-adaptor">
+ 	<via:Listener rdf:about="#ss-req-listener">
  		<rdfs:comment>Fetches social media posts from social-searcher.com</rdfs:comment>
- 		<rdfs:label>Social Searcher Adaptor</rdfs:label>
- 		<via:i rdf:resource="#ss-keywords"/>
-		<via:o rdf:resource="#ss-get-results"/>
- 	</via:Adaptor>
+ 		<rdfs:label>Social Searcher Request Listener</rdfs:label>
+ 		<via:event rdf:resource="#ss-keywords"/>
+		<via:notify rdf:resource="#ss-get-results"/>
+ 	</via:Listener>
  	
  	<via:Input rdf:about="#ss-keywords">
  		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z\s]*)$</via:pattern>
  		<via:label_1>Keywords</via:label_1>
  	</via:Input>
  	
- 	<via:Output rdf:about="#ss-get-results">
+ 	<via:EventHandler rdf:about="#ss-get-results">
  		<via:config>ss</via:config>
  		<via:json rdf:resource="https://api.social-searcher.com/v2/search?q=${1}&amp;network=twitter,googleplus,instagram,tumblr,reddit,flickr,vimeo,vine&amp;key=${key}"/>
  		<!-- the rdfs:range is a via:Template -->
  		<via:log>Fetching social posts for '${1}' from social-searcher.com.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
 		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/ss/ss-api-results.xsl"/>
- 	</via:Output>
+ 	</via:EventHandler>
 
 </rdf:RDF>

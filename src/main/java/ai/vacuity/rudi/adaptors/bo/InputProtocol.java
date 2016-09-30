@@ -19,7 +19,7 @@ public class InputProtocol {
 	Literal label = null;
 	HashMap<Integer, Literal> labelMap = new HashMap<Integer, Literal>();
 
-	ResponseProtocol responseProtocol = null;
+	EventHandler eventHandler = null;
 	Object pattern = null;
 
 	IndexableQuery query = null;
@@ -69,12 +69,12 @@ public class InputProtocol {
 		this.labelMap = labelMap;
 	}
 
-	public ResponseProtocol getResponseProtocol() {
-		return responseProtocol;
+	public EventHandler getEventHandler() {
+		return eventHandler;
 	}
 
-	public void setResponseProtocol(ResponseProtocol responseProtocol) {
-		this.responseProtocol = responseProtocol;
+	public void setEventHandler(EventHandler eventHandler) {
+		this.eventHandler = eventHandler;
 	}
 
 	public IRI getDataType() {

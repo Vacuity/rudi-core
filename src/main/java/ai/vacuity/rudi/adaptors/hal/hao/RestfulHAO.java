@@ -102,8 +102,8 @@ public class RestfulHAO extends AbstractHAO {
 		StringReader srxml = new StringReader(xml);
 		UUID uuid = UUID.randomUUID();
 
-		String filePathStr = xslt.replace(".xsl", "-" + uuid + ".rdf").replace("http://localhost:8080/rudi-adaptors/a/", "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/");
-		String fxmlStr = xslt.replace(".xsl", "-" + uuid + ".xml").replace("http://localhost:8080/rudi-adaptors/a/", "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/");
+		String filePathStr = xslt.replace(".xsl", "-" + uuid + ".rdf").replace("http://localhost:8080/rudi-adaptors/a/", "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/");
+		String fxmlStr = xslt.replace(".xsl", "-" + uuid + ".xml").replace("http://localhost:8080/rudi-adaptors/a/", "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/");
 		File fxml = new File(fxmlStr);
 		FileWriter fw = new FileWriter(fxml);
 		fw.write(xml);
@@ -115,7 +115,7 @@ public class RestfulHAO extends AbstractHAO {
 		logger.debug("The generated RDF file is:\n");
 		transformer.transform(in, out);
 
-		SparqlHAO.addToRepository(filePathStr, "http://tryrudi.io/rdf/demo/");
+		SparqlHAO.addToRepository(filePathStr, xslt.replace(".xsl", "-" + uuid + ".rdf"));
 
 		// QuadStore.main(new String[] {});
 
@@ -263,21 +263,21 @@ public class RestfulHAO extends AbstractHAO {
 		// Call.ActivityFeed feed = new Call.ActivityFeed();
 		try {
 			String resp = response.parseAsString();
-			if (Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).hasResponseProcessor()) {
-				Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).getResponseProcessor().process(resp, input);
-				resp = Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).getResponseProcessor().getResponse();
-				input = Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).getResponseProcessor().getInput();
+			if (Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).hasResponseProcessor()) {
+				Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().process(resp, input);
+				resp = Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().getResponse();
+				input = Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().getInput();
 			}
 			// if (StringUtils.isNotBlank(resp)) resp = resp.replace("${0}", input);
 
 			String xslt = null;
-			if (inputProtocol.getResponseProtocol().hasTranslator()) {
-				xslt = inputProtocol.getResponseProtocol().getTranslator().build();
+			if (inputProtocol.getEventHandler().hasTranslator()) {
+				xslt = inputProtocol.getEventHandler().getTranslator().build();
 				transform(resp, xslt);
 			}
 			else {
 				UUID uuid = UUID.randomUUID();
-				String fxmlStr = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/" + response.getRequest().getUrl().getHost() + "-" + uuid + ".rdf";
+				String fxmlStr = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/" + response.getRequest().getUrl().getHost() + "-" + uuid + ".rdf";
 				File fxml = new File(fxmlStr);
 				fxml.createNewFile();
 				FileWriter fw = new FileWriter(fxml);

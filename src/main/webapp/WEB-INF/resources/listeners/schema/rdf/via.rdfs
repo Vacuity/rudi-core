@@ -127,6 +127,15 @@
          <rdfs:comment></rdfs:comment>
          <rdfs:subClassOf rdf:resource="http://rdfs.org/sioc/ns#"/>
     </owl:Class>
+	
+    <owl:Class rdf:about="Query">
+         <rdfs:comment></rdfs:comment>
+    </owl:Class>
+	
+    <owl:Class rdf:about="TupleQuery">
+         <rdfs:comment></rdfs:comment>
+         <rdfs:subClassOf rdf:resource="Query"/>
+    </owl:Class>
      
              
  </rdf:RDF>

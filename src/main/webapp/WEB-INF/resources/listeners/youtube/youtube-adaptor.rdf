@@ -14,20 +14,20 @@
      xmlns:sioc="http://rdfs.org/sioc/ns#"
  >
  	
- 	<via:Adaptor rdf:about="#youtube-url-adaptor">
+ 	<via:Listener rdf:about="#youtube-req-listener">
  		<rdfs:comment>Pulls video URL from youtube.com</rdfs:comment>
- 		<rdfs:label>Youtube Fetch Adaptor</rdfs:label>
- 		<via:i rdf:resource="#youtube_cmd"/>
-		<via:o rdf:resource="#youtube-fetch-videos"/>
- 	</via:Adaptor>
+ 		<rdfs:label>Youtube Request Listener</rdfs:label>
+ 		<via:event rdf:resource="#youtube_cmd"/>
+		<via:notify rdf:resource="#youtube-fetch-videos"/>
+ 	</via:Listener>
 
- 	<via:Output rdf:about="#youtube-fetch-videos">
+ 	<via:EventHandler rdf:about="#youtube-fetch-videos">
  		<via:config>youtube.data</via:config>
  		<via:json rdf:resource="https://www.googleapis.com/youtube/v3/search?part=snippet&amp;type=video&amp;q=${1}&amp;key=${key}"/>
 		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.xsl"/>
  		<via:log>Checking youtube.com for videos about '${1}'</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
- 	</via:Output>
+ 	</via:EventHandler>
  	
  	<via:Input rdf:about="#youtube_cmd">
  		<via:pattern rdf:datatype="&via;Regex">^youtube\s*(.*)</via:pattern>

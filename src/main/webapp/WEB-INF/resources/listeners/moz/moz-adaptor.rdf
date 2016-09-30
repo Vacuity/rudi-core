@@ -15,12 +15,12 @@
      xmlns:sioc="http://rdfs.org/sioc/ns#"
  >
  	
- 	<via:Adaptor rdf:about="#moz-adaptor">
+ 	<via:Listener rdf:about="#moz-req-listener">
  		<rdfs:comment>Fetches URL backlink data from moz.com</rdfs:comment>
- 		<rdfs:label>Moz Adaptor</rdfs:label>
- 		<via:i rdf:resource="#moz-cmd"/>
-		<via:o rdf:resource="#moz-get-backlink-stats"/>
- 	</via:Adaptor>
+ 		<rdfs:label>Moz Request Listener</rdfs:label>
+ 		<via:event rdf:resource="#moz-cmd"/>
+		<via:notify rdf:resource="#moz-get-backlink-stats"/>
+ 	</via:Listener>
  	
  	<via:Input rdf:about="#moz-cmd">
  		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)</via:pattern>
@@ -29,21 +29,21 @@
  		<via:capture_1 rdf:datatype="&via;URL">http://example.com</via:capture_1>
  	</via:Input>
  	
- 	<via:Output rdf:about="#moz-get-backlink-stats">
+ 	<via:EventHandler rdf:about="#moz-get-backlink-stats">
  		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&amp;Scope=page_to_page&amp;Sort=domains_linking_page&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=${token}"/>
  		<!-- the rdfs:range is a via:Template -->
  		<via:log>Fetching backlinks for '${1}' from moz.com.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
 		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/moz/moz-api-results.xsl"/>
- 	</via:Output>
+ 	</via:EventHandler>
  	
- 	<via:Output rdf:about="#moz-get-url-stats">
+ 	<via:EventHandler rdf:about="#moz-get-url-stats">
  		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/url-metrics/${1}?144115188075855876=2048&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=%${token}"/>
  		<via:log>Fetching freshness and URL canonical form for '${1}' from moz.com.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
- 	</via:Output>
+ 	</via:EventHandler>
 
 
 </rdf:RDF>

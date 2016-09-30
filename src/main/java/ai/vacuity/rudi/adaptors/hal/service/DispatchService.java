@@ -2,6 +2,8 @@ package ai.vacuity.rudi.adaptors.hal.service;
 
 import java.io.IOException;
 
+import org.slf4j.LoggerFactory;
+
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
@@ -9,17 +11,18 @@ import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateProcessor;
 
 public class DispatchService {
+	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(DispatchService.class);
 
 	public static void dispatch(String input) throws IOException, IllegalArgumentException {
 		find_matches: for (InputProtocol ip : SparqlHAO.getInputs()) {
 			if (ip == null) break;
 			if (ip.hasSparqlQuery()) continue; // don't match alerts
-			String call = ip.getResponseProtocol().getCall();
-			String log = ip.getResponseProtocol().getLog();
+			String call = ip.getEventHandler().getCall();
+			String log = ip.getEventHandler().getLog();
 			AbstractHAO hao = null;
 
-			if (ip.getResponseProtocol().hasSparqlQuery()) {
-				call = ip.getResponseProtocol().getSparql();
+			if (ip.getEventHandler().hasSparqlQuery()) {
+				call = ip.getEventHandler().getSparql();
 				call = AbstractTemplateProcessor.process(ip, input, call);
 				hao = new SparqlHAO();
 			}
@@ -30,7 +33,7 @@ public class DispatchService {
 			if (call == null) continue find_matches;
 			log = AbstractTemplateProcessor.process(ip, input, log);
 
-			SparqlHAO.logger.debug("[Rudi]: " + log);
+			logger.debug("[Rudi]: " + log);
 
 			// if (call.indexOf("?") > 0) {
 			// String path = call;
@@ -50,12 +53,12 @@ public class DispatchService {
 		find_matches: for (InputProtocol ip : SparqlHAO.getInputs()) {
 			if (ip == null) break;
 			if (!ip.hasSparqlQuery()) continue; // only match alerts
-			String call = ip.getResponseProtocol().getCall();
-			String log = ip.getResponseProtocol().getLog();
+			String call = ip.getEventHandler().getCall();
+			String log = ip.getEventHandler().getLog();
 			AbstractHAO hao = null;
 
-			if (ip.getResponseProtocol().hasSparqlQuery()) {
-				call = ip.getResponseProtocol().getSparql();
+			if (ip.getEventHandler().hasSparqlQuery()) {
+				call = ip.getEventHandler().getSparql();
 				call = AbstractTemplateProcessor.process(ip, id, call);
 				hao = new SparqlHAO();
 			}
@@ -66,7 +69,7 @@ public class DispatchService {
 			if (call == null) continue find_matches;
 			log = AbstractTemplateProcessor.process(ip, id, log);
 
-			SparqlHAO.logger.debug("[Rudi]: " + log);
+			logger.debug("[Rudi]: " + log);
 
 			// if (call.indexOf("?") > 0) {
 			// String path = call;
