@@ -1,4 +1,4 @@
-package ai.vacuity.rudi.adaptors.controller;
+package ai.vacuity.rudi.adaptors.hal.hao;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.UUID;
 
@@ -32,17 +33,15 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
 
-import ai.vacuity.rudi.adaptors.bo.Endpoint;
-import ai.vacuity.rudi.adaptors.bo.Input;
-import ai.vacuity.rudi.adaptors.data.QuadStore;
+import ai.vacuity.rudi.adaptors.bo.Config;
 
 /**
  *
  * @author M.Vasudevarao
- * @author smonroe
+ * @author In Lak'ech.
  */
-public class Call {
-	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Call.class);
+public class RestfulHAO extends AbstractHAO {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(RestfulHAO.class);
 
 	/**
 	 * @param args
@@ -61,7 +60,7 @@ public class Call {
 		String xslt = args[1];
 		String rdf = args[2];
 
-		Call st = new Call();
+		RestfulHAO st = new RestfulHAO();
 		// try
 		// {
 		// st.transform(json, xslt, rdf);
@@ -116,7 +115,7 @@ public class Call {
 		logger.debug("The generated RDF file is:\n");
 		transformer.transform(in, out);
 
-		QuadStore.addToRepository(filePathStr, "http://tryrudi.io/rdf/demo/");
+		SparqlHAO.addToRepository(filePathStr, "http://tryrudi.io/rdf/demo/");
 
 		// QuadStore.main(new String[] {});
 
@@ -223,9 +222,6 @@ public class Call {
 	// }
 
 	// static String xslt = null;
-	static String call = null;
-	static Input inputProtocols = null;
-	static String input = null;
 	//
 	// public static String getXslt() {
 	// return xslt;
@@ -235,31 +231,8 @@ public class Call {
 	// Call.xslt = xslt;
 	// }
 
-	public static String getInput() {
-		return input;
-	}
-
-	public static void setInput(String target) {
-		Call.input = target;
-	}
-
-	public static Input getInputProtocols() {
-		return inputProtocols;
-	}
-
-	public static void setInputProtocols(Input input) {
-		Call.inputProtocols = input;
-	}
-
-	public static String getCall() {
-		return call;
-	}
-
-	public static void setCall(String call) {
-		Call.call = call;
-	}
-
-	public static void run() throws IOException {
+	@Override
+	public void run() {
 
 		HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
 			@Override
@@ -270,10 +243,18 @@ public class Call {
 		// PlusUrl url = PlusUrl.listPublicActivities(USER_ID).setMaxResults(MAX_RESULTS);
 		// url.put("fields", "items(id,url,object(content,plusoners/totalItems))");
 
-		GenericUrl gurl = new GenericUrl(new URL(call));
+		try {
+			GenericUrl gurl = new GenericUrl(new URL(call));
+			HttpRequest request = requestFactory.buildGetRequest(gurl);
+			RestfulHAO.parseResponse(request.execute());
+		}
+		catch (MalformedURLException muex) {
+			logger.error(muex.getMessage(), muex);
+		}
+		catch (IOException iex) {
+			logger.error(iex.getMessage(), iex);
+		}
 
-		HttpRequest request = requestFactory.buildGetRequest(gurl);
-		Call.parseResponse(request.execute());
 	}
 
 	static void parseResponse(HttpResponse response) throws IOException {
@@ -282,16 +263,16 @@ public class Call {
 		// Call.ActivityFeed feed = new Call.ActivityFeed();
 		try {
 			String resp = response.parseAsString();
-			if (Endpoint.getEndpointmap().get(inputProtocols.getOutput().getEndpointLabel()).hasResponseProcessor()) {
-				Endpoint.getEndpointmap().get(inputProtocols.getOutput().getEndpointLabel()).getResponseProcessor().process(resp, input);
-				resp = Endpoint.getEndpointmap().get(inputProtocols.getOutput().getEndpointLabel()).getResponseProcessor().getResponse();
-				input = Endpoint.getEndpointmap().get(inputProtocols.getOutput().getEndpointLabel()).getResponseProcessor().getInput();
+			if (Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).hasResponseProcessor()) {
+				Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).getResponseProcessor().process(resp, input);
+				resp = Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).getResponseProcessor().getResponse();
+				input = Config.getMap().get(inputProtocol.getResponseProtocol().getConfigLabel()).getResponseProcessor().getInput();
 			}
 			// if (StringUtils.isNotBlank(resp)) resp = resp.replace("${0}", input);
 
 			String xslt = null;
-			if (inputProtocols.getOutput().hasTranslator()) {
-				xslt = inputProtocols.getOutput().getTranslator().build();
+			if (inputProtocol.getResponseProtocol().hasTranslator()) {
+				xslt = inputProtocol.getResponseProtocol().getTranslator().build();
 				transform(resp, xslt);
 			}
 			else {
@@ -305,7 +286,7 @@ public class Call {
 			}
 		}
 		catch (TransformerException tex) {
-			APIClient.logger.debug(tex.getMessage(), tex);
+			logger.debug(tex.getMessage(), tex);
 		}
 
 		// if (feed.getActivities() == null) return;

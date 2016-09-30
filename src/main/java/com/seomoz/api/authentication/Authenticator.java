@@ -12,7 +12,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.LoggerFactory;
 
-import ai.vacuity.rudi.adaptors.bo.Endpoint;
+import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateProcessor;
 
 /**
@@ -47,9 +47,9 @@ public class Authenticator extends AbstractTemplateProcessor {
 			p.load(resourceStream);
 			this.accessID = p.getProperty("moz.id");
 			this.secretKey = p.getProperty("moz.key");
-			if (Endpoint.getEndpointmap() != null && Endpoint.getEndpointmap().containsKey("moz")) {
-				this.accessID = (Endpoint.getEndpointmap().get("moz").hasId()) ? Endpoint.getEndpointmap().get("moz").getId() : p.getProperty("moz.id");
-				this.secretKey = (Endpoint.getEndpointmap().get("moz").hasKey()) ? Endpoint.getEndpointmap().get("moz").getKey() : p.getProperty("moz.key");
+			if (Config.getMap() != null && Config.getMap().containsKey("moz")) {
+				this.accessID = (Config.getMap().get("moz").hasId()) ? Config.getMap().get("moz").getId() : p.getProperty("moz.id");
+				this.secretKey = (Config.getMap().get("moz").hasKey()) ? Config.getMap().get("moz").getKey() : p.getProperty("moz.key");
 			}
 		}
 		catch (Exception ex) {
@@ -194,7 +194,7 @@ public class Authenticator extends AbstractTemplateProcessor {
 		this.template = this.template.replace("${id}", getAccessID());
 		this.template = this.template.replace("${expiry}", oa[0]);
 		this.template = this.template.replace("${token}", oa[2]);
-		logger.debug("Authentication String: " + this.template);
+		logger.debug("Processing Template: " + this.template);
 	}
 
 	@Override
@@ -203,7 +203,7 @@ public class Authenticator extends AbstractTemplateProcessor {
 	}
 
 	@Override
-	public String getTarget() {
+	public String getInput() {
 		return this.target;
 	}
 }

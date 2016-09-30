@@ -6,11 +6,12 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 
-import ai.vacuity.rudi.adaptors.data.QuadStore;
+import ai.vacuity.rudi.adaptors.hal.hao.IndexableQuery;
+import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
 
-public class Input {
+public class InputProtocol {
 
-	public final static IRI PARSE_TYPE_REGEX = QuadStore.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/Regex");
+	public final static IRI PARSE_TYPE_REGEX = SparqlHAO.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/Regex");
 
 	Value trigger = null;
 	IRI dataType = null;
@@ -18,8 +19,11 @@ public class Input {
 	Literal label = null;
 	HashMap<Integer, Literal> labelMap = new HashMap<Integer, Literal>();
 
-	Output output = null;
+	ResponseProtocol responseProtocol = null;
 	Object pattern = null;
+
+	IndexableQuery query = null;
+	boolean hasSparqlQuery = false;
 
 	// by setting the default value to 0, all datatype patterns will default to zero.
 	// see QuadStore.processTemplate()
@@ -65,12 +69,12 @@ public class Input {
 		this.labelMap = labelMap;
 	}
 
-	public Output getOutput() {
-		return output;
+	public ResponseProtocol getResponseProtocol() {
+		return responseProtocol;
 	}
 
-	public void setOutput(Output output) {
-		this.output = output;
+	public void setResponseProtocol(ResponseProtocol responseProtocol) {
+		this.responseProtocol = responseProtocol;
 	}
 
 	public IRI getDataType() {
@@ -79,5 +83,21 @@ public class Input {
 
 	public void setDataType(IRI dataType) {
 		this.dataType = dataType;
+	}
+
+	public IndexableQuery getQuery() {
+		return query;
+	}
+
+	public void setQuery(IndexableQuery query) {
+		this.query = query;
+	}
+
+	public boolean hasSparqlQuery() {
+		return hasSparqlQuery;
+	}
+
+	public void hasSparqlQuery(boolean hasSparqlQuery) {
+		this.hasSparqlQuery = hasSparqlQuery;
 	}
 }

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE rdf:RDF [
-	<!ENTITY via "http://www.vacuity.ai/onto/via/">
+	<!ENTITY via "http://www.vacuity.ai/onto/via/1.0/">
 	<!ENTITY vi "http://www.vacuity.ai/onto/instances#">
     <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
 ]>
-<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
-     xmlns:via="http://www.vacuity.ai/onto/via/"
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances/1.0"
+     xmlns:via="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
@@ -23,9 +23,6 @@
  	</via:Adaptor>
  	
  	<via:Input rdf:about="#moz-cmd">
- 		<via:features rdf:resource="nil"/>
- 		<via:featured_in rdf:resource="nil"/>
- 		<via:type rdf:resource="http://www.w3.org/2000/01/rdf-schema#Resource"/>
  		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)</via:pattern>
  		<via:pattern rdf:datatype="&via;Regex">^do\s*(.*)</via:pattern>
  		<via:label_1>Web URL</via:label_1>
@@ -33,7 +30,7 @@
  	</via:Input>
  	
  	<via:Output rdf:about="#moz-get-backlink-stats">
- 		<via:endpoint>moz</via:endpoint>
+ 		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&amp;Scope=page_to_page&amp;Sort=domains_linking_page&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=${token}"/>
  		<!-- the rdfs:range is a via:Template -->
  		<via:log>Fetching backlinks for '${1}' from moz.com.</via:log>
@@ -42,7 +39,7 @@
  	</via:Output>
  	
  	<via:Output rdf:about="#moz-get-url-stats">
- 		<via:endpoint>moz</via:endpoint>
+ 		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/url-metrics/${1}?144115188075855876=2048&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=%${token}"/>
  		<via:log>Fetching freshness and URL canonical form for '${1}' from moz.com.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->

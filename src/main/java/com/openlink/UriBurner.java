@@ -17,7 +17,7 @@ public class UriBurner extends AbstractTemplateProcessor {
 	}
 
 	@Override
-	public String getTarget() {
+	public String getInput() {
 		return this.target;
 	}
 }

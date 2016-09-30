@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import ai.vacuity.rudi.adaptors.data.QuadStore;
+import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 
 @Controller
 public class BaseController {
@@ -22,7 +22,7 @@ public class BaseController {
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String welcome(@RequestParam("q") String query, ModelMap model) {
 		try {
-			QuadStore.processInput(query);
+			DispatchService.dispatch(query);
 		}
 		catch (IOException e) {
 			e.printStackTrace();

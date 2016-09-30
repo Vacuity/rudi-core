@@ -1,8 +1,14 @@
 package ai.vacuity.rudi.adaptors.interfaces.impl;
 
-import ai.vacuity.rudi.adaptors.interfaces.ResponseProcessor;
+import ai.vacuity.rudi.adaptors.interfaces.IResponseProcessor;
 
-public class AbstractResponseProcessor implements ResponseProcessor {
+/**
+ * Performs transformations on the response and/or input value.
+ * 
+ * @author In Lak'ech.
+ *
+ */
+public abstract class AbstractResponseProcessor implements IResponseProcessor {
 
 	protected String response;
 	protected String input;

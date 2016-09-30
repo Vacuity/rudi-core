@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  <!DOCTYPE rdf:RDF []>
- <rdf:RDF xmlns="http://www.vacuity.ai/onto/via/rdfs#"
-     xml:base="http://www.vacuity.ai/onto/via/"
+ <rdf:RDF xmlns="http://www.vacuity.ai/onto/via/1.0/rdfs#"
+     xml:base="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
@@ -90,10 +90,12 @@
 
 	<owl:ObjectProperty rdf:about="json">
 		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+		<rdfs:label>application/json</rdfs:label>
 	</owl:ObjectProperty>
 
 	<owl:ObjectProperty rdf:about="xml">
 		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+		<rdfs:label>text/xml</rdfs:label>
 	</owl:ObjectProperty>
 
 	<owl:ObjectProperty rdf:about="n3">
@@ -110,6 +112,7 @@
 
 	<owl:ObjectProperty rdf:about="rdf">
 		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
+		<rdfs:label>application/rdf+xml</rdfs:label>
 	</owl:ObjectProperty>
 
 	<owl:ObjectProperty rdf:about="gson">

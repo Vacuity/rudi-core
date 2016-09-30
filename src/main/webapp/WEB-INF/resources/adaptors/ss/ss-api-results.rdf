@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE rdf:RDF [
+	<!ENTITY via "http://www.vacuity.ai/onto/via/">
+	<!ENTITY vi "http://www.vacuity.ai/onto/instances#">
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
+     xmlns:via="http://www.vacuity.ai/onto/via/"
+     xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:sioc="http://rdfs.org/sioc/ns#"
+ >
+ 	
+ 	<via:Adaptor rdf:about="#moz-adaptor">
+ 		<rdfs:comment>Fetches social media posts from social-searcher.com</rdfs:comment>
+ 		<rdfs:label>Social Searcher Adaptor</rdfs:label>
+ 		<via:i rdf:resource="#ss-keywords"/>
+		<via:o rdf:resource="#ss-get-results"/>
+ 	</via:Adaptor>
+ 	
+ 	<via:Input rdf:about="#ss-keywords">
+ 		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z\s]*)$</via:pattern>
+ 		<via:label_1>Keywords</via:label_1>
+ 	</via:Input>
+ 	
+ 	<via:Output rdf:about="#ss-get-results">
+ 		<via:config>ss</via:config>
+ 		<via:json rdf:resource="https://api.social-searcher.com/v2/search?q=${1}&amp;network=twitter,googleplus,instagram,tumblr,reddit,flickr,vimeo,vine&amp;key=${key}"/>
+ 		<!-- the rdfs:range is a via:Template -->
+ 		<via:log>Fetching social posts for '${1}' from social-searcher.com.</via:log>
+ 		<!-- be sure to add a timestamp before registering the log -->
+		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/ss/ss-api-results.xsl"/>
+ 	</via:Output>
+
+</rdf:RDF>

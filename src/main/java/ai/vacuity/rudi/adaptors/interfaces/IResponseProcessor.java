@@ -6,10 +6,10 @@ package ai.vacuity.rudi.adaptors.interfaces;
  * @author In Lak'ech.
  *
  */
-public interface TemplateProcessor {
-	public void process(String template, String target);
+public interface IResponseProcessor {
+	public void process(String response, String input);
 
-	public String getTemplate();
+	public String getResponse();
 
-	public String getTarget();
+	public String getInput();
 }
