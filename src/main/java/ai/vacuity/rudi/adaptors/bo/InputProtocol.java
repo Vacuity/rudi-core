@@ -6,7 +6,6 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 
-import ai.vacuity.rudi.adaptors.hal.hao.IndexableQuery;
 import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
 
 public class InputProtocol {
@@ -23,7 +22,7 @@ public class InputProtocol {
 	Object pattern = null;
 
 	IndexableQuery query = null;
-	boolean hasSparqlQuery = false;
+	// boolean hasSparqlQuery = false;
 
 	// by setting the default value to 0, all datatype patterns will default to zero.
 	// see QuadStore.processTemplate()
@@ -94,10 +93,10 @@ public class InputProtocol {
 	}
 
 	public boolean hasSparqlQuery() {
-		return hasSparqlQuery;
+		return this.query != null;
 	}
 
-	public void hasSparqlQuery(boolean hasSparqlQuery) {
-		this.hasSparqlQuery = hasSparqlQuery;
-	}
+	// public void hasSparqlQuery(boolean hasSparqlQuery) {
+	// this.hasSparqlQuery = hasSparqlQuery;
+	// }
 }

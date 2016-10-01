@@ -7,9 +7,9 @@ package ai.vacuity.rudi.adaptors.interfaces;
  *
  */
 public interface IResponseProcessor {
-	public void process(String response, String input);
+	public void process(String response, IEvent event);
 
 	public String getResponse();
 
-	public String getInput();
+	public IEvent getEvent();
 }

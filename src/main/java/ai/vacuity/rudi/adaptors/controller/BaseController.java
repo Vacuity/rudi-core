@@ -1,7 +1,9 @@
 package ai.vacuity.rudi.adaptors.controller;
 
 import java.io.IOException;
+import java.util.UUID;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -10,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import ai.vacuity.rudi.adaptors.bo.IndexableInput;
+import ai.vacuity.rudi.adaptors.hal.hao.Constants;
+import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 
 @Controller
@@ -21,11 +26,17 @@ public class BaseController {
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String welcome(@RequestParam("q") String query, ModelMap model) {
+		UUID userId = UUID.randomUUID();
+		UUID channelId = UUID.randomUUID();
+		IRI user = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI + "smonroe");
+		IRI channel = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
+		IndexableInput ii = new IndexableInput(user, channel, query);
+
 		try {
-			DispatchService.dispatch(query);
+			DispatchService.dispatch(ii);
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage(), e);
 		}
 
 		return welcomeName("<a href=\"http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.rdf\">API Response</a>", model);

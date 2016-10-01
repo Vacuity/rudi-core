@@ -99,7 +99,6 @@
  	
 
 
-
  	<via:Listener rdf:about="#test-query-listener">
  		<rdfs:comment>SPARQL Listener example</rdfs:comment>
  		<rdfs:label>SPARQL Listener example</rdfs:label>
@@ -119,7 +118,14 @@ select ?1 where {
 		</via:sparql>
  		<via:label_1>Listen for new Youtube vids submitted to the Index</via:label_1>
 	</via:TupleQuery> 	
- 	
+
+
+ 	<via:Listener rdf:about="#test-query-listener-2">
+ 		<rdfs:comment>SPARQL Listener example (send email)</rdfs:comment>
+ 		<rdfs:label>SPARQL Listener example (send email)</rdfs:label>
+ 		<via:event rdf:resource="#get_videos"/>
+		<via:notify rdf:resource="#smonroe"/>
+ 	</via:Listener>
  	
  	
  	

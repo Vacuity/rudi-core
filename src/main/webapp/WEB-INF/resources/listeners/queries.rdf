@@ -44,6 +44,29 @@ select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?capt
 		</via:sparql>
 	</via:TupleQuery>
 	
+ 	<via:TupleQuery rdf:about="#get_subscriptions">
+		<rdfs:label>get_subscriptions</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+PREFIX via: <http://www.vacuity.ai/onto/via/1.0/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+select distinct ?listener ?i_query ?i_query_label ?notifies where {
+  
+  ?listener rdf:type via:Listener .
+  ?listener via:notify ?notifies .    
+  ?listener via:event ?i_query . 
+  ?i_query rdf:type ?qtype .
+  ?qtype rdfs:subClassOf via:Query .
+  ?i_query rdfs:label ?i_query_label .
+  
+  FILTER NOT EXISTS { 
+  	?notifies rdf:type via:EventHandler . 
+  }
+}
+]]>
+		</via:sparql>
+	</via:TupleQuery>
+	
  	<via:TupleQuery rdf:about="#get_adaptor_with_capture-hold">
 		<rdfs:label>get_adaptor_with_capture-hold</rdfs:label>
  		<via:sparql>

@@ -34,6 +34,7 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
+import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 
 /**
  *
@@ -55,26 +56,10 @@ public class RestfulHAO extends AbstractHAO {
 		}
 
 		String json = "";
-
-		// String dataXML = args[0];
 		String xslt = args[1];
 		String rdf = args[2];
 
 		RestfulHAO st = new RestfulHAO();
-		// try
-		// {
-		// st.transform(json, xslt, rdf);
-		// }
-		// catch (TransformerConfigurationException e)
-		// {
-		// System.err.println("TransformerConfigurationException");
-		// System.err.println(e);
-		// }
-		// catch (TransformerException e)
-		// {
-		// System.err.println("TransformerException");
-		// System.err.println(e);
-		// }
 	}
 
 	public static String transform(String json) {
@@ -102,8 +87,8 @@ public class RestfulHAO extends AbstractHAO {
 		StringReader srxml = new StringReader(xml);
 		UUID uuid = UUID.randomUUID();
 
-		String filePathStr = xslt.replace(".xsl", "-" + uuid + ".rdf").replace("http://localhost:8080/rudi-adaptors/a/", "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/");
-		String fxmlStr = xslt.replace(".xsl", "-" + uuid + ".xml").replace("http://localhost:8080/rudi-adaptors/a/", "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/");
+		String filePathStr = xslt.replace(".xsl", "-" + uuid + ".rdf").replace("http://localhost:8080/rudi-adaptors/a/", SparqlHAO.DIR_LISTENERS);
+		String fxmlStr = xslt.replace(".xsl", "-" + uuid + ".xml").replace("http://localhost:8080/rudi-adaptors/a/", SparqlHAO.DIR_LISTENERS);
 		File fxml = new File(fxmlStr);
 		FileWriter fw = new FileWriter(fxml);
 		fw.write(xml);
@@ -115,121 +100,16 @@ public class RestfulHAO extends AbstractHAO {
 		logger.debug("The generated RDF file is:\n");
 		transformer.transform(in, out);
 
-		SparqlHAO.addToRepository(filePathStr, xslt.replace(".xsl", "-" + uuid + ".rdf"));
-
+		SparqlHAO.addToRepository(filePathStr, event.getIri());
 		// QuadStore.main(new String[] {});
 
 	}
 
-	// FROM APICLIENT
+	// FROM API CLIENT
 
 	static final int MAX_RESULTS = 3;
 	static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 	static final JsonFactory JSON_FACTORY = new JacksonFactory();
-
-	// /** Feed of Google+ activities. */
-	// public static class ActivityFeed {
-	//
-	// /** List of Google+ activities. */
-	// @Key("items")
-	// private List<Activity> activities;
-	//
-	// public List<Activity> getActivities() {
-	// return activities;
-	// }
-	// }
-
-	// /** Google+ activity. */
-	// public static class Activity extends GenericJson {
-	//
-	// /** Activity URL. */
-	// @Key
-	// private String url;
-	//
-	// public String getUrl() {
-	// return url;
-	// }
-	//
-	// /** Activity object. */
-	// @Key("object")
-	// private ActivityObject activityObject;
-	//
-	// public ActivityObject getActivityObject() {
-	// return activityObject;
-	// }
-	// }
-	//
-	// /** Google+ activity object. */
-	// public static class ActivityObject {
-	//
-	// /** HTML-formatted content. */
-	// @Key
-	// private String content;
-	//
-	// public String getContent() {
-	// return content;
-	// }
-	//
-	// /** People who +1'd this activity. */
-	// @Key
-	// private PlusOners plusoners;
-	//
-	// public PlusOners getPlusOners() {
-	// return plusoners;
-	// }
-	// }
-	//
-	// /** People who +1'd an activity. */
-	// public static class PlusOners {
-	//
-	// /** Total number of people who +1'd this activity. */
-	// @Key
-	// private long totalItems;
-	//
-	// public long getTotalItems() {
-	// return totalItems;
-	// }
-	// }
-
-	// /** Google+ URL. */
-	// public static class PlusUrl extends GenericUrl {
-	//
-	// public PlusUrl(String encodedUrl) {
-	// super(encodedUrl);
-	// }
-	//
-	// @SuppressWarnings("unused")
-	// @Key
-	// private final String key = API_KEY;
-	//
-	// /** Maximum number of results. */
-	// @Key
-	// private int maxResults;
-	//
-	// public int getMaxResults() {
-	// return maxResults;
-	// }
-	//
-	// public PlusUrl setMaxResults(int maxResults) {
-	// this.maxResults = maxResults;
-	// return this;
-	// }
-	//
-	// /** Lists the public activities for the given Google+ user ID. */
-	// public static PlusUrl listPublicActivities(String userId) {
-	// return new PlusUrl("https://www.googleapis.com/plus/v1/people/" + userId + "/activities/public");
-	// }
-	// }
-
-	// static String xslt = null;
-	//
-	// public static String getXslt() {
-	// return xslt;
-	// }
-	//
-	// public static void setXslt(String xslt) {
-	// Call.xslt = xslt;
-	// }
 
 	@Override
 	public void run() {
@@ -264,9 +144,9 @@ public class RestfulHAO extends AbstractHAO {
 		try {
 			String resp = response.parseAsString();
 			if (Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).hasResponseProcessor()) {
-				Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().process(resp, input);
+				Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().process(resp, event);
 				resp = Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().getResponse();
-				input = Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().getInput();
+				event = Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().getEvent();
 			}
 			// if (StringUtils.isNotBlank(resp)) resp = resp.replace("${0}", input);
 
@@ -277,7 +157,7 @@ public class RestfulHAO extends AbstractHAO {
 			}
 			else {
 				UUID uuid = UUID.randomUUID();
-				String fxmlStr = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/" + response.getRequest().getUrl().getHost() + "-" + uuid + ".rdf";
+				String fxmlStr = SparqlHAO.DIR_LISTENERS + response.getRequest().getUrl().getHost() + "-" + uuid + ".rdf";
 				File fxml = new File(fxmlStr);
 				fxml.createNewFile();
 				FileWriter fw = new FileWriter(fxml);
@@ -289,23 +169,5 @@ public class RestfulHAO extends AbstractHAO {
 			logger.debug(tex.getMessage(), tex);
 		}
 
-		// if (feed.getActivities() == null) return;
-		// if (feed.getActivities().isEmpty()) {
-		// System.out.println("No activities found.");
-		// }
-		// else {
-		// if (feed.getActivities().size() == Call.MAX_RESULTS) {
-		// APIClient.logger.debug("First ");
-		// }
-		// System.out.println(feed.getActivities().size() + " activities found:");
-		// for (Call.Activity activity : feed.getActivities()) {
-		// APIClient.logger.debug("\n");
-		// APIClient.logger.debug("-----------------------------------------------");
-		// APIClient.logger.debug("HTML Content: " + activity.getActivityObject().getContent());
-		// APIClient.logger.debug("+1's: " + activity.getActivityObject().getPlusOners().getTotalItems());
-		// APIClient.logger.debug("URL: " + activity.getUrl());
-		// APIClient.logger.debug("ID: " + activity.get("id"));
-		// }
-		// }
 	}
 }

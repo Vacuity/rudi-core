@@ -38,9 +38,12 @@ import com.google.common.net.MediaType;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
+import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 
 public class SparqlHAO extends AbstractHAO {
+	static final String DIR_LISTENERS = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/";
+
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(SparqlHAO.class);
 
 	// static String sparqlEndpoint = "http://www.tryrudi.io/sparql";
@@ -54,6 +57,7 @@ public class SparqlHAO extends AbstractHAO {
 	static final HashMap<String, TupleQuery> queries = new HashMap<String, TupleQuery>();
 
 	static final String QUERY_GET_LISTENER = "get_listener";
+	static final String QUERY_GET_SUBSCRIPTIONS = "get_subscriptions";
 	static final String QUERY_GET_ADAPTOR_WITH_CAPTURE = "get_adaptor_with_capture";
 	static final String QUERY_GET_ADAPTOR_OUTPUT = "get_adaptor_output";
 	static final String QUERY_GET_PATTERN_LABELS = "get_pattern_labels";
@@ -67,7 +71,7 @@ public class SparqlHAO extends AbstractHAO {
 		SparqlHAO.loadRepository(); // load rdf demo instance data, patterns,
 									// and schema
 		SparqlHAO.load(SparqlHAO.QUERY_GET_LISTENER); // load adaptors
-		SparqlHAO.load(SparqlHAO.QUERY_GET_ADAPTOR_WITH_CAPTURE); // load adaptors
+		SparqlHAO.load(SparqlHAO.QUERY_GET_SUBSCRIPTIONS); // load adaptors
 
 		SparqlHAO.getRepository().addRepositoryConnectionListener(listener);
 
@@ -212,6 +216,34 @@ public class SparqlHAO extends AbstractHAO {
 		// fw.close();
 	}
 
+	static void loadRepository() {
+		try {
+			try (RepositoryConnection con = getConnection()) {
+				String[] extensions = new String[] { "rdf", "rdfs" };
+				IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
+				Iterator<File> iter = FileUtils.iterateFiles(new File(SparqlHAO.DIR_LISTENERS), filter, DirectoryFileFilter.DIRECTORY);
+				Resource context = getValueFactory().createIRI(Constants.CONTEXT_VIA);
+				con.clear(context);
+				con.begin();
+				while (iter.hasNext()) {
+					File f = iter.next();
+					logger.debug("Loading file: " + f.getName());
+					con.add(f, null, RDFFormat.RDFXML, context);
+				}
+				con.commit();
+			}
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+		catch (RDF4JException e) {
+			logger.error(e.getMessage(), e);
+		}
+		catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
+
 	public static void load(String queryLabel) {
 		Config.load();
 		try (RepositoryConnection con = getConnection()) {
@@ -303,7 +335,7 @@ public class SparqlHAO extends AbstractHAO {
 											iq.setIri((IRI) bs2.getValue("i_query"));
 											SemanticListener.register(iq);
 											i.setQuery(iq);
-											i.hasSparqlQuery(true);
+											// i.hasSparqlQuery(true);
 										}
 									}
 									catch (QueryEvaluationException qex) {
@@ -342,76 +374,122 @@ public class SparqlHAO extends AbstractHAO {
 							logger.error(iaex.getMessage(), iaex);
 						}
 						break;
+					case SparqlHAO.QUERY_GET_SUBSCRIPTIONS:
+						// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
+						try (TupleQueryResult r2 = data.evaluate()) {
+							Vector<Exception> err = new Vector<Exception>();
+							while (r2.hasNext()) {
+								BindingSet bs2 = r2.next();
+								logger.debug("Listener: " + bs2.getValue("listener"));
+								logger.debug("Pattern: " + bs2.getValue("pattern"));
+								logger.debug("Label: " + bs2.getValue("i_label"));
+								logger.debug("Input Query: " + bs2.getValue("i_query"));
+								logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
+								logger.debug("Notifies: " + bs2.getValue("notifies"));
+								// logger.debug("Config: " + bs2.getValue("config"));
+								// logger.debug("Translator: " + bs2.getValue("translator"));
+								// logger.debug("Log: " + bs2.getValue("log"));
+								// logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
+								// logger.debug("Call: " + bs2.getValue("call"));
+								// logger.debug("Media Type: " + bs2.getValue("mediaType"));
+								// logger.debug("Response Query: " + bs2.getValue("query"));
+
+								// TODO a hack validator in lieu of a better query semantics
+								// if (bs2.getValue("i_query") == null && bs2.getValue("i_label") == null) {
+								// IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("input") + ". via:Input must contain a via:pattern, via:capture_*, or via:query predicate.");
+								// logger.error(ilaex.getMessage(), ilaex);
+								// continue;
+								// }
+
+								if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
+									IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
+									logger.error(ilaex.getMessage(), ilaex);
+									continue;
+								}
+
+								InputProtocol i = new InputProtocol();
+								// if (bs2.getValue("pattern") != null) {
+								// Literal pattern = (Literal) bs2.getValue("pattern");
+								// i.setTrigger(pattern);
+								// i.setDataType(pattern.getDatatype());
+								// if (pattern.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
+								// else i.setPattern(i.getTrigger());
+								// }
+								// i.setLabel((Literal) bs2.getValue("i_label"));
+
+								if (bs2.getValue("capturePropertyType") != null) {
+									String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
+									int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
+									i.setCaptureIndex(captureIndex);
+								}
+
+								// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
+								// EventHandler handler = new EventHandler();
+								// handler.setConfigLabel(bs2.getValue("config").stringValue());
+								// handler.setLog(bs2.getValue("log").stringValue());
+								// handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
+								// if (bs2.getValue("translator") != null) handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
+								// handler.setCall(bs2.getValue("call").stringValue());
+								// i.setEventHandler(handler);
+								//
+								// // if sparql
+								// // Create a new Repo, set its URL to the value o.getCall()
+								// // retrive query resource from repo
+								if (bs2.getValue("i_query") != null) {
+									IRI query = (IRI) bs2.getValue("i_query");
+									TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
+									ipQuery.setBinding("q", query);
+									try (TupleQueryResult r3 = ipQuery.evaluate()) {
+										if (r3.hasNext()) { // expect a single result
+											BindingSet bs3 = r3.next();
+											String queryStr = bs3.getValue("s").stringValue();
+											IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
+											iq.setId(bs2.getValue("i_query").stringValue().hashCode());
+											iq.setLabel(bs2.getValue("i_query_label").stringValue());
+											iq.setIri((IRI) bs2.getValue("i_query"));
+											iq.setOwnerIri((IRI) bs2.getValue("notifies")); // this notifier is a non-EventHandler, see #get_subscriptions query
+											SemanticListener.register(iq);
+											i.setQuery(iq);
+											// i.hasSparqlQuery(true);
+										}
+									}
+									catch (QueryEvaluationException qex) {
+										logger.error(qex.getMessage(), qex);
+									}
+								}
+
+								// if (bs2.getValue("query") != null) {
+								// IRI query = (IRI) bs2.getValue("query");
+								// TupleQuery rpQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
+								// rpQuery.setBinding("q", query);
+								// try (TupleQueryResult r3 = rpQuery.evaluate()) {
+								// if (r3.hasNext()) { // expect a single result
+								// BindingSet bs3 = r3.next();
+								// handler.setSparql(bs3.getValue("s").stringValue());
+								// handler.setRepository(new SPARQLRepository(handler.getCall()));
+								// handler.hasSparqlQuery(true);
+								// }
+								// }
+								// catch (QueryEvaluationException qex) {
+								// logger.error(qex.getMessage(), qex);
+								// }
+								// }
+
+								// do o.setSparql() for the sparql of the query URI
+								// set o.isSparqlEndpoint = true
+
+								getInputs()[getInputsCursor()] = i;
+								incrementInputsCursor();
+							}
+						}
+						catch (QueryEvaluationException qex) {
+							logger.error(qex.getMessage(), qex);
+						}
+						catch (IllegalArgumentException iaex) {
+							logger.error(iaex.getMessage(), iaex);
+						}
+						break;
 					case SparqlHAO.QUERY_GET_ADAPTOR_WITH_CAPTURE:
-						// // data.setBinding("capturePropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/capture"));
-						// try (TupleQueryResult r2 = data.evaluate()) {
-						// while (r2.hasNext()) {
-						// BindingSet bs2 = r2.next();
-						// logger.debug("Adaptor: " + bs2.getValue("adaptor"));
-						// logger.debug("Pattern: " + bs2.getValue("pattern"));
-						// logger.debug("Label: " + bs2.getValue("i_label"));
-						// logger.debug("Input Query: " + bs2.getValue("i_query"));
-						// logger.debug("Config: " + bs2.getValue("config"));
-						// logger.debug("Translator: " + bs2.getValue("translator"));
-						// logger.debug("Log: " + bs2.getValue("log"));
-						// logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
-						// logger.debug("Call: " + bs2.getValue("call"));
-						// logger.debug("Media Type: " + bs2.getValue("mediaType"));
-						//
-						// InputProtocol i = new InputProtocol();
-						// if (bs2.getValue("pattern") != null) {
-						// Literal pattern = (Literal) bs2.getValue("pattern");
-						// i.setTrigger(pattern);
-						// i.setDataType(pattern.getDatatype());
-						// if (pattern.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
-						// else i.setPattern(i.getTrigger());
-						// }
-						// i.setLabel((Literal) bs2.getValue("i_label"));
-						//
-						// if (bs2.getValue("capturePropertyType") != null) {
-						// String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
-						// int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
-						// i.setCaptureIndex(captureIndex);
-						// }
-						//
-						// ResponseProtocol o = new ResponseProtocol();
-						// o.setConfigLabel(bs2.getValue("config").stringValue());
-						// o.setLog(bs2.getValue("log").stringValue());
-						// o.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
-						// if (bs2.getValue("translator") != null) o.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
-						// o.setCall(bs2.getValue("call").stringValue());
-						// i.setResponseProtocol(o);
-						//
-						// if (bs2.getValue("i_query") != null) {
-						// IRI query = (IRI) bs2.getValue("i_query");
-						// TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
-						// ipQuery.setBinding("q", query);
-						// try (TupleQueryResult r3 = ipQuery.evaluate()) {
-						// if (r3.hasNext()) { // expect a single result
-						// BindingSet bs3 = r3.next();
-						// String queryStr = bs3.getValue("s").stringValue();
-						// i.setQueryId(queryStr);
-						// con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr);
-						// IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
-						// SemanticListener.register(iq);
-						// i.hasSparqlQuery(true);
-						// }
-						// }
-						// catch (QueryEvaluationException qex) {
-						// logger.error(qex.getMessage(), qex);
-						// }
-						// }
-						//
-						// getInputs()[getInputsCursor()] = i;
-						// incrementInputsCursor();
-						// }
-						// }
-						// catch (QueryEvaluationException qex) {
-						// logger.error(qex.getMessage(), qex);
-						// }
-						// catch (IllegalArgumentException iaex) {
-						// logger.error(iaex.getMessage(), iaex);
-						// }
 						break;
 					case SparqlHAO.QUERY_GET_ADAPTOR_OUTPUT:
 						try (TupleQueryResult r2 = data.evaluate()) {
@@ -474,35 +552,13 @@ public class SparqlHAO extends AbstractHAO {
 	}
 
 	public static void main(String[] args) {
-		// repo.initialize();
-
-		// File file = new File("/path/to/example.rdf");
-		// String baseURI = "http://example.org/example/local";
-
-		// catch (IOException e) {
-		// // handle io exception
-		// }
 	}
 
-	private static void loadRepository() {
-		ValueFactory vf = SparqlHAO.getRepository().getValueFactory();
+	public static void addToRepository(Iterable<Statement> i, Resource context) {
 		try {
 			try (RepositoryConnection con = getConnection()) {
-				String baseDir = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/";
-				String[] extensions = new String[] { "rdf", "rdfs" };
-				IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
-				Iterator<File> iter = FileUtils.iterateFiles(new File(baseDir), filter, DirectoryFileFilter.DIRECTORY);
-				Resource context = vf.createIRI("http://tryrudi.io/rdf/demo/");
-				con.clear(context);
 				con.begin();
-				while (iter.hasNext()) {
-					File f = iter.next();
-					// con.add(file, baseURI, RDFFormat.RDFXML);
-					// URL url = new
-					// URL("http://example.org/example/remote.rdf");
-					logger.debug("Loading file: " + f.getName());
-					con.add(f, null, RDFFormat.RDFXML, context);
-				}
+				con.add(i, context);
 				con.commit();
 			}
 			catch (Exception e) {
@@ -517,12 +573,28 @@ public class SparqlHAO extends AbstractHAO {
 		}
 	}
 
-	public static void addToRepository(String filePathStr, String contextStr) {
-		ValueFactory vf = SparqlHAO.getRepository().getValueFactory();
+	public static void addToRepository(Statement st, Resource context) {
 		try {
 			try (RepositoryConnection con = getConnection()) {
-				Resource context = vf.createIRI(contextStr);
-				con.clear(context);
+				con.begin();
+				con.add(st, context);
+				con.commit();
+			}
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+		catch (RDF4JException e) {
+			logger.error(e.getMessage(), e);
+		}
+		catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
+
+	public static void addToRepository(String filePathStr, Resource context) {
+		try {
+			try (RepositoryConnection con = getConnection()) {
 				con.begin();
 				File f = new File(filePathStr);
 				con.add(f, null, RDFFormat.RDFXML, context);

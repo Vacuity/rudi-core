@@ -7,9 +7,9 @@ package ai.vacuity.rudi.adaptors.interfaces;
  *
  */
 public interface ITemplateProcessor {
-	public void process(String template, String input);
+	public void process(String template, IEvent input);
 
 	public String getTemplate();
 
-	public String getInput();
+	public IEvent getEvent();
 }

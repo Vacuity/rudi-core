@@ -1,4 +1,4 @@
-package ai.vacuity.rudi.adaptors.hal.hao;
+package ai.vacuity.rudi.adaptors.bo;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
@@ -6,12 +6,15 @@ import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.Dataset;
 import org.eclipse.rdf4j.query.Query;
 
-public class IndexableQuery implements Query {
+import ai.vacuity.rudi.adaptors.interfaces.IEvent;
+
+public class IndexableQuery implements Query, IEvent {
 
 	Query delegate = null;
 	int id = 0;
 	String label = "";
 	IRI iri = null;
+	IRI notifies = null;
 
 	public IndexableQuery(Query delegate) {
 		this.delegate = delegate;
@@ -90,20 +93,54 @@ public class IndexableQuery implements Query {
 		this.id = id;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ai.vacuity.rudi.adaptors.bo.Indexable#getLabel()
+	 */
+	@Override
 	public String getLabel() {
 		return label;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ai.vacuity.rudi.adaptors.bo.Indexable#setLabel(java.lang.String)
+	 */
+	@Override
 	public void setLabel(String label) {
 		this.label = label;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ai.vacuity.rudi.adaptors.bo.Indexable#getIri()
+	 */
+	@Override
 	public IRI getIri() {
 		return iri;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ai.vacuity.rudi.adaptors.bo.Indexable#setIri(org.eclipse.rdf4j.model.IRI)
+	 */
+	@Override
 	public void setIri(IRI iri) {
 		this.iri = iri;
+	}
+
+	@Override
+	public IRI getOwnerIri() {
+		return this.notifies;
+	}
+
+	@Override
+	public void setOwnerIri(IRI notifies) {
+		this.notifies = notifies;
 	}
 
 }

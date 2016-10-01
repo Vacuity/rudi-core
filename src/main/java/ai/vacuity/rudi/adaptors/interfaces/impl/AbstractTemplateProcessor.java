@@ -24,17 +24,18 @@ import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
+import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateProcessor;
 
 public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 
 	protected String template;
-	protected String target;
+	protected IEvent event;
 
 	@Override
-	public void process(String template, String target) {
+	public void process(String template, IEvent event) {
 		this.template = template;
-		this.target = target;
+		this.event = event;
 	}
 
 	@Override
@@ -43,8 +44,8 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 	}
 
 	@Override
-	public String getInput() {
-		return this.target;
+	public IEvent getEvent() {
+		return this.event;
 	}
 
 	/**
@@ -52,18 +53,18 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 	 * 
 	 * @param ip
 	 *            the InputProtocol describing the match criteria
-	 * @param input
+	 * @param event
 	 *            the input to match
 	 * @param template
 	 *            the template associated with the response protocol
 	 * @return
 	 */
-	public static String process(InputProtocol ip, String input, String template) {
+	public static String process(InputProtocol ip, IEvent event, String template) {
 		// 1. swap captured groups' placeholders first
 		// FIRST MATCH GATE
 		boolean found = false;
 		if (ip.getDataType().equals(InputProtocol.PARSE_TYPE_REGEX) && ip.getPattern() instanceof Pattern) {
-			Matcher matcher = ((Pattern) ip.getPattern()).matcher(input);
+			Matcher matcher = ((Pattern) ip.getPattern()).matcher(event.getLabel());
 			while (matcher.find()) {
 				if (!found) {
 					SparqlHAO.logger.debug("Match: " + ip.getTrigger().stringValue());
@@ -81,7 +82,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 		// SECOND MATCH GATE
 		if (ip.getDataType().equals(SparqlHAO.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/URL"))) {
 			try {
-				new URL(input);
+				new URL(event.getLabel());
 				found = true;
 			}
 			catch (MalformedURLException mfuex) {
@@ -90,7 +91,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 		}
 		if (ip.getDataType().equals(SparqlHAO.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
 			try {
-				SparqlHAO.getValueFactory().createIRI(input);
+				SparqlHAO.getValueFactory().createIRI(event.getLabel());
 				found = true;
 			}
 			catch (IllegalArgumentException iaex) {
@@ -99,7 +100,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 		}
 		if (ip.getDataType().equals(SparqlHAO.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
 			try {
-				Integer.parseInt(input);
+				Integer.parseInt(event.getLabel());
 				found = true;
 			}
 			catch (NumberFormatException nfex) {
@@ -123,13 +124,13 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 		// TODO should the log include the unprocessed placeholder value?
 
 		if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasTemplateProcessor()) {
-			Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(template, input);
+			Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(template, event);
 			template = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getTemplate();
 
 			// allow the template processor to transform user input prior to user input being filled in template
-			input = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getInput();
+			event = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getEvent();
 		}
-		if (StringUtils.isNotBlank(template)) template = template.replace("${" + ip.getCaptureIndex() + "}", input);
+		if (StringUtils.isNotBlank(template)) template = template.replace("${" + ip.getCaptureIndex() + "}", event.getLabel());
 
 		// 3. swap any remaining reserved placed holders
 		if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasKey()) template = template.replace("${key}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getKey());
@@ -223,10 +224,10 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 					// log the hit
 					IRI hit = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
 					IRI rdf_type = SparqlHAO.getValueFactory().createIRI(Constants.NS_RDF, "type");
-					IRI via_Hit = SparqlHAO.getValueFactory().createIRI(Constants.NS_RDF, "type");
-					IRI via_index = SparqlHAO.getValueFactory().createIRI(Constants.NS_RDF, "index");
-					IRI via_value = SparqlHAO.getValueFactory().createIRI(Constants.NS_RDF, "value");
-					IRI via_query = SparqlHAO.getValueFactory().createIRI(Constants.NS_RDF, "query");
+					IRI via_Hit = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "Hit");
+					IRI via_index = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "index");
+					IRI via_value = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "value");
+					IRI via_query = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "query");
 					Literal valueLit = SparqlHAO.getValueFactory().createLiteral(Integer.parseInt(name));
 
 					tuples.add(SparqlHAO.getValueFactory().createStatement(hit, rdf_type, via_Hit));
@@ -235,21 +236,21 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 					tuples.add(SparqlHAO.getValueFactory().createStatement(hit, via_value, captures.getValue(name)));
 				}
 			}
-			Resource context = SparqlHAO.getRepository().getValueFactory().createIRI("http://tryrudi.io/rdf/demo/");
-			SparqlHAO.getRepository().getConnection().begin();
-			SparqlHAO.getRepository().getConnection().add(tuples, context);
-			SparqlHAO.getRepository().getConnection().commit();
+			if (tuples.size() > 0) {
+				Resource context = SparqlHAO.getRepository().getValueFactory().createIRI("http://tryrudi.io/rdf/demo/");
+				SparqlHAO.addToRepository(tuples, context);
+			}
 		}
 		catch (NumberFormatException nfex) {
 			return null;
 		}
 
 		if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasTemplateProcessor()) {
-			Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(template, ip.getQuery().getLabel());
+			Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(template, ip.getQuery());
 			template = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getTemplate();
 
 			// allow the template processor to transform user input prior to user input being filled in template
-			ip.getQuery().setLabel(Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getInput());
+			ip.getQuery().setLabel(Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getEvent().getLabel());
 		}
 		if (StringUtils.isNotBlank(template)) template = template.replace("${" + ip.getCaptureIndex() + "}", ip.getQuery().getLabel());
 

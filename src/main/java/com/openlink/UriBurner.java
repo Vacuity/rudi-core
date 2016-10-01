@@ -1,13 +1,14 @@
 package com.openlink;
 
+import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateProcessor;
 
 public class UriBurner extends AbstractTemplateProcessor {
 
 	@Override
-	public void process(String template, String target) {
+	public void process(String template, IEvent target) {
 		super.process(template, target);
-		this.target = target.replace("://", "/");
+		this.event.setLabel(target.getLabel().replace("://", "/"));
 		// this.target = URLEncoder.encode(this.target);
 	}
 
@@ -17,7 +18,7 @@ public class UriBurner extends AbstractTemplateProcessor {
 	}
 
 	@Override
-	public String getInput() {
-		return this.target;
+	public IEvent getEvent() {
+		return this.event;
 	}
 }

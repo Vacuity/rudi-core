@@ -35,6 +35,7 @@ import org.eclipse.rdf4j.repository.event.RepositoryConnectionListener;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
 import org.slf4j.LoggerFactory;
 
+import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 
 public class SemanticListener implements RepositoryConnectionListener {
@@ -49,7 +50,7 @@ public class SemanticListener implements RepositoryConnectionListener {
 	static {
 		SemanticListener.getRepository().initialize();
 		try (RepositoryConnection con = SemanticListener.getRepository().getConnection()) {
-			Resource context = con.getValueFactory().createIRI("http://tryrudi.io/rdf/demo/");
+			Resource context = con.getValueFactory().createIRI(Constants.CONTEXT_DEMO);
 			con.clear(context);
 
 			File dir = new File(indexDir);

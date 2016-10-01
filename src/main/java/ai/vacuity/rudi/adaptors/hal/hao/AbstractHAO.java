@@ -1,11 +1,12 @@
 package ai.vacuity.rudi.adaptors.hal.hao;
 
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
+import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 
 public class AbstractHAO {
 	static String call = null;
 	static InputProtocol inputProtocol = null;
-	static String input = null;
+	static IEvent event = null;
 
 	public String getCall() {
 		return call;
@@ -23,12 +24,12 @@ public class AbstractHAO {
 		this.inputProtocol = inputProtocol;
 	}
 
-	public String getInput() {
-		return input;
+	public IEvent getEvent() {
+		return event;
 	}
 
-	public void setInput(String input) {
-		this.input = input;
+	public void setEvent(IEvent input) {
+		this.event = input;
 	}
 
 	public void run() {
