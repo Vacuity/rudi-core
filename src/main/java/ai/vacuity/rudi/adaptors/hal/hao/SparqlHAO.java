@@ -26,6 +26,7 @@ import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.event.base.NotifyingRepositoryWrapper;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
@@ -42,17 +43,15 @@ import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 
 public class SparqlHAO extends AbstractHAO {
-	static final String DIR_LISTENERS = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/listeners/";
-
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(SparqlHAO.class);
 
 	// static String sparqlEndpoint = "http://www.tryrudi.io/sparql";
 	// static Repository repo = new SPARQLRepository(sparqlEndpoint);
-	final static File dataDir = new File("/users/smonroe/data");
-	final static String indexes = "spoc,posc,cosp";
+	// final static File dataDir = new File(Constants.DIR_ALERTS);
+	// final static String indexes = "spoc,posc,cosp";
 	// static Repository repo = new SailRepository(new
 	// ForwardChainingRDFSInferencer(new NativeStore(dataDir, indexes)));
-	final static NotifyingRepositoryWrapper repository = new NotifyingRepositoryWrapper(new HTTPRepository("http://localhost:8080/rdf4j-server", "rudi"));
+	final static NotifyingRepositoryWrapper repository = new NotifyingRepositoryWrapper(SparqlHAO.parseSPARQLRepository(Constants.SPARQL_ENDPOINT_VIA));
 	final static SemanticListener listener = new SemanticListener();
 	static final HashMap<String, TupleQuery> queries = new HashMap<String, TupleQuery>();
 
@@ -221,7 +220,7 @@ public class SparqlHAO extends AbstractHAO {
 			try (RepositoryConnection con = getConnection()) {
 				String[] extensions = new String[] { "rdf", "rdfs" };
 				IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
-				Iterator<File> iter = FileUtils.iterateFiles(new File(SparqlHAO.DIR_LISTENERS), filter, DirectoryFileFilter.DIRECTORY);
+				Iterator<File> iter = FileUtils.iterateFiles(new File(Constants.DIR_LISTENERS), filter, DirectoryFileFilter.DIRECTORY);
 				Resource context = getValueFactory().createIRI(Constants.CONTEXT_VIA);
 				con.clear(context);
 				con.begin();
@@ -272,6 +271,7 @@ public class SparqlHAO extends AbstractHAO {
 								logger.debug("Label: " + bs2.getValue("i_label"));
 								logger.debug("Input Query: " + bs2.getValue("i_query"));
 								logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
+								logger.debug("Event Handler: " + bs2.getValue("output"));
 								logger.debug("Config: " + bs2.getValue("config"));
 								logger.debug("Translator: " + bs2.getValue("translator"));
 								logger.debug("Log: " + bs2.getValue("log"));
@@ -314,6 +314,7 @@ public class SparqlHAO extends AbstractHAO {
 								handler.setConfigLabel(bs2.getValue("config").stringValue());
 								handler.setLog(bs2.getValue("log").stringValue());
 								handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
+								handler.setIri((IRI) bs2.getValue("output"));
 								if (bs2.getValue("translator") != null) handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
 								handler.setCall(bs2.getValue("call").stringValue());
 								i.setEventHandler(handler);
@@ -610,5 +611,21 @@ public class SparqlHAO extends AbstractHAO {
 		catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * Kept getting "Missing parameter: query" error on commits to rdf4j repos configured with SPARQLRepository. This method configures rdf4j URLs to use HTTPRepository instead.
+	 * 
+	 * See this post: https://groups.google.com/forum/#!searchin/rdf4j-users/"Missing$20parameter$3A$20query"|sort:relevance/rdf4j-users/7hS_U8MzXpI/osJNrzmfBQAJ
+	 * 
+	 * @param url
+	 * @return a Repository appropriate for the given URL
+	 */
+	public static Repository parseSPARQLRepository(String url) {
+		String rdf4jPathIndicator = "rdf4j-server/repositories";
+		if (url.indexOf(rdf4jPathIndicator) > 0) {
+			return new HTTPRepository(url);
+		}
+		else return new SPARQLRepository(url);
 	}
 }

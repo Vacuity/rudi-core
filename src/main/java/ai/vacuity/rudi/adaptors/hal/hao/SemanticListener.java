@@ -32,7 +32,6 @@ import org.eclipse.rdf4j.query.parser.sparql.SPARQLParserFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.event.RepositoryConnectionListener;
-import org.eclipse.rdf4j.repository.http.HTTPRepository;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
@@ -41,10 +40,10 @@ import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 public class SemanticListener implements RepositoryConnectionListener {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(SemanticListener.class);
 
-	final static String indexDir = File.separator + "Users" + File.separator + "smonroe" + File.separator + "rudi" + File.separator + "alerts" + File.separator + "index" + File.separator;
-	final static String queueDir = File.separator + "Users" + File.separator + "smonroe" + File.separator + "rudi" + File.separator + "alerts" + File.separator + "queue" + File.separator;
+	final static String indexDir = Constants.DIR_ALERTS + "index" + File.separator;
+	final static String queueDir = Constants.DIR_ALERTS + "queue" + File.separator;
 
-	final static Repository repository = new HTTPRepository("http://localhost:8080/rdf4j-server", "alerts");
+	final static Repository repository = SparqlHAO.parseSPARQLRepository(Constants.SPARQL_ENDPOINT_ALERTS);
 	private final static HashMap<Value, Vector<IndexableQuery>> map = new HashMap<Value, Vector<IndexableQuery>>();
 
 	static {
@@ -70,7 +69,7 @@ public class SemanticListener implements RepositoryConnectionListener {
 	private static final int ITERATIONS = 5;
 	private static final double MEG = (Math.pow(1024, 2));
 	private static final int RECORD_COUNT = 4000000;
-	private static final String RECORD = "Help I am trapped in a fortune cookie factory\n";
+	private static final String RECORD = "Some test text\n";
 	private static final int RECSIZE = RECORD.getBytes().length;
 
 	public static void main(String[] args) throws Exception {

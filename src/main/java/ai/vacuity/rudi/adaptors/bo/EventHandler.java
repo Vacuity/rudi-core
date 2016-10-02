@@ -1,5 +1,6 @@
 package ai.vacuity.rudi.adaptors.bo;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.Repository;
 
 import com.google.api.client.http.GenericUrl;
@@ -12,6 +13,7 @@ public class EventHandler {
 	HttpRequest request = null;
 	String call = "";
 	MediaType contentType = null;
+	IRI iri = null;
 
 	Repository repository = null;
 	String sparql = null;
@@ -95,6 +97,14 @@ public class EventHandler {
 
 	public void hasSparqlQuery(boolean isSparqlQuery) {
 		this.hasSparqlQuery = isSparqlQuery;
+	}
+
+	public IRI getIri() {
+		return iri;
+	}
+
+	public void setIri(IRI iri) {
+		this.iri = iri;
 	}
 
 }

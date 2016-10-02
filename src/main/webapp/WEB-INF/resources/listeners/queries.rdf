@@ -11,7 +11,7 @@
 <![CDATA[
 PREFIX via: <http://www.vacuity.ai/onto/via/1.0/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?capturePropertyType ?config ?translator ?log ?replyTypeProp ?call ?mediaType ?query where {
+select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?output ?capturePropertyType ?config ?translator ?log ?replyTypeProp ?call ?mediaType ?query where {
   
   ?listener rdf:type via:Listener .
   ?listener via:event ?input .
@@ -193,4 +193,15 @@ select ?s ?p ?o where {?s ?p ?o .}
 		</via:sparql>
 	</via:TupleQuery>
 	
+	
+	<via:TupleQuery rdf:about="#get_channels">
+		<rdfs:label>get_channels</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+select ?s ?p ?o where {?s ?p ?o .}
+]]>
+		</via:sparql>
+	</via:TupleQuery>
+	
+		
 </rdf:RDF>

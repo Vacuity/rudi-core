@@ -19,6 +19,7 @@ import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
@@ -28,6 +29,7 @@ import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateProcessor;
 
 public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(AbstractTemplateProcessor.class);
 
 	protected String template;
 	protected IEvent event;
@@ -205,12 +207,21 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 		// 2. run the call processor (give customer processors priority over system processor)
 		// TODO should the log include the unprocessed placeholder value?
 		String query = ip.getQuery().getDelegate().toString().replace("\n", "").replace("\t", "");
+
+		Resource context = ip.getQuery().getOwnerIri();
+		if (context == null) context = ip.getEventHandler().getIri();
+		if (context == null) context = SparqlHAO.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
+
+		// TODO need OO insertion
+		// query = query.replace("where {", "from named <" + context.stringValue() + "> where {");
+		// logger.debug("The Query: " + query);
+
 		TupleQuery alertQuery = SparqlHAO.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, query);
-		// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
+		alertQuery.setBinding("context", context);
 		try (TupleQueryResult alerts = alertQuery.evaluate()) {
 			if (!alerts.hasNext()) return null;
 			Vector<Statement> tuples = new Vector<Statement>();
-			while (alerts.hasNext()) {
+			for (int j = 0; alerts.hasNext(); j++) {
 				BindingSet captures = alerts.next();
 				Iterator<String> capture_names = captures.getBindingNames().iterator();
 				while (capture_names.hasNext()) {
@@ -218,6 +229,8 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 					String value = captures.getValue(name).stringValue();
 					if (value == null) value = "-- null value --";
 					if (StringUtils.isNotBlank(template)) template = template.replace("${" + name + "}", value);
+
+					logger.debug("SPARQL Capture Value (" + name + "." + j + "): " + value);
 
 					UUID uuid = UUID.randomUUID();
 
@@ -237,7 +250,6 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				}
 			}
 			if (tuples.size() > 0) {
-				Resource context = SparqlHAO.getRepository().getValueFactory().createIRI("http://tryrudi.io/rdf/demo/");
 				SparqlHAO.addToRepository(tuples, context);
 			}
 		}

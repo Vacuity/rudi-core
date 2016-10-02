@@ -1,6 +1,7 @@
 package ai.vacuity.rudi.adaptors.controller;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.UUID;
 
 import org.eclipse.rdf4j.model.IRI;
@@ -25,21 +26,25 @@ public class BaseController {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(BaseController.class);
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public String welcome(@RequestParam("q") String query, ModelMap model) {
-		UUID userId = UUID.randomUUID();
+	public String welcome(@RequestParam("q") String q, ModelMap model) {
 		UUID channelId = UUID.randomUUID();
-		IRI user = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI + "smonroe");
+		IRI user = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI + "anon");
 		IRI channel = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
-		IndexableInput ii = new IndexableInput(user, channel, query);
+		IndexableInput input = new IndexableInput(user, channel, q);
 
 		try {
-			DispatchService.dispatch(ii);
+			DispatchService.dispatch(input);
 		}
 		catch (IOException e) {
 			logger.error(e.getMessage(), e);
 		}
 
-		return welcomeName("<a href=\"http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.rdf\">API Response</a>", model);
+		// String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
+		// String link = String.format("%s/query?action=exec&queryLn=SPARQL&query=%s&limit_query=100&infer=true&", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(describeChannel));
+
+		String link = String.format("%s/explore?resource=<%s>", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(channel.stringValue()));
+
+		return welcomeName("<h3>Channel ID: <a href=\"" + channel.stringValue() + "\"/>" + channel.stringValue() + "</a></h3><br/>Explore the <a href=\"" + link + "\">Index</a> for data linked to your channel id.", model);
 
 		// model.addAttribute("message", "Welcome");
 		// model.addAttribute("counter", ++counter);
@@ -54,8 +59,8 @@ public class BaseController {
 	public String welcomeName(@PathVariable String name, ModelMap model) {
 
 		model.addAttribute("message", name);
-		model.addAttribute("counter", ++counter);
-		logger.debug("[welcomeName] counter : {}", counter);
+		// model.addAttribute("counter", ++counter);
+		// logger.debug("[welcomeName] counter : {}", counter);
 		return VIEW_INDEX;
 
 	}

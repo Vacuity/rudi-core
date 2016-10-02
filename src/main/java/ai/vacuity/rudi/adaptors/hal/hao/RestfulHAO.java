@@ -34,7 +34,6 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
-import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 
 /**
  *
@@ -71,7 +70,7 @@ public class RestfulHAO extends AbstractHAO {
 		return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" + "<root>\n" + XML.toString(new JSONObject(json)) + "</root>\n";
 	}
 
-	public static void transform(String json, String xslt) throws TransformerConfigurationException, TransformerException, IOException {
+	public static void transform(String json, String xslt, String host) throws TransformerConfigurationException, TransformerException, IOException {
 
 		logger.debug("Retrieved JSON:\n" + json);
 		String xml = transform(json);
@@ -87,9 +86,13 @@ public class RestfulHAO extends AbstractHAO {
 		StringReader srxml = new StringReader(xml);
 		UUID uuid = UUID.randomUUID();
 
-		String filePathStr = xslt.replace(".xsl", "-" + uuid + ".rdf").replace("http://localhost:8080/rudi-adaptors/a/", SparqlHAO.DIR_LISTENERS);
-		String fxmlStr = xslt.replace(".xsl", "-" + uuid + ".xml").replace("http://localhost:8080/rudi-adaptors/a/", SparqlHAO.DIR_LISTENERS);
+		String filePathStr = Constants.DIR_RESPONSES + host + File.separator + uuid + ".rdf";
+		String fxmlStr = Constants.DIR_RESPONSES + host + File.separator + uuid + ".xml";
+
 		File fxml = new File(fxmlStr);
+		if (!fxml.getParentFile().exists()) {
+			fxml.getParentFile().mkdirs();
+		}
 		FileWriter fw = new FileWriter(fxml);
 		fw.write(xml);
 		fw.close();
@@ -153,16 +156,22 @@ public class RestfulHAO extends AbstractHAO {
 			String xslt = null;
 			if (inputProtocol.getEventHandler().hasTranslator()) {
 				xslt = inputProtocol.getEventHandler().getTranslator().build();
-				transform(resp, xslt);
+				transform(resp, xslt, response.getRequest().getUrl().getHost());
 			}
 			else {
 				UUID uuid = UUID.randomUUID();
-				String fxmlStr = SparqlHAO.DIR_LISTENERS + response.getRequest().getUrl().getHost() + "-" + uuid + ".rdf";
+				String fxmlStr = Constants.DIR_RESPONSES + response.getRequest().getUrl().getHost() + File.separator + uuid + ".rdf";
 				File fxml = new File(fxmlStr);
+				if (!fxml.getParentFile().exists()) {
+					fxml.getParentFile().mkdirs();
+				}
 				fxml.createNewFile();
 				FileWriter fw = new FileWriter(fxml);
 				fw.write(resp);
 				fw.close();
+
+				SparqlHAO.addToRepository(fxmlStr, event.getIri());
+
 			}
 		}
 		catch (TransformerException tex) {

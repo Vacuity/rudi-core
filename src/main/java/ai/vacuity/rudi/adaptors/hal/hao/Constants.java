@@ -1,5 +1,9 @@
 package ai.vacuity.rudi.adaptors.hal.hao;
 
+import java.io.File;
+
+import ai.vacuity.rudi.adaptors.bo.Config;
+
 public class Constants {
 
 	/*
@@ -32,5 +36,12 @@ public class Constants {
 	public final static String NS_FREE = "http://freebase.com/";
 	public static final String CONTEXT_DEMO = "http://tryrudi.io/rdf/demo/";
 	public static final String CONTEXT_VIA = "http://tryrudi.io/rdf/via/";
+	public static final String DIR_LISTENERS = (Config.getSettings().containsKey("rudi.data")) ? Config.getSettings().getProperty("rudi.data") + "listeners/" : System.getProperty("user.home") + File.separator + "listeners/";
+	public static final String DIR_RESPONSES = (Config.getSettings().containsKey("rudi.data")) ? Config.getSettings().getProperty("rudi.data") + "responses/" : System.getProperty("user.home") + File.separator + "responses/";
+	public static final String DIR_ALERTS = (Config.getSettings().containsKey("rudi.data")) ? Config.getSettings().getProperty("rudi.data") + "data/" : System.getProperty("user.home") + File.separator + "alerts/";
+
+	public static final String SPARQL_ENDPOINT_VIA = Config.getSettings().getProperty("rudi.repo.via");
+	public static final String SPARQL_ENDPOINT_ALERTS = Config.getSettings().getProperty("rudi.repo.alerts");
+	public static final String SPARQL_ENDPOINT_RESPONSES = Config.getSettings().getProperty("rudi.repo.responses");
 
 }
