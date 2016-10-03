@@ -39,26 +39,26 @@ public class BaseController {
 			logger.error(e.getMessage(), e);
 		}
 
-		// String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
+		String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
 		// String link = String.format("%s/query?action=exec&queryLn=SPARQL&query=%s&limit_query=100&infer=true&", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(describeChannel));
 
 		String link = String.format("%s/explore?resource=<%s>", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(channel.stringValue()));
+		model.addAttribute("channel", channel.stringValue());
+		model.addAttribute("link", link);
 
-		return welcomeName("<h3>Channel ID: <a href=\"" + channel.stringValue() + "\"/>" + channel.stringValue() + "</a></h3><br/>Explore the <a href=\"" + link + "\">Index</a> for data linked to your channel id.", model);
+		// return welcomeName("<h3>Channel ID: <a href=\"" + channel.stringValue() + "\"/>" + channel.stringValue() + "</a></h3><br/>Explore the <a href=\"" + link + "\">Index</a> for data linked to your channel id.", model);
 
-		// model.addAttribute("message", "Welcome");
-		// model.addAttribute("counter", ++counter);
 		// logger.debug("[welcome] counter : {}", counter);
 		//
 		// // Spring uses InternalResourceViewResolver and return back index.jsp
-		// return VIEW_INDEX;
+		return VIEW_INDEX;
 
 	}
 
 	@RequestMapping(value = "/{name}", method = RequestMethod.GET)
 	public String welcomeName(@PathVariable String name, ModelMap model) {
 
-		model.addAttribute("message", name);
+		// model.addAttribute("message", name);
 		// model.addAttribute("counter", ++counter);
 		// logger.debug("[welcomeName] counter : {}", counter);
 		return VIEW_INDEX;

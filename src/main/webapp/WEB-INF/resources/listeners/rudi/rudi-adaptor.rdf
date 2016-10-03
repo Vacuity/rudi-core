@@ -80,7 +80,7 @@
  	<!-- Sponger Output -->
  	<via:EventHandler rdf:about="#virtuoso-sponger">
  		<via:config>uriburner</via:config>
- 		<via:rdf rdf:resource="http://linkeddata.uriburner.com/sparql?default-graph-uri=${0}&amp;query=DESCRIBE%20%3Chttp%3A%2F%2Flinkeddata.uriburner.com%2Fabout%2Fid%2FentIPy%2F${0}%3E&amp;output=application%2Frdf%2Bxml"/>
+ 		<via:rdf rdf:resource="http://myrudi.io/sparql?default-graph-uri=${0}&amp;query=DESCRIBE%20%3Chttp%3A%2F%2Flinkeddata.uriburner.com%2Fabout%2Fid%2FentIPy%2F${0}%3E&amp;output=application%2Frdf%2Bxml"/>
  		<via:log>Collecting hyperdata for '${0}' using Virtuoso Sponger</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>
@@ -88,7 +88,7 @@
  	<via:EventHandler rdf:about="#virtuoso-sponger-sparql">
  		<via:config>uriburner</via:config>
  		<via:log>Collecting hyperdata for '${0}' using Virtuoso Sponger SPARQL endpoint</via:log> 		
- 		<via:rdf rdf:resource="http://linkeddata.uriburner.com/sparql"/>
+ 		<via:rdf rdf:resource="http://myrudi.io/sparql"/>
  		<via:query rdf:resource="#describe"/>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>
@@ -112,10 +112,13 @@
 <![CDATA[
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
-select ?0 ?1 ?2 where {
-	?0 rdf:type <http://www.w3.org/ns/ma-ont/VideoTrack> .
-	?0 dc:title ?1 .
-	?0 dc:description ?2 .
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+select ?0 ?1 ?2 ?context where {
+	graph ?context {
+		?0 rdf:type <http://www.w3.org/ns/ma-ont/VideoTrack> .
+		?0 dc:title ?1 .
+		?0 dc:description ?2 .
+	}
 }
 ]]>
 		</via:sparql>
@@ -126,7 +129,7 @@ select ?0 ?1 ?2 where {
  	<via:Listener rdf:about="#test-query-listener-2">
  		<rdfs:comment>SPARQL Listener example (send email)</rdfs:comment>
  		<rdfs:label>SPARQL Listener example (send email)</rdfs:label>
- 		<via:event rdf:resource="#get_videos"/>
+ 		<via:event rdf:resource="#get_videos-hold"/>
 		<via:notify rdf:resource="#smonroe"/>
  	</via:Listener>
  	

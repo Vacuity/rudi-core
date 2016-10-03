@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,7 @@ public class DispatchService {
 	}
 
 	// TODO need to merge this with the other dispatch() method
-	public static void dispatch(int id) throws IOException, IllegalArgumentException {
+	public static void dispatch(int id, Resource context) throws IOException, IllegalArgumentException {
 		find_matches: for (InputProtocol ip : SparqlHAO.getInputs()) {
 			if (ip == null) break;
 			if (!ip.hasSparqlQuery()) continue; // only match alerts
@@ -61,17 +62,17 @@ public class DispatchService {
 
 				if (ip.getEventHandler().hasSparqlQuery()) {
 					call = ip.getEventHandler().getSparql();
-					call = AbstractTemplateProcessor.process(ip, id, call);
+					call = AbstractTemplateProcessor.process(ip, id, call, context);
 					hao = new SparqlHAO();
 				}
 				else {
-					call = AbstractTemplateProcessor.process(ip, id, call);
+					call = AbstractTemplateProcessor.process(ip, id, call, context);
 					hao = new RestfulHAO();
 				}
 				if (call == null) continue find_matches;
 
 				String log = ip.getEventHandler().getLog();
-				log = AbstractTemplateProcessor.process(ip, id, log);
+				log = AbstractTemplateProcessor.process(ip, id, log, context);
 				logger.debug("[Rudi]: " + log);
 
 				hao.setCall(call);

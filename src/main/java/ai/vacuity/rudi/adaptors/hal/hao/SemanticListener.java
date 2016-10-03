@@ -35,9 +35,10 @@ import org.eclipse.rdf4j.repository.event.RepositoryConnectionListener;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
+import ai.vacuity.rudi.adaptors.bo.Tuple;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 
-public class SemanticListener implements RepositoryConnectionListener {
+public class SemanticListener extends Thread implements RepositoryConnectionListener {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(SemanticListener.class);
 
 	final static String indexDir = Constants.DIR_ALERTS + "index" + File.separator;
@@ -45,6 +46,12 @@ public class SemanticListener implements RepositoryConnectionListener {
 
 	final static Repository repository = SparqlHAO.parseSPARQLRepository(Constants.SPARQL_ENDPOINT_ALERTS);
 	private final static HashMap<Value, Vector<IndexableQuery>> map = new HashMap<Value, Vector<IndexableQuery>>();
+
+	Vector<Tuple> tuples = new Vector<Tuple>();
+
+	public SemanticListener() {
+		start(); // start responding to heard triples
+	}
 
 	static {
 		SemanticListener.getRepository().initialize();
@@ -90,6 +97,21 @@ public class SemanticListener implements RepositoryConnectionListener {
 			writeBuffered(records, file, 8192);
 			writeBuffered(records, file, (int) MEG);
 			writeBuffered(records, file, 4 * (int) MEG);
+		}
+	}
+
+	@Override
+	public void run() {
+		while (true) {
+			// try {
+			// Thread.sleep(5000);
+			// }
+			// catch (InterruptedException e) {
+			// logger.error(e.getMessage(), e);
+			// }
+			if (getTuples().size() <= 0) continue;
+			add(getTuples().get(0));
+			getTuples().remove(0);
 		}
 	}
 
@@ -206,7 +228,7 @@ public class SemanticListener implements RepositoryConnectionListener {
 				al.add(query.getDelegate().toString());
 				writeBuffered(al, queryQueueRQFile, (int) MEG);
 
-				renew(query.getId());
+				// renew(query.getId());
 			}
 			catch (IOException ioex) {
 				logger.debug(ioex.getMessage(), ioex);
@@ -241,9 +263,13 @@ public class SemanticListener implements RepositoryConnectionListener {
 		// Vector<IndexableQuery> qp = getMap().get(predicate);
 		// Vector<IndexableQuery> qo = getMap().get(object);
 
-		add(subject);
-		add(predicate);
-		add(object);
+		Tuple t = new Tuple();
+		t.setConnection(conn);
+		t.setSubject(subject);
+		t.setPredicate(predicate);
+		t.setObject(object);
+		t.setContexts(contexts);
+		getTuples().add(t);
 
 		// int phash = predicate.hashCode();
 		// int ohash = object.hashCode();
@@ -263,14 +289,28 @@ public class SemanticListener implements RepositoryConnectionListener {
 		// }
 	}
 
-	private void add(Value value) {
+	private void add(Tuple t) {
+		for (Resource context : t.getContexts()) {
+			add(t.getSubject(), context);
+			add(t.getPredicate(), context);
+			add(t.getObject(), context);
+		}
+	}
+
+	private void add(Value value, Resource context) {
 		int shash = value.hashCode();
+		// logger.debug("Hash value: " + shash + " for " + value.stringValue());
 		File indexDirFile = new File(indexDir + shash + File.separator);
 		if (indexDirFile.exists()) {
 			File[] queryLabelHashes = indexDirFile.listFiles();
 			for (File queryLabelHashFile : queryLabelHashes) {
-				File queryQueue = new File(queueDir + queryLabelHashFile.getName() + File.separator + "tar" + File.separator);
-				File queuedValue = new File(queueDir + queryLabelHashFile.getName() + File.separator + "tar" + File.separator + shash);
+				int qhash = Integer.parseInt(queryLabelHashFile.getName());
+				File queryQueue = new File(queueDir + queryLabelHashFile.getName() + File.separator + "tar" + File.separator + context.hashCode() + File.separator);
+				File queuedValue = new File(queueDir + queryLabelHashFile.getName() + File.separator + "tar" + File.separator + context.hashCode() + File.separator + shash);
+				if (!queuedValue.getParentFile().exists()) {
+					queuedValue.getParentFile().mkdirs();
+					renew(qhash, context); // renew the queue
+				}
 				if (queuedValue.exists()) {
 					for (int tries = 10; !queuedValue.delete(); tries--) {
 						if (tries == 0) {
@@ -280,11 +320,10 @@ public class SemanticListener implements RepositoryConnectionListener {
 					if (queryQueue.list() != null && queryQueue.list().length <= 0) {
 						// match found
 						logger.debug("Match found: " + queryLabelHashFile + " for value '" + value.stringValue() + "'");
-						File queryQueueRQFile = new File(queueDir + queryLabelHashFile.getName() + ".rq"); // fetch the query and run it'
-						int qhash = Integer.parseInt(queryLabelHashFile.getName());
+						// File queryQueueRQFile = new File(queueDir + queryLabelHashFile.getName() + ".rq"); // fetch the query and run it'
 
 						try {
-							DispatchService.dispatch(qhash);
+							DispatchService.dispatch(qhash, context);
 						}
 						catch (IllegalArgumentException e) {
 							logger.error(e.getMessage(), e);
@@ -292,20 +331,23 @@ public class SemanticListener implements RepositoryConnectionListener {
 						catch (IOException e) {
 							logger.error(e.getMessage(), e);
 						}
-						renew(qhash); // renew the queue
+						renew(qhash, context); // renew the queue
 					}
+				}
+				else {
+					// logger.debug("Queue doesn't exist: " + context.hashCode() + File.separator + shash + " for " + value.stringValue());
 				}
 			}
 		}
 	}
 
-	public static void renew(int queryLabelHash) {
+	public static void renew(int queryLabelHash, Resource context) {
 		try {
 			File src = new File(queueDir + queryLabelHash + File.separator + "src" + File.separator);
 			if (!src.exists()) return;
 			File[] files = src.listFiles();
 			for (File f : files) {
-				File tar = new File(queueDir + queryLabelHash + File.separator + "tar" + File.separator + f.getName());
+				File tar = new File(queueDir + queryLabelHash + File.separator + "tar" + File.separator + context.hashCode() + File.separator + f.getName());
 				tar.createNewFile();
 				if (!tar.exists()) {
 					logger.error("Could not create tar file: " + tar.getAbsolutePath());
@@ -368,6 +410,14 @@ public class SemanticListener implements RepositoryConnectionListener {
 
 	public static Repository getRepository() {
 		return repository;
+	}
+
+	public Vector<Tuple> getTuples() {
+		return tuples;
+	}
+
+	public void setTuples(Vector<Tuple> tuples) {
+		this.tuples = tuples;
 	}
 
 }

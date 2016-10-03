@@ -9,6 +9,7 @@ public class IndexableInput implements IEvent {
 	private IRI ownerIri = null;
 	private IRI iri = null;
 	private String input = null;
+	private IRI[] called = new IRI[] {};
 
 	public IndexableInput(IRI userIri, IRI iri, String input) {
 		this.input = input;
@@ -42,6 +43,14 @@ public class IndexableInput implements IEvent {
 
 	public void setOwnerIri(IRI userIri) {
 		this.ownerIri = userIri;
+	}
+
+	public IRI[] getCalled() {
+		return called;
+	}
+
+	public void setCalled(IRI[] called) {
+		this.called = called;
 	}
 
 }

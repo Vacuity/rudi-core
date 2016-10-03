@@ -100,7 +100,7 @@ public class RestfulHAO extends AbstractHAO {
 		if (!f.getParentFile().exists()) f.getParentFile().mkdirs();
 		StreamSource in = new StreamSource(srxml);
 		StreamResult out = new StreamResult(f);
-		logger.debug("The generated RDF file is:\n");
+		logger.debug("The generated RDF file is: " + f.getAbsolutePath());
 		transformer.transform(in, out);
 
 		SparqlHAO.addToRepository(filePathStr, event.getIri());
