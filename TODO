@@ -8,3 +8,4 @@ TODO Add support for POST body and Headers
 TODO Implement caching of search results
 TODO Remove hardcoded namespaces, URIs, URLs, filepaths, etc
 TODO Multiple via:label_* elements need to collect in a common InputProtocol, current they each form separate protocols
+TODO Allow multiple <via:notify> per listener
