@@ -317,6 +317,7 @@ public class SparqlHAO extends AbstractHAO {
 								handler.setIri((IRI) bs2.getValue("output"));
 								if (bs2.getValue("translator") != null) handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
 								handler.setCall(bs2.getValue("call").stringValue());
+								// handler.setCall(Config.getSettings().getProperty(handler.getConfigLabel() + Config.PROPERTY_SUFFIX_URL) + bs2.getValue("call").stringValue());
 								i.setEventHandler(handler);
 
 								// if sparql

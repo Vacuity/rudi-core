@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"description": "",
+	"type": "object",
+	"properties": {
+		"q": {
+			"type": "string"
+		},
+		"channelId": {
+			"type": "string"
+		},
+		"ttl": {
+			"type": "integer"
+		},
+		"transactions": {
+			"type": "array",
+			"items": {
+				"$ref": "./transaction"
+			}
+		}
+	},
+	"required": [
+		"q"
+	]
+}

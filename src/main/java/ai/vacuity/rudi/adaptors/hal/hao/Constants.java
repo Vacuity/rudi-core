@@ -44,4 +44,6 @@ public class Constants {
 	public static final String SPARQL_ENDPOINT_ALERTS = Config.getSettings().getProperty("rudi.repo.alerts");
 	public static final String SPARQL_ENDPOINT_RESPONSES = Config.getSettings().getProperty("rudi.repo.responses");
 
+	public static final String RUDI_DOMAIN = Config.getSettings().getProperty("rudi.domain");
+
 }

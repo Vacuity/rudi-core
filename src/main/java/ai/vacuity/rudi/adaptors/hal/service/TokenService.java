@@ -86,25 +86,25 @@ public class TokenService {
 		ServiceUrl url = new ServiceUrl("https://api.dailymotion.com/videos/favorites");
 		url.setFields("id,tags,title,url");
 
-		HttpRequest request = requestFactory.buildGetRequest(url);
-		VideoFeed videoFeed = request.execute().parseAs(VideoFeed.class);
-		if (videoFeed.list.isEmpty()) {
-			logger.debug("No favorite videos found.");
-		}
-		else {
-			if (videoFeed.hasMore) {
-				logger.debug("First ");
-			}
-			logger.debug(videoFeed.list.size() + " favorite videos found:");
-			for (Video video : videoFeed.list) {
-				logger.debug("\n");
-				logger.debug("-----------------------------------------------");
-				logger.debug("ID: " + video.id);
-				logger.debug("Title: " + video.title);
-				logger.debug("Tags: " + video.tags);
-				logger.debug("URL: " + video.url);
-			}
-		}
+		// HttpRequest request = requestFactory.buildGetRequest(url);
+		// VideoFeed videoFeed = request.execute().parseAs(VideoFeed.class);
+		// if (videoFeed.list.isEmpty()) {
+		// logger.debug("No favorite videos found.");
+		// }
+		// else {
+		// if (videoFeed.hasMore) {
+		// logger.debug("First ");
+		// }
+		// logger.debug(videoFeed.list.size() + " favorite videos found:");
+		// for (Video video : videoFeed.list) {
+		// logger.debug("\n");
+		// logger.debug("-----------------------------------------------");
+		// logger.debug("ID: " + video.id);
+		// logger.debug("Title: " + video.title);
+		// logger.debug("Tags: " + video.tags);
+		// logger.debug("URL: " + video.url);
+		// }
+		// }
 	}
 
 	public static void main(String[] args) {
