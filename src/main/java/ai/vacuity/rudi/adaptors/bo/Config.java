@@ -31,7 +31,7 @@ public class Config {
 	final static Properties settings = new Properties();
 	final static Vector<String> labels = new Vector<String>();
 
-	static final String PROPERTY_SUFFIX_URL = "url";
+	public static final String PROPERTY_SUFFIX_URL = "url";
 	static final String PROPERTY_SUFFIX_ID = "id";
 	static final String PROPERTY_SUFFIX_KEY = "key";
 	static final String PROPERTY_SUFFIX_TOKEN = "token";
