@@ -23,6 +23,7 @@
 	</bean>
 	
 	<mvc:resources mapping="/a/**" location="/WEB-INF/resources/listeners/" />
+	<mvc:resources mapping="/js/**" location="/WEB-INF/resources/js/" />
 	<mvc:annotation-driven/>
 
 </beans>

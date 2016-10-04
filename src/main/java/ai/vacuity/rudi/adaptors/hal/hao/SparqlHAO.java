@@ -7,10 +7,6 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOCase;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -219,8 +215,8 @@ public class SparqlHAO extends AbstractHAO {
 		try {
 			try (RepositoryConnection con = getConnection()) {
 				String[] extensions = new String[] { "rdf", "rdfs" };
-				IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
-				Iterator<File> iter = FileUtils.iterateFiles(new File(Constants.DIR_LISTENERS), filter, DirectoryFileFilter.DIRECTORY);
+				// IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
+				Iterator<File> iter = FileUtils.iterateFiles(new File(Constants.DIR_LISTENERS), extensions, true);
 				Resource context = getValueFactory().createIRI(Constants.CONTEXT_VIA);
 				con.clear(context);
 				con.begin();
