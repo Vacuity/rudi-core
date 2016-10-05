@@ -136,11 +136,10 @@ body{
 		        	.attr("width","100")
 		        	.attr("height","100")
 		        	.attr("autocomplete","off")
-	        	    .appendTo($("body")); //main div
-		       		
-		        $('#inp').focus();
+	        	    .appendTo($("body")); //main div		       		
 		        noCursor('inp');
 			}	        
+	        $('#inp').focus();
 		}
 		
 		function getResponse(){	        
@@ -155,19 +154,28 @@ body{
 
 	        $.getJSON( "json?q=" + query, function( data ) {
 	        	
+	        	
+	        	$.each(data.logs, function(i, item) {
+		        	d = document.createElement('div');
+		        	$(d).addClass('response')
+		        	    .html("> " + item)
+			        	.attr("id","channel")
+		        	    .appendTo($("body")); //main div
+	        	});
+	        	
 	        	d = document.createElement('div');
 	        	$(d).addClass('response')
-	        	    .html("Channel Id: <a href='"+data.channelId+"'>" + data.channelId + "</a>")
+	        	    .html("> Channel Id: <a href='"+data.channelId+"'>" + data.channelId + "</a>")
 		        	.attr("id","channel")
 	        	    .appendTo($("body")); //main div
 	        	    
 		        d = document.createElement('div');
 	        	$(d).addClass('response')
 		        	.attr("id","link")
-	        	    .html("<p>Explore the <a href='" + data.link + "'>Index</a> for data linked to your channel id.</p>")
+	        	    .html("> Explore the <a href='" + data.link + "'>Index</a> for data linked to your channel id.")
 	        	    .appendTo($("body")); //main div
 	        	    
-	        	ready();
+	        	ready(data.msg);
 		        	    
 		        $('#spinner').remove();
 	        });
@@ -181,19 +189,20 @@ body{
 				$('#inp').val(query);
 				getResponse();
 			}
-			else ready();
+			else ready("Go ahead, I'm listening.");
 		}
 		
-		function ready(){
+		function ready(msg){
 		    d = document.createElement('div');
 	       	$(d).addClass('css-typing')
 	       		.css({
 	       			fontFamily: "'Droid Serif', serif'",
 					color: "#ffffff",
-					fontSize: "16pt"
+					fontSize: "16pt",
+					paddingTop: "1em"
 				})
 	        	.attr("id","msg")
-	        	.html("Go ahead, I'm listening.")
+	        	.html(msg)
         	    .appendTo($("body")); //main div
 		}
 		

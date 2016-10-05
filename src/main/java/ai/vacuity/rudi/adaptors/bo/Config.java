@@ -31,6 +31,18 @@ public class Config {
 	final static Properties settings = new Properties();
 	final static Vector<String> labels = new Vector<String>();
 
+	public static final String PROPERTY_REPO_TYPE_SUFFIX = "repo.type";
+
+	public static final String REPO_TYPE_VIRTUOSO = "virtuoso";
+	public static final String REPO_TYPE_JENA = "jena";
+	public static final String REPO_TYPE_RDF4J = "rdf4j";
+	public static final String REPO_TYPE_SPARQL = "sparql";
+
+	public static final String PROPERTY_SUFFIX_USER = "user";
+	public static final String PROPERTY_SUFFIX_PASS = "pass";
+	public static final String PROPERTY_SUFFIX_LAZYADD = "lazyAdd";
+	public static final String PROPERTY_SUFFIX_DEFAULTGRAPH = "defaultGraph";
+
 	public static final String PROPERTY_SUFFIX_URL = "url";
 	static final String PROPERTY_SUFFIX_ID = "id";
 	static final String PROPERTY_SUFFIX_KEY = "key";

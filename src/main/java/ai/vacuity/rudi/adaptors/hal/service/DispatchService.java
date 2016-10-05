@@ -1,7 +1,9 @@
 package ai.vacuity.rudi.adaptors.hal.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 
 import org.eclipse.rdf4j.model.IRI;
@@ -12,15 +14,16 @@ import org.slf4j.LoggerFactory;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
-import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphMaster;
+import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateProcessor;
 
 public class DispatchService {
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(DispatchService.class);
 
-	public static void dispatch(IEvent event) throws IOException, IllegalArgumentException {
+	public static List<String> dispatch(IEvent event) throws IOException, IllegalArgumentException {
+		ArrayList<String> logs = new ArrayList<String>();
 		find_matches: for (InputProtocol ip : GraphMaster.getInputs()) {
 			if (ip == null) break;
 			if (ip.hasSparqlQuery()) continue; // don't match alerts
@@ -28,31 +31,35 @@ public class DispatchService {
 			String log = ip.getEventHandler().getLog();
 			AbstractHAO hao = null;
 
+			String[] processed = new String[] {};
+
 			if (ip.getEventHandler().hasSparqlQuery()) {
 				procedure = ip.getEventHandler().getSparql();
-				procedure = AbstractTemplateProcessor.process(ip, event, procedure);
+				processed = AbstractTemplateProcessor.process(ip, event, procedure, log);
 				hao = new GraphMaster();
 			}
 			else {
-				procedure = AbstractTemplateProcessor.process(ip, event, procedure);
+				processed = AbstractTemplateProcessor.process(ip, event, procedure, log);
 				hao = new RestfulHAO();
 			}
-			if (procedure == null) continue find_matches;
-			log = AbstractTemplateProcessor.process(ip, event, log);
+			if (processed.length == 0) continue find_matches;
 
-			logger.debug("[Rudi]: " + log);
+			logs.add(processed[1]);
+			logger.debug("[Rudi]: " + processed[1]);
 
 			DispatchService.index(event);
 
-			hao.setCall(procedure);
+			hao.setCall(processed[0]);
 			hao.setInputProtocol(ip);
 			hao.setEvent(event);
 			hao.run();
 		}
+		return logs;
 	}
 
 	// TODO need to merge this with the other dispatch() method
 	public static void dispatch(int id, Resource context) throws IOException, IllegalArgumentException {
+		ArrayList<String> logs = new ArrayList<String>();
 		find_matches: for (InputProtocol ip : GraphMaster.getInputs()) {
 			if (ip == null) break;
 			if (!ip.hasSparqlQuery()) continue; // only match alerts
@@ -74,6 +81,7 @@ public class DispatchService {
 
 				String log = ip.getEventHandler().getLog();
 				log = AbstractTemplateProcessor.process(ip, id, log, context);
+				logs.add(log);
 				logger.debug("[Rudi]: " + log);
 
 				hao.setCall(call);

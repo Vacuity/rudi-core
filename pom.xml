@@ -125,14 +125,14 @@
         </dependency>		
 	
 		<dependency>
-		  <groupId>virtuoso.sesame.driver</groupId>
-		  <artifactId>virtuoso-driver</artifactId>
+		  <groupId>virtuoso.rdf4j</groupId>
+		  <artifactId>virtuoso-jdbc4</artifactId>
 		  <version>4</version>
 		</dependency>
 	
 		<dependency>
-		  <groupId>virtuoso.sesame</groupId>
-		  <artifactId>virtuoso-sesame</artifactId>
+		  <groupId>virtuoso.rdf4j</groupId>
+		  <artifactId>virtuoso-rdf4j</artifactId>
 		  <version>4</version>
 		</dependency>
 	

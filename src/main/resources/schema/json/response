@@ -8,10 +8,22 @@
 		},
 		"channelId": {
 			"type": "string"
-		}
+		},
+		"msg": {
+			"type": "string"
+		},
+        "logs": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 0,
+            "uniqueItems": false
+        }
 	},
 	"required": [
 		"link",
-		"channelId"
+		"channelId",
+		"msg"
 	]
 }

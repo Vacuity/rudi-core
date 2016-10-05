@@ -16,10 +16,12 @@ select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?outp
   ?listener rdf:type via:Listener .
   ?listener via:event ?input .
   ?input ?c ?i_label .
-  OPTIONAL {?input via:pattern ?pattern .}
-  OPTIONAL {
+  {
+   {?input via:pattern ?pattern .}
+    UNION {
 	  ?input ?capturePropertyType ?pattern .
 	  ?capturePropertyType rdfs:subPropertyOf via:capture .
+    }  
   }
   ?c rdfs:subPropertyOf via:label .
   ?listener via:notify ?output .

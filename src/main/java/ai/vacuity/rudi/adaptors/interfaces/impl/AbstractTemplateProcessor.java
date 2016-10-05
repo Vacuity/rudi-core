@@ -62,7 +62,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 	 *            the template associated with the response protocol
 	 * @return
 	 */
-	public static String process(InputProtocol ip, IEvent event, String template) {
+	public static String[] process(InputProtocol ip, IEvent event, String... templates) {
 		// 1. swap captured groups' placeholders first
 		// FIRST MATCH GATE
 		boolean found = false;
@@ -76,9 +76,11 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				int groups = matcher.groupCount();
 				for (int gp = 1; gp <= groups; gp++) {
 					GraphMaster.logger.debug("group " + gp + ": " + matcher.group(gp));
-					template = template.replace("${" + gp + "}", matcher.group(gp));
+					for (int i = 0; i < templates.length; i++)
+						templates[i] = templates[i].replace("${" + gp + "}", matcher.group(gp));
 				}
-				template = template.replace("${0}", matcher.group());
+				for (int i = 0; i < templates.length; i++)
+					templates[i] = templates[i].replace("${0}", matcher.group());
 			}
 		}
 
@@ -89,7 +91,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				found = true;
 			}
 			catch (MalformedURLException mfuex) {
-				return null;
+				return new String[0];
 			}
 		}
 		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
@@ -98,7 +100,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				found = true;
 			}
 			catch (IllegalArgumentException iaex) {
-				return null;
+				return new String[0];
 			}
 		}
 		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
@@ -107,7 +109,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				found = true;
 			}
 			catch (NumberFormatException nfex) {
-				return null;
+				return new String[0];
 			}
 		}
 		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#dateTime"))) {
@@ -117,30 +119,33 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				found = true;
 			}
 			catch (NumberFormatException nfex) {
-				return null;
+				return new String[0];
 			}
 		}
 
-		if (!found) return null;
+		if (!found) return new String[0];
 
 		// 2. run the call processor (give customer processors priority over system processor)
 		// TODO should the log include the unprocessed placeholder value?
 
-		if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasTemplateProcessor()) {
-			Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(template, event);
-			template = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getTemplate();
+		for (int i = 0; i < templates.length; i++) {
+			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasTemplateProcessor()) {
 
-			// allow the template processor to transform user input prior to user input being filled in template
-			event = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getEvent();
+				Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(templates[i], event);
+				templates[i] = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getTemplate();
+
+				// allow the template processor to transform user input prior to user input being filled in template
+				event = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getEvent();
+			}
+			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${" + ip.getCaptureIndex() + "}", event.getLabel());
+
+			// 3. swap any remaining reserved placed holders
+			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasKey()) templates[i] = templates[i].replace("${key}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getKey());
+			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasId()) templates[i] = templates[i].replace("${id}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getId());
+			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasToken()) templates[i] = templates[i].replace("${token}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getToken());
 		}
-		if (StringUtils.isNotBlank(template)) template = template.replace("${" + ip.getCaptureIndex() + "}", event.getLabel());
 
-		// 3. swap any remaining reserved placed holders
-		if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasKey()) template = template.replace("${key}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getKey());
-		if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasId()) template = template.replace("${id}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getId());
-		if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasToken()) template = template.replace("${token}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getToken());
-
-		return template;
+		return templates;
 	}
 
 	public static String process(InputProtocol ip, int id, String template, Resource context) {

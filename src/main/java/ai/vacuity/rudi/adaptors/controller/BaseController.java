@@ -43,11 +43,13 @@ public class BaseController {
 	public @ResponseBody Response get(@RequestParam(value = "q", required = false) String q) {
 		// logger.debug("Reached the controller.");
 		try {
+			Response r = new Response();
+
 			UUID channelId = UUID.randomUUID();
 			IRI user = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "anon");
 			IRI channel = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
 			IndexableInput input = new IndexableInput(user, channel, q);
-			DispatchService.dispatch(input);
+			r.setLogs(DispatchService.dispatch(input));
 			String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
 			// String link = String.format("%s/query?action=exec&queryLn=SPARQL&query=%s&limit_query=100&infer=true&", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(describeChannel));
 
@@ -57,9 +59,9 @@ public class BaseController {
 			// model.addAttribute("link", link);
 			// model.addAttribute("test", "reached the controller");
 
-			Response r = new Response();
 			r.setLink(link);
 			r.setChannelId(channel.stringValue());
+			r.setMsg("Ok, I'm listening.");
 			return r;
 		}
 		catch (IOException e) {

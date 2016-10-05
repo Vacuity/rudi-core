@@ -9,6 +9,7 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -39,6 +40,7 @@ import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
 import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
+import virtuoso.rdf4j.driver.VirtuosoRepository;
 
 public class GraphMaster extends AbstractHAO {
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphMaster.class);
@@ -66,7 +68,7 @@ public class GraphMaster extends AbstractHAO {
 	static {
 		GraphMaster.getRepository().initialize();
 		GraphMaster.loadRepository(); // load rdf demo instance data, patterns,
-									// and schema
+										// and schema
 		GraphMaster.load(GraphMaster.QUERY_GET_LISTENER); // load adaptors
 		GraphMaster.load(GraphMaster.QUERY_GET_SUBSCRIPTIONS); // load adaptors
 
@@ -407,7 +409,7 @@ public class GraphMaster extends AbstractHAO {
 										if (r3.hasNext()) { // expect a single result
 											BindingSet bs3 = r3.next();
 											handler.setSparql(bs3.getValue("s").stringValue());
-											handler.setRepository(new SPARQLRepository(handler.getCall()));
+											handler.setRepository(GraphMaster.parseSPARQLRepository(handler.getCall(), bs2.getValue("config").stringValue()));
 											handler.hasSparqlQuery(true);
 										}
 									}
@@ -668,6 +670,10 @@ public class GraphMaster extends AbstractHAO {
 		}
 	}
 
+	public static Repository parseSPARQLRepository(String url) {
+		return parseSPARQLRepository(url, null);
+	}
+
 	/**
 	 * Kept getting "Missing parameter: query" error on commits to rdf4j repos configured with SPARQLRepository. This method configures rdf4j URLs to use HTTPRepository instead.
 	 * 
@@ -676,11 +682,21 @@ public class GraphMaster extends AbstractHAO {
 	 * @param url
 	 * @return a Repository appropriate for the given URL
 	 */
-	public static Repository parseSPARQLRepository(String url) {
-		String rdf4jPathIndicator = "rdf4j-server/repositories";
-		if (url.indexOf(rdf4jPathIndicator) > 0) {
-			return new HTTPRepository(url);
+	public static Repository parseSPARQLRepository(String url, String config) {
+		String repoType = Config.getSettings().getProperty(config + "." + Config.getSettings().getProperty(Config.PROPERTY_REPO_TYPE_SUFFIX));
+		if (config == null || repoType == null) repoType = Config.REPO_TYPE_SPARQL;
+		if (StringUtils.isNoneBlank(repoType)) {
+			switch (repoType) {
+			case Config.REPO_TYPE_VIRTUOSO: {
+				String user = Config.getSettings().getProperty(config + "." + Config.getSettings().getProperty(Config.PROPERTY_SUFFIX_USER));
+				String pass = Config.getSettings().getProperty(config + "." + Config.getSettings().getProperty(Config.PROPERTY_SUFFIX_PASS));
+				return new VirtuosoRepository("jdbc:virtuoso://" + url + "/log_enable=0", user, pass);
+			}
+			}
 		}
-		else return new SPARQLRepository(url);
+
+		String rdf4jPathIndicator = "rdf4j-server/repositories";
+		if (url.indexOf(rdf4jPathIndicator) > 0 || repoType.equals(Config.REPO_TYPE_RDF4J)) { return new HTTPRepository(url); }
+		return new SPARQLRepository(url);
 	}
 }
