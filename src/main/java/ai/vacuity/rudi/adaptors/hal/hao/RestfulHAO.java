@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Date;
 import java.util.UUID;
+import java.util.Vector;
 
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
@@ -18,6 +20,8 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Statement;
 import org.json.JSONObject;
 import org.json.XML;
 import org.slf4j.LoggerFactory;
@@ -103,9 +107,21 @@ public class RestfulHAO extends AbstractHAO {
 		logger.debug("The generated RDF file is: " + f.getAbsolutePath());
 		transformer.transform(in, out);
 
-		SparqlHAO.addToRepository(filePathStr, event.getIri());
+		index(filePathStr);
 		// QuadStore.main(new String[] {});
 
+	}
+
+	private static void index(String response) {
+		UUID responseId = UUID.randomUUID();
+		IRI responseIRI = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "r-" + responseId);
+		GraphMaster.addToRepository(response, responseIRI);
+		Vector<Statement> tuples = new Vector<Statement>();
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "Item")));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_DC + "date"), GraphMaster.getValueFactory().createLiteral(new Date())));
+		tuples.add(GraphMaster.getValueFactory().createStatement(event.getIri(), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), responseIRI));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_creator"), inputProtocol.getEventHandler().getIri()));
+		GraphMaster.addToRepository(tuples, event.getIri());
 	}
 
 	// FROM API CLIENT
@@ -170,8 +186,7 @@ public class RestfulHAO extends AbstractHAO {
 				fw.write(resp);
 				fw.close();
 
-				SparqlHAO.addToRepository(fxmlStr, event.getIri());
-
+				index(fxmlStr);
 			}
 		}
 		catch (TransformerException tex) {

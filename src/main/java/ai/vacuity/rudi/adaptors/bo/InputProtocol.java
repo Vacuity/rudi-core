@@ -6,11 +6,11 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 
-import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
+import ai.vacuity.rudi.adaptors.hal.hao.GraphMaster;
 
 public class InputProtocol {
 
-	public final static IRI PARSE_TYPE_REGEX = SparqlHAO.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/Regex");
+	public final static IRI PARSE_TYPE_REGEX = GraphMaster.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/Regex");
 
 	Value trigger = null;
 	IRI dataType = null;

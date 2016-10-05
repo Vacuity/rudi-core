@@ -3,6 +3,7 @@ package ai.vacuity.rudi.adaptors.interfaces.impl;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.Vector;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
-import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
+import ai.vacuity.rudi.adaptors.hal.hao.GraphMaster;
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateProcessor;
 
@@ -69,12 +70,12 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 			Matcher matcher = ((Pattern) ip.getPattern()).matcher(event.getLabel());
 			while (matcher.find()) {
 				if (!found) {
-					SparqlHAO.logger.debug("Match: " + ip.getTrigger().stringValue());
+					GraphMaster.logger.debug("Match: " + ip.getTrigger().stringValue());
 					found = true;
 				}
 				int groups = matcher.groupCount();
 				for (int gp = 1; gp <= groups; gp++) {
-					SparqlHAO.logger.debug("group " + gp + ": " + matcher.group(gp));
+					GraphMaster.logger.debug("group " + gp + ": " + matcher.group(gp));
 					template = template.replace("${" + gp + "}", matcher.group(gp));
 				}
 				template = template.replace("${0}", matcher.group());
@@ -82,7 +83,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 		}
 
 		// SECOND MATCH GATE
-		if (ip.getDataType().equals(SparqlHAO.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/URL"))) {
+		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/URL"))) {
 			try {
 				new URL(event.getLabel());
 				found = true;
@@ -91,16 +92,16 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				return null;
 			}
 		}
-		if (ip.getDataType().equals(SparqlHAO.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
+		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
 			try {
-				SparqlHAO.getValueFactory().createIRI(event.getLabel());
+				GraphMaster.getValueFactory().createIRI(event.getLabel());
 				found = true;
 			}
 			catch (IllegalArgumentException iaex) {
 				return null;
 			}
 		}
-		if (ip.getDataType().equals(SparqlHAO.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
+		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
 			try {
 				Integer.parseInt(event.getLabel());
 				found = true;
@@ -109,7 +110,7 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 				return null;
 			}
 		}
-		if (ip.getDataType().equals(SparqlHAO.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#dateTime"))) {
+		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#dateTime"))) {
 			try {
 				// for type dateTime, the value is the date format
 				new SimpleDateFormat(((Value) ip.getPattern()).stringValue());
@@ -148,16 +149,30 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 
 		logger.debug("Context: " + context);
 
-		TupleQuery alertQuery = SparqlHAO.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, query);
+		TupleQuery alertQuery = GraphMaster.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, query);
 		alertQuery.setBinding("context", context);
 		try (TupleQueryResult alerts = alertQuery.evaluate()) {
 			if (!alerts.hasNext()) return null;
+			UUID u = UUID.randomUUID();
+			IRI alertIRI = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "alrt-" + u);
 			Vector<Statement> tuples = new Vector<Statement>();
+			if (alerts.hasNext()) {
+				Resource owner = ip.getQuery().getOwnerIri();
+				if (owner == null) owner = ip.getEventHandler().getIri();
+				if (owner == null) owner = GraphMaster.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
+				Statement st = GraphMaster.getValueFactory().createStatement(alertIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_owner"), owner);
+				tuples.add(st);
+			}
 			for (int j = 0; alerts.hasNext(); j++) {
 				try {
-
+					UUID uuid = UUID.randomUUID();
+					IRI hit = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
 					BindingSet captures = alerts.next();
 					Iterator<String> capture_names = captures.getBindingNames().iterator();
+					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.rdf_type, GraphMaster.via_Hit));
+					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), alertIRI));
+					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.dc_date, GraphMaster.getValueFactory().createLiteral(new Date())));
+					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.via_query, ip.getQuery().getIri()));
 					while (capture_names.hasNext()) {
 						String name = capture_names.next();
 						if (captures.getValue(name) == null) {
@@ -169,40 +184,26 @@ public abstract class AbstractTemplateProcessor implements ITemplateProcessor {
 
 						logger.debug("SPARQL Capture Value (" + name + "." + j + "): " + value);
 
-						UUID uuid = UUID.randomUUID();
-
-						// log the hit
-						IRI hit = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
-						IRI rdf_type = SparqlHAO.getValueFactory().createIRI(Constants.NS_RDF, "type");
-						IRI via_Hit = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "Hit");
-						IRI via_index = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "index");
-						IRI via_value = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "value");
-						IRI via_query = SparqlHAO.getValueFactory().createIRI(Constants.NS_VIA, "query");
-						Literal valueLit = SparqlHAO.getValueFactory().createLiteral(name);
+						Literal valueLit = GraphMaster.getValueFactory().createLiteral(name);
 
 						try {
-							valueLit = SparqlHAO.getValueFactory().createLiteral(Integer.parseInt(name)); // try to make the capture's datatype granular
+							valueLit = GraphMaster.getValueFactory().createLiteral(Integer.parseInt(name)); // try to make the capture's datatype granular
 						}
 						catch (NumberFormatException nfex) {
 						}
-
-						tuples.add(SparqlHAO.getValueFactory().createStatement(hit, rdf_type, via_Hit));
-						tuples.add(SparqlHAO.getValueFactory().createStatement(hit, via_query, ip.getQuery().getIri()));
-						tuples.add(SparqlHAO.getValueFactory().createStatement(hit, via_index, valueLit));
-						tuples.add(SparqlHAO.getValueFactory().createStatement(hit, via_value, captures.getValue(name)));
+						UUID puuid = UUID.randomUUID();
+						IRI p = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "p-" + puuid);
+						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.rdf_type, GraphMaster.via_Projection));
+						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.via_bindName, valueLit));
+						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.via_value, captures.getValue(name)));
+						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), hit));
 					}
 				}
 				catch (Exception e) {
 					logger.error(e.getMessage(), e);
 					continue;
 				}
-			}
-			if (tuples.size() > 0) {
-				Resource owner = ip.getQuery().getOwnerIri();
-				if (owner == null) owner = ip.getEventHandler().getIri();
-				if (owner == null) owner = SparqlHAO.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
-
-				SparqlHAO.addToRepository(tuples, owner);
+				GraphMaster.addToRepository(tuples, alertIRI);
 			}
 		}
 		catch (Exception e) {

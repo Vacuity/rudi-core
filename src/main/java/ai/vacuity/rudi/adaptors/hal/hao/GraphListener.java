@@ -38,24 +38,30 @@ import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.Tuple;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 
-public class SemanticListener extends Thread implements RepositoryConnectionListener {
-	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(SemanticListener.class);
+/**
+ * Listens to semantics in the Index on behalf of EventHandlers.
+ * 
+ * @author In Lak'ech.
+ *
+ */
+public class GraphListener extends Thread implements RepositoryConnectionListener {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphListener.class);
 
 	final static String indexDir = Constants.DIR_ALERTS + "index" + File.separator;
 	final static String queueDir = Constants.DIR_ALERTS + "queue" + File.separator;
 
-	final static Repository repository = SparqlHAO.parseSPARQLRepository(Constants.SPARQL_ENDPOINT_ALERTS);
+	final static Repository repository = GraphMaster.parseSPARQLRepository(Constants.SPARQL_ENDPOINT_ALERTS);
 	private final static HashMap<Value, Vector<IndexableQuery>> map = new HashMap<Value, Vector<IndexableQuery>>();
 
 	Vector<Tuple> tuples = new Vector<Tuple>();
 
-	public SemanticListener() {
-		start(); // start responding to heard triples
+	public GraphListener() {
+		start(); // start observing the index
 	}
 
 	static {
-		SemanticListener.getRepository().initialize();
-		try (RepositoryConnection con = SemanticListener.getRepository().getConnection()) {
+		GraphListener.getRepository().initialize();
+		try (RepositoryConnection con = GraphListener.getRepository().getConnection()) {
 			Resource context = con.getValueFactory().createIRI(Constants.CONTEXT_DEMO);
 			con.clear(context);
 

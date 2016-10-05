@@ -18,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
-import ai.vacuity.rudi.adaptors.hal.hao.SparqlHAO;
+import ai.vacuity.rudi.adaptors.hal.hao.GraphMaster;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 import ai.vacuity.rudi.adaptors.types.Channel;
 import ai.vacuity.rudi.adaptors.types.Packet;
@@ -44,15 +44,15 @@ public class BaseController {
 		// logger.debug("Reached the controller.");
 		try {
 			UUID channelId = UUID.randomUUID();
-			IRI user = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI + "anon");
-			IRI channel = SparqlHAO.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
+			IRI user = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "anon");
+			IRI channel = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
 			IndexableInput input = new IndexableInput(user, channel, q);
 			DispatchService.dispatch(input);
 			String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
 			// String link = String.format("%s/query?action=exec&queryLn=SPARQL&query=%s&limit_query=100&infer=true&", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(describeChannel));
 
 			String link = String.format("%s/explore?resource=<%s>", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(channel.stringValue()));
-			link = link.replace(Constants.SPARQL_ENDPOINT_RESPONSES.substring(0, Constants.SPARQL_ENDPOINT_RESPONSES.indexOf("/rdf4j-server")), "http://" + Constants.RUDI_DOMAIN);
+			if (Constants.SPARQL_ENDPOINT_RESPONSES.indexOf("rdf4j-server") > 0) link = link.replace(Constants.SPARQL_ENDPOINT_RESPONSES.substring(0, Constants.SPARQL_ENDPOINT_RESPONSES.indexOf("/rdf4j-server")), "http://" + Constants.RUDI_DOMAIN);
 			// model.addAttribute("channel", channel.stringValue());
 			// model.addAttribute("link", link);
 			// model.addAttribute("test", "reached the controller");
