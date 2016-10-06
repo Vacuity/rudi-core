@@ -24,11 +24,13 @@ public class Constants {
 	public final static String NS_DBPROP = "http://dbpedia.org/property/";
 	public final static String NS_DBPEDIA = "http://dbpedia.org/ontology/";
 	public final static String NS_SIOC = "http://rdfs.org/sioc/ns#";
+	public final static String NS_NEPOMUK = "http://www.semanticdesktop.org/ontologies/2007/03/22/nmo/";
 	public final static String NS_MOAT = "http://moat-project.org/ns#";
 	public final static String NS_OAT = "http://www.w3.org/2002/07/owl#";
 	public final static String NS_SKOS = "http://www.w3.org/2004/02/skos/core#";
 	public final static String NS_WN2 = "http://www.w3.org/2006/03/wn/wn20/schema/";
 	public final static String NS_WN3 = "http://purl.org/vocabularies/princeton/wn30/";
+	public final static String NS_NIX = "http://www.vacuity.ai/onto/nix/1.0/";
 	public final static String NS_VIA = "http://www.vacuity.ai/onto/via/1.0/";
 	public final static String NS_MA_ONT = "http://www.w3.org/ns/ma-ont/";
 	public final static String NS_OWL = "http://www.w3.org/2002/07/owl#";

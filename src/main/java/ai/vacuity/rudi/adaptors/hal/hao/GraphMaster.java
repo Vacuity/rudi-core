@@ -1,10 +1,10 @@
 package ai.vacuity.rudi.adaptors.hal.hao;
 
 import java.io.File;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.UUID;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
@@ -18,9 +18,6 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.GraphQueryResult;
-import org.eclipse.rdf4j.query.Query;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
@@ -42,7 +39,7 @@ import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import virtuoso.rdf4j.driver.VirtuosoRepository;
 
-public class GraphMaster extends AbstractHAO {
+public class GraphMaster {
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphMaster.class);
 
 	// static String sparqlEndpoint = "http://www.tryrudi.io/sparql";
@@ -63,14 +60,21 @@ public class GraphMaster extends AbstractHAO {
 	static final String QUERY_GET_ENDPOINT_LABELS = "get_endpoint_labels";
 	static final String QUERY_GET_QUERIES = "get_queries";
 	private static final int MAX_INPUTS = 100000;
-	private static final InputProtocol[] inputs = new InputProtocol[GraphMaster.MAX_INPUTS];
+	private static final InputProtocol[] regexPatterns = new InputProtocol[GraphMaster.MAX_INPUTS];
+	private static final InputProtocol[] typedPatterns = new InputProtocol[GraphMaster.MAX_INPUTS];
+	private static final InputProtocol[] queryPatterns = new InputProtocol[GraphMaster.MAX_INPUTS];
+
+	/**
+	 * Tracks altered contexts. Context added to inbox in each GraphMaster.add(... context) method. Context removed from context on each DispatchService.dispatch(... context). Context checked at the start of the GraphListener.add(... context) method.
+	 */
+	private static final Set<Resource> inbox = new HashSet<Resource>();
 
 	static {
 		GraphMaster.getRepository().initialize();
 		GraphMaster.loadRepository(); // load rdf demo instance data, patterns,
 										// and schema
 		GraphMaster.load(GraphMaster.QUERY_GET_LISTENER); // load adaptors
-		GraphMaster.load(GraphMaster.QUERY_GET_SUBSCRIPTIONS); // load adaptors
+		// GraphMaster.load(GraphMaster.QUERY_GET_SUBSCRIPTIONS); // load adaptors
 
 		GraphMaster.getRepository().addRepositoryConnectionListener(listener);
 
@@ -98,35 +102,11 @@ public class GraphMaster extends AbstractHAO {
 
 	public final static IRI via_Projection = getValueFactory().createIRI(Constants.NS_VIA, "Projection");
 
-	public static InputProtocol[] getInputs() {
-		return inputs;
-	}
+	public final static IRI via_timestamp = getValueFactory().createIRI(Constants.NS_VIA, "timestamp");
 
-	private static int inputsCursor = 0;
-
-	public static int getInputsCursor() {
-		return inputsCursor;
-	}
-
-	public static void setInputsCursor(int inputsCursor) {
-		GraphMaster.inputsCursor = inputsCursor;
-	}
-
-	private static void incrementInputsCursor() {
-		GraphMaster.inputsCursor++;
-	}
-
-	public static NotifyingRepositoryWrapper getRepository() {
-		return repository;
-	}
-
-	public static RepositoryConnection getConnection() {
-		return getRepository().getConnection();
-	}
-
-	public static ValueFactory getValueFactory() {
-		return getRepository().getValueFactory();
-	}
+	private static int regexInputsCursor = 0;
+	private static int typedInputsCursor = 0;
+	private static int queryInputsCursor = 0;
 
 	public static void load() {
 		// BindingSet queries = query();
@@ -187,90 +167,6 @@ public class GraphMaster extends AbstractHAO {
 		}
 	}
 
-	@Override
-	public void run() {
-		Query q = getInputProtocol().getEventHandler().getRepository().getConnection().prepareQuery(QueryLanguage.SPARQL, getCall());
-		if (q instanceof TupleQuery) {
-			try (TupleQueryResult r = ((TupleQuery) q).evaluate()) {
-				Vector<Statement> results = new Vector<Statement>();
-				UUID ruuid = UUID.randomUUID();
-				IRI reply = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "r-" + ruuid);
-				if (r.hasNext()) {
-					results.add(GraphMaster.getValueFactory().createStatement(event.getIri(), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply));
-				}
-				while (r.hasNext()) { // iterate over the result
-					BindingSet bindingSet = r.next();
-					Iterator<String> capture_names = bindingSet.getBindingNames().iterator();
-					UUID uuid2 = UUID.randomUUID();
-					IRI result = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "rst-" + uuid2);
-					results.add(GraphMaster.getValueFactory().createStatement(result, GraphMaster.rdf_type, GraphMaster.via_QueryResult));
-					results.add(GraphMaster.getValueFactory().createStatement(result, GraphMaster.dc_date, GraphMaster.getValueFactory().createLiteral(new Date())));
-					results.add(GraphMaster.getValueFactory().createStatement(result, GraphMaster.via_query, inputProtocol.getEventHandler().getIri()));
-					results.add(GraphMaster.getValueFactory().createStatement(result, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_creator"), inputProtocol.getEventHandler().getIri()));
-					results.add(GraphMaster.getValueFactory().createStatement(result, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), reply));
-					while (capture_names.hasNext()) {
-						String name = capture_names.next();
-						if (bindingSet.getValue(name) == null) {
-							logger.error("Null value for capture: " + name + "\nQuery:\n" + getCall());
-						}
-
-						// log the hit
-						// UUID uuid = UUID.randomUUID();
-						Literal valueLit = GraphMaster.getValueFactory().createLiteral(name);
-
-						try {
-							valueLit = GraphMaster.getValueFactory().createLiteral(Integer.parseInt(name)); // try to make the capture's datatype granular
-						}
-						catch (NumberFormatException nfex) {
-						}
-
-						UUID puuid = UUID.randomUUID();
-						IRI p = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "p-" + puuid);
-						results.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.rdf_type, GraphMaster.via_Projection));
-						results.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.via_bindName, valueLit));
-						results.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.via_value, bindingSet.getValue(name)));
-						results.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), result));
-					}
-				}
-				GraphMaster.addToRepository(results, reply); // index each result under its own graph id
-			}
-			catch (QueryEvaluationException qex) {
-				logger.error(qex.getMessage(), qex);
-			}
-		}
-		if (q instanceof GraphQuery) {
-			try (GraphQueryResult result = ((GraphQuery) q).evaluate()) {
-				Vector<Statement> results = new Vector<Statement>();
-				while (result.hasNext()) { // iterate over the result
-					Statement st = result.next();
-					Resource s = st.getSubject();
-					Resource p = st.getPredicate();
-					Value o = st.getObject();
-					results.add(st);
-					// logger.debug("Subject: " + s.stringValue());
-					// logger.debug("Property: " + p.stringValue());
-					// logger.debug("Value: " + o.stringValue());
-				}
-				UUID uuid = UUID.randomUUID();
-				IRI reply = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "rst-" + uuid);
-				results.add(GraphMaster.getValueFactory().createStatement(reply, GraphMaster.rdf_type, GraphMaster.via_QueryResult));
-				results.add(GraphMaster.getValueFactory().createStatement(reply, GraphMaster.dc_date, GraphMaster.getValueFactory().createLiteral(new Date())));
-				results.add(GraphMaster.getValueFactory().createStatement(event.getIri(), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply));
-				GraphMaster.addToRepository(results, reply); // index the result under its own graph id
-			}
-			catch (QueryEvaluationException qex) {
-				logger.error(qex.getMessage(), qex);
-			}
-		}
-		// UUID uuid = UUID.randomUUID();
-		// String fxmlStr = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/" + new GenericUrl(getInputProtocol().getResponseProtocol().getCall()).getHost() + "-" + uuid + ".rdf";
-		// File fxml = new File(fxmlStr);
-		// fxml.createNewFile();
-		// FileWriter fw = new FileWriter(fxml);
-		// fw.write(resp);
-		// fw.close();
-	}
-
 	static void loadRepository() {
 		try (RepositoryConnection con = getConnection()) {
 			String[] extensions = new String[] { "rdf", "rdfs" };
@@ -325,8 +221,8 @@ public class GraphMaster extends AbstractHAO {
 								logger.debug("Listener: " + bs2.getValue("listener"));
 								logger.debug("Pattern: " + bs2.getValue("pattern"));
 								logger.debug("Label: " + bs2.getValue("i_label"));
-								logger.debug("Input Query: " + bs2.getValue("i_query"));
-								logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
+								logger.debug("Query type: " + bs2.getValue("qtype"));
+								// logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
 								logger.debug("Event Handler: " + bs2.getValue("output"));
 								logger.debug("Config: " + bs2.getValue("config"));
 								logger.debug("Translator: " + bs2.getValue("translator"));
@@ -343,11 +239,11 @@ public class GraphMaster extends AbstractHAO {
 									continue;
 								}
 
-								if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
-									IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
-									logger.error(ilaex.getMessage(), ilaex);
-									continue;
-								}
+								// if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
+								// IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
+								// logger.error(ilaex.getMessage(), ilaex);
+								// continue;
+								// }
 
 								InputProtocol i = new InputProtocol();
 								if (bs2.getValue("pattern") != null) {
@@ -379,8 +275,8 @@ public class GraphMaster extends AbstractHAO {
 								// if sparql
 								// Create a new Repo, set its URL to the value o.getCall()
 								// retrive query resource from repo
-								if (bs2.getValue("i_query") != null) {
-									IRI query = (IRI) bs2.getValue("i_query");
+								if (bs2.getValue("qtype") != null) {
+									IRI query = (IRI) bs2.getValue("input");
 									TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
 									ipQuery.setBinding("q", query);
 									try (TupleQueryResult r3 = ipQuery.evaluate()) {
@@ -388,9 +284,10 @@ public class GraphMaster extends AbstractHAO {
 											BindingSet bs3 = r3.next();
 											String queryStr = bs3.getValue("s").stringValue();
 											IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
-											iq.setId(bs2.getValue("i_query").stringValue().hashCode());
-											iq.setLabel(bs2.getValue("i_query_label").stringValue());
-											iq.setIri((IRI) bs2.getValue("i_query"));
+											iq.setId(bs2.getValue("input").stringValue().hashCode());
+											iq.setLabel(bs2.getValue("i_label").stringValue());
+											iq.setIri((IRI) bs2.getValue("input"));
+											iq.setOwnerIri((IRI) bs2.getValue("notifies"));
 											GraphListener.register(iq);
 											i.setQuery(iq);
 											// i.hasSparqlQuery(true);
@@ -401,6 +298,7 @@ public class GraphMaster extends AbstractHAO {
 									}
 								}
 
+								// response query
 								if (bs2.getValue("query") != null) {
 									IRI query = (IRI) bs2.getValue("query");
 									TupleQuery rpQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
@@ -421,8 +319,19 @@ public class GraphMaster extends AbstractHAO {
 								// do o.setSparql() for the sparql of the query URI
 								// set o.isSparqlEndpoint = true
 
-								getInputs()[getInputsCursor()] = i;
-								incrementInputsCursor();
+								if (i.getPattern() != null) {
+									getRegexPatterns()[getRegexInputsCursor()] = i;
+									incrementRegexInputsCursor();
+								}
+								else if (i.hasSparqlQuery()) {
+									getQueryPatterns()[getQueryInputsCursor()] = i;
+									incrementQueryInputsCursor();
+								}
+								else {
+									getTypedPatterns()[getTypedInputsCursor()] = i;
+									incrementTypedInputsCursor();
+								}
+
 							}
 						}
 						catch (QueryEvaluationException qex) {
@@ -536,8 +445,10 @@ public class GraphMaster extends AbstractHAO {
 								// do o.setSparql() for the sparql of the query URI
 								// set o.isSparqlEndpoint = true
 
-								getInputs()[getInputsCursor()] = i;
-								incrementInputsCursor();
+								if (i.hasSparqlQuery()) {
+									getQueryPatterns()[getQueryInputsCursor()] = i;
+									incrementQueryInputsCursor();
+								}
 							}
 						}
 						catch (QueryEvaluationException qex) {
@@ -618,6 +529,7 @@ public class GraphMaster extends AbstractHAO {
 				con.begin();
 				con.add(i, context);
 				con.commit();
+				GraphMaster.updateInbox(context);
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -637,6 +549,7 @@ public class GraphMaster extends AbstractHAO {
 				con.begin();
 				con.add(st, context);
 				con.commit();
+				GraphMaster.updateInbox(context);
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -657,6 +570,7 @@ public class GraphMaster extends AbstractHAO {
 				File f = new File(filePathStr);
 				con.add(f, null, RDFFormat.RDFXML, context);
 				con.commit();
+				GraphMaster.updateInbox(context);
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -699,4 +613,77 @@ public class GraphMaster extends AbstractHAO {
 		if (url.indexOf(rdf4jPathIndicator) > 0 || repoType.equals(Config.REPO_TYPE_RDF4J)) { return new HTTPRepository(url); }
 		return new SPARQLRepository(url);
 	}
+
+	public static InputProtocol[] getRegexPatterns() {
+		return regexPatterns;
+	}
+
+	public static int getRegexInputsCursor() {
+		return regexInputsCursor;
+	}
+
+	public static void setRegexInputsCursor(int inputsCursor) {
+		GraphMaster.regexInputsCursor = inputsCursor;
+	}
+
+	private static void incrementRegexInputsCursor() {
+		GraphMaster.regexInputsCursor++;
+	}
+
+	private static void incrementTypedInputsCursor() {
+		GraphMaster.typedInputsCursor++;
+	}
+
+	private static void incrementQueryInputsCursor() {
+		GraphMaster.queryInputsCursor++;
+	}
+
+	public static NotifyingRepositoryWrapper getRepository() {
+		return repository;
+	}
+
+	public static RepositoryConnection getConnection() {
+		return getRepository().getConnection();
+	}
+
+	public static ValueFactory getValueFactory() {
+		return getRepository().getValueFactory();
+	}
+
+	public static InputProtocol[] getTypedPatterns() {
+		return typedPatterns;
+	}
+
+	public static int getTypedInputsCursor() {
+		return typedInputsCursor;
+	}
+
+	public static void setTypedInputsCursor(int typedInputsCursor) {
+		GraphMaster.typedInputsCursor = typedInputsCursor;
+	}
+
+	public static InputProtocol[] getQueryPatterns() {
+		return queryPatterns;
+	}
+
+	public static int getQueryInputsCursor() {
+		return queryInputsCursor;
+	}
+
+	public static void setQueryInputsCursor(int queryInputsCursor) {
+		GraphMaster.queryInputsCursor = queryInputsCursor;
+	}
+
+	public static Set<Resource> getInbox() {
+		return GraphMaster.inbox;
+	}
+
+	public static void removeFromInbox(Resource r) {
+		GraphMaster.getInbox().remove(r);
+	}
+
+	private static void updateInbox(Resource r) {
+		GraphMaster.getInbox().add(r);
+	}
+
 }

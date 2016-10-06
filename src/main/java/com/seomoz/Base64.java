@@ -1,4 +1,4 @@
-package com.seomoz.api.authentication;
+package com.seomoz;
 /**
  * <p>Encodes and decodes to and from Base64 notation.</p>
  * 

@@ -6,7 +6,7 @@ package ai.vacuity.rudi.adaptors.interfaces;
  * @author In Lak'ech.
  *
  */
-public interface ITemplateProcessor {
+public interface ITemplateModule {
 	public void process(String template, IEvent input);
 
 	public String getTemplate();

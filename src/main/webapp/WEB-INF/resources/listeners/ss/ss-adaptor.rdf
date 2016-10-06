@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE rdf:RDF [
-	<!ENTITY via "http://www.vacuity.ai/onto/via/">
-	<!ENTITY vi "http://www.vacuity.ai/onto/instances#">
+	<!ENTITY via "http://www.vacuity.ai/onto/via/1.0/">
+	<!ENTITY vi "http://www.vacuity.ai/onto/instances/1.0#">
     <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
 ]>
-<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
-     xmlns:via="http://www.vacuity.ai/onto/via/"
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances/1.0"
+     xmlns:via="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
@@ -18,15 +18,10 @@
  	<via:Listener rdf:about="#ss-req-listener">
  		<rdfs:comment>Fetches social media posts from social-searcher.com</rdfs:comment>
  		<rdfs:label>Social Searcher Request Listener</rdfs:label>
- 		<via:event rdf:resource="#ss-keywords"/>
+ 		<via:event rdf:resource="#catchAll"/>
 		<via:notify rdf:resource="#ss-get-results"/>
  	</via:Listener>
- 	
- 	<via:Input rdf:about="#ss-keywords">
- 		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z\s]*)$</via:pattern>
- 		<via:label_1>Keywords</via:label_1>
- 	</via:Input>
- 	
+ 	 	
  	<via:EventHandler rdf:about="#ss-get-results">
  		<via:config>ss</via:config>
  		<via:json rdf:resource="https://api.social-searcher.com/v2/search?q=${1}&amp;network=twitter,googleplus,instagram,tumblr,reddit,flickr,vimeo,vine&amp;key=${key}"/>

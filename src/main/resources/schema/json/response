@@ -12,6 +12,9 @@
 		"msg": {
 			"type": "string"
 		},
+		"duration": {
+			"type": "string"
+		},
         "logs": {
             "type": "array",
             "items": {

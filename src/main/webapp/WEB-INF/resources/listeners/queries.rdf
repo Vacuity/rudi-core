@@ -11,7 +11,7 @@
 <![CDATA[
 PREFIX via: <http://www.vacuity.ai/onto/via/1.0/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?output ?capturePropertyType ?config ?translator ?log ?replyTypeProp ?call ?mediaType ?query where {
+select distinct ?listener ?input ?pattern ?i_label ?qtype ?output ?capturePropertyType ?config ?translator ?log ?replyTypeProp ?call ?mediaType ?query where {
   
   ?listener rdf:type via:Listener .
   ?listener via:event ?input .
@@ -22,6 +22,10 @@ select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?outp
 	  ?input ?capturePropertyType ?pattern .
 	  ?capturePropertyType rdfs:subPropertyOf via:capture .
     }  
+    UNION {
+	  	?input rdf:type ?qtype .
+	  	?qtype rdfs:subClassOf via:Query .
+    }
   }
   ?c rdfs:subPropertyOf via:label .
   ?listener via:notify ?output .
@@ -34,12 +38,6 @@ select distinct ?listener ?input ?pattern ?i_label ?i_query ?i_query_label ?outp
   
   
   OPTIONAL {?output via:query ?query .}
-  OPTIONAL {
-  	?listener via:event ?i_query . 
-  	?i_query rdf:type ?qtype .
-  	?qtype rdfs:subClassOf via:Query .
-  	?i_query rdfs:label ?i_query_label .
-  }
 
 }
 ]]>
@@ -61,9 +59,6 @@ select distinct ?listener ?i_query ?i_query_label ?notifies where {
   ?qtype rdfs:subClassOf via:Query .
   ?i_query rdfs:label ?i_query_label .
   
-  FILTER NOT EXISTS { 
-  	?notifies rdf:type via:EventHandler . 
-  }
 }
 ]]>
 		</via:sparql>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <xsl:output method="xml" version="1.0" encoding="UTF-8" indent="yes" omit-xml-declaration="no" />
 
 <xsl:template match="/">
@@ -25,7 +25,7 @@
  	</sioc:Forum>
  	<sioc:Post rdf:about="{url/text()}">
  		<dc:title><xsl:value-of select="text"/></dc:title>
- 		<dc:date rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime"><xsl:value-of select="posted"/></dc:date>
+ 		<dc:date rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime"><xsl:value-of select="substring(posted,0,11)"/>T<xsl:value-of select="substring(posted,12,8)"/></dc:date>
  		<foaf:depiction rdf:resource="{image/text()}"/>
  		<sioc:has_container rdf:resource="http://www.twitter.com"/>
 <xsl:if test="network/user_mentions">

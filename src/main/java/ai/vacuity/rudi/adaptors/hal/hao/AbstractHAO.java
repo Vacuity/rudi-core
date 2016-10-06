@@ -4,9 +4,9 @@ import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 
 public class AbstractHAO {
-	static String call = null;
-	static InputProtocol inputProtocol = null;
-	static IEvent event = null;
+	protected String call = null;
+	protected InputProtocol inputProtocol = null;
+	protected IEvent event = null;
 
 	public String getCall() {
 		return call;

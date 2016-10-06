@@ -1,9 +1,9 @@
 package com.seomoz;
 
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
-import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractResponseProcessor;
+import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractResponseModule;
 
-public class Context extends AbstractResponseProcessor {
+public class Context extends AbstractResponseModule {
 
 	@Override
 	public void process(String response, IEvent event) {

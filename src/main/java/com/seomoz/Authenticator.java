@@ -1,4 +1,4 @@
-package com.seomoz.api.authentication;
+package com.seomoz;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -14,14 +14,14 @@ import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
-import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateProcessor;
+import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
 
 /**
  * The authentication class which is used to generate the authentication string
  * 
  * @author Radeep Solutions
  */
-public class Authenticator extends AbstractTemplateProcessor {
+public class Authenticator extends AbstractTemplateModule {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Authenticator.class);
 	private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
 

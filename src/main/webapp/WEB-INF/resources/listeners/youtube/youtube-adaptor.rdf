@@ -17,6 +17,7 @@
  	<via:Listener rdf:about="#youtube-req-listener">
  		<rdfs:comment>Pulls video URL from youtube.com</rdfs:comment>
  		<rdfs:label>Youtube Request Listener</rdfs:label>
+ 		<via:event rdf:resource="#catchAll"/>
  		<via:event rdf:resource="#youtube_cmd"/>
 		<via:notify rdf:resource="#youtube-fetch-videos"/>
  	</via:Listener>

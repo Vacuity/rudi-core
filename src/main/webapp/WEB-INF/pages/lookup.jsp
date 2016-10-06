@@ -123,13 +123,15 @@ body{
 		
 		function guaranteeInput(){
 			if ( $( "#inp" ).length <= 0 ) {
+				$("body").empty();
 			    d = document.createElement('input');
 		       	$(d).css({
 		       			backgroundColor:"transparent", 
 		       			color:"#ffffff", 
 		       			fontFamily: "Droid Serif', serif", 
 		       			border:"0px solid transparent",
-		       			fontSize:"40pt"
+		       			fontSize:"40pt",
+		       			width: "100%"
 		       		})
 		        	.attr("type","text")
 		        	.attr("id","inp")
@@ -162,6 +164,12 @@ body{
 			        	.attr("id","channel")
 		        	    .appendTo($("body")); //main div
 	        	});
+        	    	        	
+	        	d = document.createElement('div');
+	        	$(d).addClass('response')
+	        	    .html("> Total match time: " + data.duration + " seconds")
+		        	.attr("id","channel")
+	        	    .appendTo($("body")); //main div
 	        	
 	        	d = document.createElement('div');
 	        	$(d).addClass('response')
@@ -174,7 +182,8 @@ body{
 		        	.attr("id","link")
 	        	    .html("> Explore the <a href='" + data.link + "'>Index</a> for data linked to your channel id.")
 	        	    .appendTo($("body")); //main div
-	        	    
+		        	    
+		        	    
 	        	ready(data.msg);
 		        	    
 		        $('#spinner').remove();

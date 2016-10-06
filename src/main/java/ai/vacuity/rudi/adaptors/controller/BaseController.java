@@ -2,6 +2,7 @@ package ai.vacuity.rudi.adaptors.controller;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.util.UUID;
 
 import org.eclipse.rdf4j.model.IRI;
@@ -48,8 +49,10 @@ public class BaseController {
 			UUID channelId = UUID.randomUUID();
 			IRI user = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "anon");
 			IRI channel = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
+			long start = System.currentTimeMillis();
 			IndexableInput input = new IndexableInput(user, channel, q);
 			r.setLogs(DispatchService.dispatch(input));
+			long end = System.currentTimeMillis();
 			String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
 			// String link = String.format("%s/query?action=exec&queryLn=SPARQL&query=%s&limit_query=100&infer=true&", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(describeChannel));
 
@@ -58,7 +61,8 @@ public class BaseController {
 			// model.addAttribute("channel", channel.stringValue());
 			// model.addAttribute("link", link);
 			// model.addAttribute("test", "reached the controller");
-
+			DecimalFormat df = new DecimalFormat("#.###");
+			r.setDuration(df.format(new Float((end - start) / 1000f).doubleValue()));
 			r.setLink(link);
 			r.setChannelId(channel.stringValue());
 			r.setMsg("Ok, I'm listening.");

@@ -47,11 +47,13 @@ import ai.vacuity.rudi.adaptors.bo.Config;
 public class RestfulHAO extends AbstractHAO {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(RestfulHAO.class);
 
+	private float duration = -1;
+
 	/**
 	 * @param args
 	 *            the command line arguments
 	 */
-	public static void main(String[] args) {
+	public void main(String[] args) {
 		if (args.length != 3) {
 			System.err.println("give command as follows : ");
 			System.err.println("XSLTTest data.xml converted.xsl converted.html");
@@ -65,21 +67,29 @@ public class RestfulHAO extends AbstractHAO {
 		RestfulHAO st = new RestfulHAO();
 	}
 
-	public static String transform(String json) {
+	public String transform(String json) {
 		if (json.startsWith("[") && json.endsWith("]")) {
 			json = "{\"items\":\n" + json + "\n}";
 		}
 		if (StringUtils.isBlank(json)) return null;
-		logger.debug("Truncated JSON:\n" + json);
+		// logger.debug("Truncated JSON:\n" + json);
 		return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" + "<root>\n" + XML.toString(new JSONObject(json)) + "</root>\n";
 	}
 
-	public static void transform(String json, String xslt, String host) throws TransformerConfigurationException, TransformerException, IOException {
+	public void transform(String json, String xslt, String host) throws TransformerConfigurationException, TransformerException, IOException {
 
-		logger.debug("Retrieved JSON:\n" + json);
+		// logger.debug("Retrieved JSON:\n" + json);
 		String xml = transform(json);
 		if (xml == null) return;
-		logger.debug("The generated XML file is:\n" + xml);
+		UUID uuid = UUID.randomUUID();
+		String fxmlStr = Constants.DIR_RESPONSES + host + File.separator + uuid + ".xml";
+
+		File fxml = new File(fxmlStr);
+		if (!fxml.getParentFile().exists()) {
+			fxml.getParentFile().mkdirs();
+		}
+		// logger.debug("The generated XML file is:\n" + xml);
+
 		TransformerFactory factory = TransformerFactory.newInstance();
 		// File f = new File(xslt);
 		URL oracle = new URL(xslt);
@@ -88,15 +98,8 @@ public class RestfulHAO extends AbstractHAO {
 
 		Transformer transformer = factory.newTransformer(xslStream);
 		StringReader srxml = new StringReader(xml);
-		UUID uuid = UUID.randomUUID();
 
 		String filePathStr = Constants.DIR_RESPONSES + host + File.separator + uuid + ".rdf";
-		String fxmlStr = Constants.DIR_RESPONSES + host + File.separator + uuid + ".xml";
-
-		File fxml = new File(fxmlStr);
-		if (!fxml.getParentFile().exists()) {
-			fxml.getParentFile().mkdirs();
-		}
 		FileWriter fw = new FileWriter(fxml);
 		fw.write(xml);
 		fw.close();
@@ -104,7 +107,7 @@ public class RestfulHAO extends AbstractHAO {
 		if (!f.getParentFile().exists()) f.getParentFile().mkdirs();
 		StreamSource in = new StreamSource(srxml);
 		StreamResult out = new StreamResult(f);
-		logger.debug("The generated RDF file is: " + f.getAbsolutePath());
+		// logger.debug("The generated RDF file is: " + f.getAbsolutePath());
 		transformer.transform(in, out);
 
 		index(filePathStr);
@@ -112,15 +115,23 @@ public class RestfulHAO extends AbstractHAO {
 
 	}
 
-	private static void index(String response) {
+	private void index(String response) {
+		UUID replyId = UUID.randomUUID();
+		IRI replyIRI = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "r-" + replyId);
+
 		UUID responseId = UUID.randomUUID();
 		IRI responseIRI = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "r-" + responseId);
 		GraphMaster.addToRepository(response, responseIRI);
 		Vector<Statement> tuples = new Vector<Statement>();
 		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "Item")));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_DC + "date"), GraphMaster.getValueFactory().createLiteral(new Date())));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "Communication_response")));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "response"), replyIRI));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.via_timestamp, GraphMaster.getValueFactory().createLiteral(new Date())));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "duration"), GraphMaster.getValueFactory().createLiteral(this.duration)));
 		tuples.add(GraphMaster.getValueFactory().createStatement(event.getIri(), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), responseIRI));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_creator"), inputProtocol.getEventHandler().getIri()));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "trigger"), event.getIri()));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "agent"), inputProtocol.getEventHandler().getIri()));
+		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "means"), GraphMaster.getValueFactory().createIRI(Config.getSettings().getProperty(inputProtocol.getEventHandler().getConfigLabel() + "." + Config.PROPERTY_SUFFIX_URL))));
 		GraphMaster.addToRepository(tuples, event.getIri());
 	}
 
@@ -145,7 +156,11 @@ public class RestfulHAO extends AbstractHAO {
 		try {
 			GenericUrl gurl = new GenericUrl(new URL(call));
 			HttpRequest request = requestFactory.buildGetRequest(gurl);
-			RestfulHAO.parseResponse(request.execute());
+			long start = System.currentTimeMillis();
+			HttpResponse hr = request.execute();
+			long end = System.currentTimeMillis();
+			this.duration = ((end - start) / 1000f);
+			parseResponse(hr);
 		}
 		catch (MalformedURLException muex) {
 			logger.error(muex.getMessage(), muex);
@@ -156,7 +171,7 @@ public class RestfulHAO extends AbstractHAO {
 
 	}
 
-	static void parseResponse(HttpResponse response) throws IOException {
+	void parseResponse(HttpResponse response) throws IOException {
 		// ActivityFeed feed = response.parseAs(ActivityFeed.class);
 
 		// Call.ActivityFeed feed = new Call.ActivityFeed();

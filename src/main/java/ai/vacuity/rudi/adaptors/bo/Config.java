@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.api.client.http.GenericUrl;
 
-import ai.vacuity.rudi.adaptors.interfaces.IResponseProcessor;
-import ai.vacuity.rudi.adaptors.interfaces.ITemplateProcessor;
+import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
+import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
 
 public class Config {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Config.class);
@@ -24,8 +24,8 @@ public class Config {
 	private String id = "";
 	private String token = "";
 	private GenericUrl url = null;
-	private ITemplateProcessor templateProcessor = null;
-	private IResponseProcessor responseProcessor = null;
+	private ITemplateModule templateProcessor = null;
+	private IResponseModule responseProcessor = null;
 
 	final static HashMap<String, Config> map = new HashMap<String, Config>();
 	final static Properties settings = new Properties();
@@ -47,8 +47,8 @@ public class Config {
 	static final String PROPERTY_SUFFIX_ID = "id";
 	static final String PROPERTY_SUFFIX_KEY = "key";
 	static final String PROPERTY_SUFFIX_TOKEN = "token";
-	static final String PROPERTY_SUFFIX_TEMPLATE_PROCESSOR = "tp";
-	static final String PROPERTY_SUFFIX_RESPONSE_PROCESSOR = "rp";
+	static final String PROPERTY_SUFFIX_TEMPLATE_MODULE = "tm";
+	static final String PROPERTY_SUFFIX_RESPONSE_MODULE = "rm";
 
 	static {
 		ClassLoader cLoader = Config.class.getClassLoader();
@@ -112,16 +112,29 @@ public class Config {
 				e.setId(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_ID));
 				e.setKey(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_KEY));
 				e.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
-				String tpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TEMPLATE_PROCESSOR);
-				String rpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_RESPONSE_PROCESSOR);
+				String tpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TEMPLATE_MODULE);
+				String rpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_RESPONSE_MODULE);
 				if (StringUtils.isNotBlank(tpStr)) {
 					try {
 						Class clazz = Class.forName(tpStr);
-						ITemplateProcessor tp = (ITemplateProcessor) clazz.newInstance();
+						ITemplateModule tp = (ITemplateModule) clazz.newInstance();
 						e.setTemplateProcessor(tp);
-
-						clazz = Class.forName(rpStr);
-						IResponseProcessor rp = (IResponseProcessor) clazz.newInstance();
+					}
+					catch (ClassNotFoundException cnfex) {
+						logger.error(cnfex.getMessage(), cnfex);
+					}
+					catch (InstantiationException iex) {
+						logger.error(iex.getMessage(), iex);
+					}
+					catch (IllegalAccessException iaex) {
+						logger.error(iaex.getMessage(), iaex);
+					}
+					catch (NullPointerException npex) {
+						// property is not required
+					}
+					try {
+						Class clazz = Class.forName(rpStr);
+						IResponseModule rp = (IResponseModule) clazz.newInstance();
 						e.setResponseProcessor(rp);
 					}
 					catch (ClassNotFoundException cnfex) {
@@ -132,6 +145,9 @@ public class Config {
 					}
 					catch (IllegalAccessException iaex) {
 						logger.error(iaex.getMessage(), iaex);
+					}
+					catch (NullPointerException npex) {
+						// property is not required
 					}
 				}
 			}
@@ -186,19 +202,19 @@ public class Config {
 		this.limit = limit;
 	}
 
-	public ITemplateProcessor getTemplateProcessor() {
+	public ITemplateModule getTemplateProcessor() {
 		return templateProcessor;
 	}
 
-	public void setTemplateProcessor(ITemplateProcessor processor) {
+	public void setTemplateProcessor(ITemplateModule processor) {
 		this.templateProcessor = processor;
 	}
 
-	public IResponseProcessor getResponseProcessor() {
+	public IResponseModule getResponseProcessor() {
 		return responseProcessor;
 	}
 
-	public void setResponseProcessor(IResponseProcessor responseProcessor) {
+	public void setResponseProcessor(IResponseModule responseProcessor) {
 		this.responseProcessor = responseProcessor;
 	}
 

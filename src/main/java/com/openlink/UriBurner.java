@@ -1,9 +1,9 @@
 package com.openlink;
 
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
-import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateProcessor;
+import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
 
-public class UriBurner extends AbstractTemplateProcessor {
+public class UriBurner extends AbstractTemplateModule {
 
 	@Override
 	public void process(String template, IEvent target) {

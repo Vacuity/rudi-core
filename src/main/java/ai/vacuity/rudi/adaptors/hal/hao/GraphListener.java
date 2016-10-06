@@ -63,7 +63,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 		GraphListener.getRepository().initialize();
 		try (RepositoryConnection con = GraphListener.getRepository().getConnection()) {
 			Resource context = con.getValueFactory().createIRI(Constants.CONTEXT_DEMO);
-			con.clear(context);
+			con.clear(context); // TODO careful, the listeners were in there
 
 			File dir = new File(indexDir);
 			if (!dir.exists()) {
@@ -86,38 +86,38 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 	private static final int RECSIZE = RECORD.getBytes().length;
 
 	public static void main(String[] args) throws Exception {
-		List<String> records = new ArrayList<String>(RECORD_COUNT);
-		int size = 0;
-		for (int i = 0; i < RECORD_COUNT; i++) {
-			records.add(RECORD);
-			size += RECSIZE;
-		}
-		System.out.println(records.size() + " 'records'");
-		System.out.println(size / MEG + " MB");
-
-		for (int i = 0; i < ITERATIONS; i++) {
-			System.out.println("\nIteration " + i);
-			File file = File.createTempFile("foo", ".txt");
-
-			writeRaw(records, file);
-			writeBuffered(records, file, 8192);
-			writeBuffered(records, file, (int) MEG);
-			writeBuffered(records, file, 4 * (int) MEG);
-		}
+		// List<String> records = new ArrayList<String>(RECORD_COUNT);
+		// int size = 0;
+		// for (int i = 0; i < RECORD_COUNT; i++) {
+		// records.add(RECORD);
+		// size += RECSIZE;
+		// }
+		// System.out.println(records.size() + " 'records'");
+		// System.out.println(size / MEG + " MB");
+		//
+		// for (int i = 0; i < ITERATIONS; i++) {
+		// System.out.println("\nIteration " + i);
+		// File file = File.createTempFile("foo", ".txt");
+		//
+		// writeRaw(records, file);
+		// writeBuffered(records, file, 8192);
+		// writeBuffered(records, file, (int) MEG);
+		// writeBuffered(records, file, 4 * (int) MEG);
+		// }
 	}
 
 	@Override
 	public void run() {
 		while (true) {
-			// try {
-			// Thread.sleep(5000);
-			// }
-			// catch (InterruptedException e) {
-			// logger.error(e.getMessage(), e);
-			// }
-			if (getTuples().size() <= 0) continue;
-			add(getTuples().get(0));
-			getTuples().remove(0);
+			try {
+				Thread.sleep(5000);
+			}
+			catch (InterruptedException e) {
+				logger.error(e.getMessage(), e);
+			}
+			while (getTuples().size() > 0) {
+				add(getTuples().remove(0));
+			}
 		}
 	}
 
@@ -194,6 +194,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 
 	private static void index(IndexableQuery query, Value value) {
 		if (value != null) { // only index Values (i.e. not query variables)
+			// logger.debug("Query: " + query.getId() + "" + query.getLabel() + " for value " + value.hashCode() + ":" + value.stringValue());
 			try {
 				File indexDirFile = new File(indexDir + value.hashCode() + File.separator);
 				if (!indexDirFile.exists()) { // the two files are logically paired
@@ -275,7 +276,8 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 		t.setPredicate(predicate);
 		t.setObject(object);
 		t.setContexts(contexts);
-		getTuples().add(t);
+		getTuples().add(t); // will need to wait until the triple is added to the index before dispatching, since the dispatcher will need to execute a query to retrieve the triple
+		// add(t);
 
 		// int phash = predicate.hashCode();
 		// int ohash = object.hashCode();
@@ -297,6 +299,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 
 	private void add(Tuple t) {
 		for (Resource context : t.getContexts()) {
+			if (!GraphMaster.getInbox().contains(context)) return;
 			add(t.getSubject(), context);
 			add(t.getPredicate(), context);
 			add(t.getObject(), context);
@@ -305,9 +308,9 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 
 	private void add(Value value, Resource context) {
 		int shash = value.hashCode();
-		// logger.debug("Hash value: " + shash + " for " + value.stringValue());
 		File indexDirFile = new File(indexDir + shash + File.separator);
 		if (indexDirFile.exists()) {
+			// logger.debug("Hash value: " + shash + ":" + value.stringValue() + " @ " + context.hashCode() + ":" + context.stringValue());
 			File[] queryLabelHashes = indexDirFile.listFiles();
 			for (File queryLabelHashFile : queryLabelHashes) {
 				int qhash = Integer.parseInt(queryLabelHashFile.getName());
@@ -325,11 +328,13 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 					}
 					if (queryQueue.list() != null && queryQueue.list().length <= 0) {
 						// match found
-						logger.debug("Match found: " + queryLabelHashFile + " for value '" + value.stringValue() + "'");
+						logger.debug("Match found: " + queryLabelHashFile + " for value '" + value.stringValue() + "' @ " + context.hashCode() + ":" + context.stringValue());
 						// File queryQueueRQFile = new File(queueDir + queryLabelHashFile.getName() + ".rq"); // fetch the query and run it'
 
 						try {
 							DispatchService.dispatch(qhash, context);
+							renew(qhash, context); // renew the queue
+							return;
 						}
 						catch (IllegalArgumentException e) {
 							logger.error(e.getMessage(), e);
@@ -337,7 +342,6 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 						catch (IOException e) {
 							logger.error(e.getMessage(), e);
 						}
-						renew(qhash, context); // renew the queue
 					}
 				}
 				else {
