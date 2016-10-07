@@ -128,3 +128,29 @@ Custom placeholders may be used, and are swapped by custom TemplateProcessors, w
 ## Sponsors
 
 Events may be handled by a sponsor node which is configured by the RUDI peer. Once configured, EventHandlers which dispatch to the sponsor node may be registered with RUDI. A sponsor node collects listeners whose EventHandlers describe HTML5 content instead of endpoint invocations. Replies from sponsor nodes are transmitted back to the event originator along the Sponsor channel.
+
+Listener Specification
+
+| Tag                  | Description                              |         Required         | Cardinality |
+| -------------------- | :--------------------------------------- | :----------------------: | :---------: |
+| **via:Listener**     | A RUDI listener                          |                          |      n      |
+| - rdfs:comment       | brief documentation                      |          false           |      n      |
+| - rdf:label          | human-readable name                      |          false           |      n      |
+| - via:event          | event to monitor; can be of type via:Input or via:Query |           true           |      n      |
+| - via:notify         | A via:EventHandler, the URI of an entity with via:cep properties, or a [LDN URI](https://www.w3.org/TR/2016/WD-ldn-20160726/) to which the via:event is passed |           true           |      n      |
+| **via:EventHandler** | accepts an event to disptach; the captured data is passed to via:call values via ${index} placeholders, where 'index' is the index of the captured datum |                          |             |
+| - via:config         | the config in the settings.ini file which registers the custom ${tags} to be used in this handler, and the endpoint attributes by which the via:call properties are sandboxed (the domain, port, and protocols must match or a Security violation is thrown) |           true           |      1      |
+| - via:json           | a via:call property whose value is the web service call to which the captured data is dispatched, and which produces JSON; the JSON is RDFized and stored in the Index |          false           |      n      |
+| - via:rdf            | a via:call property whose value is the web service call to which the captured data is dispatched, and which produces RDF (of XML, n3, or turtle format); the RDF is stored in the Index |          false           |      n      |
+| - via:translator     | the URL of an XSLT sheet which translates the XMLized output of a via:json call into RDF+XML | when via:json is present |      1      |
+| - via:query          | the via:Query to which events are passed, the result set is RDFized and added to the Index |          false           |      n      |
+| - via:log            | logs the dispatch                        |          false           |      n      |
+| **via:Input**        | captures events at RUDI's sensors, e.g. the web service controller |                          |             |
+| - via:pattern        | captures data from a event pattern of type rdf:datatype |          false           |      n      |
+| - via:Regex          | a regular expression event pattern type, captures tokens in free-form input |           true           |             |
+| - via:label_*        | labels the datum at index *              |          false           |      n      |
+| - via:capture_*      | captures a token of ref:datatype at index * from the via:pattern |          false           |      n      |
+| **via:Query**        | captures update events occuring in the Index; types are rdf:TupleQuery, rdf:GraphQuery, and rdf:BooleanQuery |                          |             |
+| - via:sparql         | the sparql query, captures projection items from the update event |           true           |      1      |
+| - via:label_*        | labels the datum captured at index *     |          false           |      n      |
+
