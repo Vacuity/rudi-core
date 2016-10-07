@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
   <wb-module deploy-name="rudi-adaptors">
     <wb-resource deploy-path="/" source-path="src/main/webapp"/>
+        <dependent-module archiveName="virtuoso-rdf4j-4.jar" deploy-path="/WEB-INF/lib" handle="module:/resource/rdf4j/rdf4j">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
     <property name="java-output-path" value="/target/classes"/>
         <property name="context-root" value="rudi-adaptors"/>
     <wb-resource deploy-path="/WEB-INF/classes" source-path="src/main/java"/>

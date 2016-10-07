@@ -29,7 +29,7 @@ import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
-import ai.vacuity.rudi.adaptors.hal.hao.GraphMaster;
+import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.SPARQLHao;
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
@@ -41,7 +41,10 @@ public class DispatchService extends Thread {
 		start(); // start dispatching events
 	}
 
-	private final static DispatchService dispatcher = new DispatchService();
+	/**
+	 * Starts the dispatch service.
+	 */
+	private final static DispatchService dispatcher = new DispatchService(); // this field is required to start the dispatcher, even though it is, for now, never used
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(DispatchService.class);
 	private static final Vector<AbstractHAO> queue = new Vector<AbstractHAO>();
 
@@ -54,16 +57,17 @@ public class DispatchService extends Thread {
 			// catch (InterruptedException e) {
 			// logger.error(e.getMessage(), e);
 			// }
-			if (getQueue().size() <= 0) continue;
-			getQueue().get(0).run();
-			getQueue().remove(0);
+			while (getQueue().size() > 0) {
+				getQueue().get(0).run();
+				getQueue().remove(0);
+			}
 		}
 	}
 
 	// TODO need to merge this with the other dispatch() method
 	public static void dispatch(int id, Resource context) throws IOException, IllegalArgumentException {
 		ArrayList<String> logs = new ArrayList<String>();
-		find_matches: for (InputProtocol ip : GraphMaster.getQueryPatterns()) {
+		find_matches: for (InputProtocol ip : GraphManager.getQueryPatterns()) {
 			if (ip == null) break;
 			if (ip.getEventHandler() != null || ip.hasSparqlQuery()) { // assume the event notifies an eventhandler
 				String procedure = ip.getEventHandler().getCall(), log = ip.getEventHandler().getLog();
@@ -89,7 +93,7 @@ public class DispatchService extends Thread {
 				hao.setEvent(ip.getQuery()); // send a label form of the query to the response pipeline
 				// hao.run();
 				DispatchService.add(hao);
-				GraphMaster.removeFromInbox(context);
+				GraphManager.removeFromInbox(context);
 			}
 			else {
 				logger.debug("[Rudi]: Notifying the delegate '" + ip.getQuery().getOwnerIri() + "'");
@@ -102,18 +106,20 @@ public class DispatchService extends Thread {
 		index(event);
 
 		ArrayList<String> logs = new ArrayList<String>();
-		InputProtocol[] protocols = GraphMaster.getTypedPatterns();
+		InputProtocol[] protocols = GraphManager.getTypedPatterns();
 		find_matches: for (int i = 0; i < protocols.length; i++) {
 			InputProtocol ip = protocols[i];
 			// try regex patterns only if no typed patterns matched
 			if (ip == null) {
-				if (protocols.equals(GraphMaster.getTypedPatterns())) {
-					protocols = GraphMaster.getRegexPatterns();
+				if (protocols.equals(GraphManager.getTypedPatterns())) {
+					protocols = GraphManager.getRegexPatterns();
 					continue;
 				}
 				else break;
 			}
+
 			String procedure = ip.getEventHandler().getCall();
+
 			String log = ip.getEventHandler().getLog();
 			AbstractHAO hao = null;
 
@@ -175,7 +181,7 @@ public class DispatchService extends Thread {
 		}
 
 		// SECOND MATCH GATE
-		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/URL"))) {
+		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/URL"))) {
 			try {
 				new URL(event.getLabel());
 				found = true;
@@ -184,16 +190,16 @@ public class DispatchService extends Thread {
 				return new String[0];
 			}
 		}
-		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
+		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
 			try {
-				GraphMaster.getValueFactory().createIRI(event.getLabel());
+				GraphManager.getValueFactory().createIRI(event.getLabel());
 				found = true;
 			}
 			catch (IllegalArgumentException iaex) {
 				return new String[0];
 			}
 		}
-		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
+		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
 			try {
 				Integer.parseInt(event.getLabel());
 				found = true;
@@ -202,7 +208,7 @@ public class DispatchService extends Thread {
 				return new String[0];
 			}
 		}
-		if (ip.getDataType().equals(GraphMaster.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#dateTime"))) {
+		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#dateTime"))) {
 			try {
 				// for type dateTime, the value is the date format
 				new SimpleDateFormat(((Value) ip.getPattern()).stringValue());
@@ -219,20 +225,26 @@ public class DispatchService extends Thread {
 		// TODO should the log include the unprocessed placeholder value?
 
 		for (int i = 0; i < templates.length; i++) {
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasTemplateProcessor()) {
+			if (ip.getEventHandler().hasEndpointTemplateModule()) {
 
-				Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(templates[i], event);
-				templates[i] = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getTemplate();
+				ip.getEventHandler().getEndpointTemplateModule().process(templates[i], event);
+				templates[i] = ip.getEventHandler().getEndpointTemplateModule().getTemplate();
 
 				// allow the template processor to transform user input prior to user input being filled in template
-				event = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getEvent();
+				event = ip.getEventHandler().getEndpointTemplateModule().getEvent();
 			}
 			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${" + ip.getCaptureIndex() + "}", event.getLabel());
 
 			// 3. swap any remaining reserved placed holders
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasKey()) templates[i] = templates[i].replace("${key}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getKey());
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasId()) templates[i] = templates[i].replace("${id}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getId());
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasToken()) templates[i] = templates[i].replace("${token}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getToken());
+			if (ip.getEventHandler().hasEndpointKey()) templates[i] = templates[i].replace("${key}", ip.getEventHandler().getEndpointKey());
+			if (ip.getEventHandler().hasEndpointId()) templates[i] = templates[i].replace("${id}", ip.getEventHandler().getEndpointId());
+			if (ip.getEventHandler().hasEndpointToken()) templates[i] = templates[i].replace("${token}", ip.getEventHandler().getEndpointToken());
+			templates[i] = templates[i].replace("http://rudi.endpoint.placeholders.vacuity.ai", Config.getRudiEndpoint());
+			templates[i] = templates[i].replace("http://rudi.host.placeholders.vacuity.ai", (Boolean.parseBoolean(Config.RUDI_SECURE) ? "https://" : "http://") + Config.RUDI_HOST);
+			templates[i] = templates[i].replace("${rudi.host}", Config.RUDI_HOST);
+			templates[i] = templates[i].replace("${rudi.endpoint}", Config.getRudiEndpoint());
+			templates[i] = templates[i].replace("${domain}", ip.getEventHandler().getEndpointDomain());
+			templates[i] = templates[i].replace("${port}", ip.getEventHandler().getEndpointPort() + "");
 		}
 
 		return templates;
@@ -244,30 +256,30 @@ public class DispatchService extends Thread {
 
 		logger.debug("Context: " + context);
 
-		TupleQuery alertQuery = GraphMaster.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, query);
+		TupleQuery alertQuery = GraphManager.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, query);
 		alertQuery.setBinding("context", context);
 		try (TupleQueryResult alerts = alertQuery.evaluate()) {
 			if (!alerts.hasNext()) return new String[0];
 			UUID u = UUID.randomUUID();
-			IRI alertIRI = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "alrt-" + u);
+			IRI alertIRI = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "alrt-" + u);
 			Vector<Statement> tuples = new Vector<Statement>();
 			if (alerts.hasNext()) {
 				Resource owner = ip.getQuery().getOwnerIri();
 				if (owner == null) owner = ip.getEventHandler().getIri();
-				if (owner == null) owner = GraphMaster.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
-				tuples.add(GraphMaster.getValueFactory().createStatement(alertIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_owner"), owner));
-				tuples.add(GraphMaster.getValueFactory().createStatement(alertIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_VIA + "context"), context));
+				if (owner == null) owner = GraphManager.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
+				tuples.add(GraphManager.getValueFactory().createStatement(alertIRI, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_owner"), owner));
+				tuples.add(GraphManager.getValueFactory().createStatement(alertIRI, GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "context"), context));
 			}
 			for (int j = 0; alerts.hasNext(); j++) {
 				try {
 					UUID uuid = UUID.randomUUID();
-					IRI hit = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
+					IRI hit = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
 					BindingSet captures = alerts.next();
 					Iterator<String> capture_names = captures.getBindingNames().iterator();
-					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.rdf_type, GraphMaster.via_Hit));
-					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), alertIRI));
-					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.via_timestamp, GraphMaster.getValueFactory().createLiteral(new Date())));
-					tuples.add(GraphMaster.getValueFactory().createStatement(hit, GraphMaster.via_query, ip.getQuery().getIri()));
+					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.rdf_type, GraphManager.via_Hit));
+					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), alertIRI));
+					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
+					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.via_query, ip.getQuery().getIri()));
 					while (capture_names.hasNext()) {
 						String name = capture_names.next();
 						if (captures.getValue(name) == null) {
@@ -283,46 +295,55 @@ public class DispatchService extends Thread {
 
 						AbstractTemplateModule.logger.debug("SPARQL Capture Value (" + name + "." + j + "): " + value);
 
-						Literal valueLit = GraphMaster.getValueFactory().createLiteral(name);
+						Literal valueLit = GraphManager.getValueFactory().createLiteral(name);
 
 						try {
-							valueLit = GraphMaster.getValueFactory().createLiteral(Integer.parseInt(name)); // try to make the capture's datatype granular
+							valueLit = GraphManager.getValueFactory().createLiteral(Integer.parseInt(name)); // try to make the capture's datatype granular
 						}
 						catch (NumberFormatException nfex) {
 						}
 						UUID puuid = UUID.randomUUID();
-						IRI p = GraphMaster.getValueFactory().createIRI(Constants.NS_VI, "p-" + puuid);
-						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.rdf_type, GraphMaster.via_Projection));
-						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.via_bindName, valueLit));
-						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.via_value, captures.getValue(name)));
-						tuples.add(GraphMaster.getValueFactory().createStatement(p, GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), hit));
+						IRI p = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "p-" + puuid);
+						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.rdf_type, GraphManager.via_Projection));
+						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.via_bindName, valueLit));
+						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.via_value, captures.getValue(name)));
+						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), hit));
 					}
 				}
 				catch (Exception e) {
 					logger.error(e.getMessage(), e);
 					continue;
 				}
-				GraphMaster.addToRepository(tuples, alertIRI);
+				GraphManager.addToRepository(tuples, alertIRI);
 			}
 		}
 		catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			return new String[0];
 		}
+		finally {
+			GraphManager.getConnection().close();
+		}
 		for (int i = 0; i < templates.length; i++) {
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasTemplateProcessor()) {
-				Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().process(templates[i], ip.getQuery());
-				templates[i] = Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getTemplate();
+			if (ip.getEventHandler().hasEndpointTemplateModule()) {
+				ip.getEventHandler().getEndpointTemplateModule().process(templates[i], ip.getQuery());
+				templates[i] = ip.getEventHandler().getEndpointTemplateModule().getTemplate();
 
 				// allow the template processor to transform user input prior to user input being filled in template
-				ip.getQuery().setLabel(Config.getMap().get(ip.getEventHandler().getConfigLabel()).getTemplateProcessor().getEvent().getLabel());
+				ip.getQuery().setLabel(Config.get(ip.getEventHandler().getConfigLabel()).getTemplateModule().getEvent().getLabel());
 			}
 			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${" + ip.getCaptureIndex() + "}", ip.getQuery().getLabel());
 
 			// 3. swap any remaining reserved placed holders
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasKey()) templates[i] = templates[i].replace("${key}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getKey());
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasId()) templates[i] = templates[i].replace("${id}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getId());
-			if (Config.getMap().get(ip.getEventHandler().getConfigLabel()).hasToken()) templates[i] = templates[i].replace("${token}", Config.getMap().get(ip.getEventHandler().getConfigLabel()).getToken());
+			if (ip.getEventHandler().hasEndpointKey()) templates[i] = templates[i].replace("${key}", ip.getEventHandler().getEndpointKey());
+			if (ip.getEventHandler().hasEndpointId()) templates[i] = templates[i].replace("${id}", ip.getEventHandler().getEndpointId());
+			if (ip.getEventHandler().hasEndpointToken()) templates[i] = templates[i].replace("${token}", ip.getEventHandler().getEndpointToken());
+			templates[i] = templates[i].replace("http://rudi.endpoint.placeholders.vacuity.ai", Config.getRudiEndpoint());
+			templates[i] = templates[i].replace("http://rudi.host.placeholders.vacuity.ai", (Boolean.parseBoolean(Config.RUDI_SECURE) ? "https://" : "http://") + Config.RUDI_HOST);
+			templates[i] = templates[i].replace("${rudi.host}", Config.RUDI_HOST);
+			templates[i] = templates[i].replace("${rudi.endpoint}", Config.getRudiEndpoint());
+			templates[i] = templates[i].replace("${domain}", ip.getEventHandler().getEndpointDomain());
+			templates[i] = templates[i].replace("${port}", ip.getEventHandler().getEndpointPort() + "");
 		}
 
 		return templates;
@@ -330,18 +351,18 @@ public class DispatchService extends Thread {
 
 	public static void index(IEvent event) {
 		Vector<Statement> tuples = new Vector<Statement>();
-		IRI sioc_owner_of = GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC, "owner_of");
-		IRI rdf_type = GraphMaster.getValueFactory().createIRI(Constants.NS_RDF, "type");
-		IRI via_channel = GraphMaster.getValueFactory().createIRI(Constants.NS_VIA, "Channel");
-		IRI rdfs_label = GraphMaster.getValueFactory().createIRI(Constants.NS_RDFS, "label");
+		IRI sioc_owner_of = GraphManager.getValueFactory().createIRI(Constants.NS_SIOC, "owner_of");
+		IRI rdf_type = GraphManager.getValueFactory().createIRI(Constants.NS_RDF, "type");
+		IRI via_channel = GraphManager.getValueFactory().createIRI(Constants.NS_VIA, "Channel");
+		IRI rdfs_label = GraphManager.getValueFactory().createIRI(Constants.NS_RDFS, "label");
 		IRI owner = event.getOwnerIri();
-		if (owner == null) owner = GraphMaster.getValueFactory().createIRI(Constants.CONTEXT_DEMO);
+		if (owner == null) owner = GraphManager.getValueFactory().createIRI(Constants.CONTEXT_DEMO);
 
-		tuples.add(GraphMaster.getValueFactory().createStatement(owner, sioc_owner_of, event.getIri()));
-		tuples.add(GraphMaster.getValueFactory().createStatement(event.getIri(), GraphMaster.via_timestamp, GraphMaster.getValueFactory().createLiteral(new Date())));
-		tuples.add(GraphMaster.getValueFactory().createStatement(event.getIri(), rdf_type, via_channel));
-		tuples.add(GraphMaster.getValueFactory().createStatement(event.getIri(), rdfs_label, GraphMaster.getValueFactory().createLiteral(event.getLabel())));
-		GraphMaster.addToRepository(tuples, GraphMaster.getValueFactory().createIRI(Constants.CONTEXT_DEMO));
+		tuples.add(GraphManager.getValueFactory().createStatement(owner, sioc_owner_of, event.getIri()));
+		tuples.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
+		tuples.add(GraphManager.getValueFactory().createStatement(event.getIri(), rdf_type, via_channel));
+		tuples.add(GraphManager.getValueFactory().createStatement(event.getIri(), rdfs_label, GraphManager.getValueFactory().createLiteral(event.getLabel())));
+		GraphManager.addToRepository(tuples, GraphManager.getValueFactory().createIRI(Constants.CONTEXT_DEMO));
 	}
 
 	private static Vector<AbstractHAO> getQueue() {

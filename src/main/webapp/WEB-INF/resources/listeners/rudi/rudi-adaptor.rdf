@@ -85,7 +85,7 @@
  	<!-- Sponger Output -->
  	<via:EventHandler rdf:about="#virtuoso-sponger">
  		<via:config>myrudi-sparql</via:config>
- 		<via:rdf rdf:resource="http://myrudi.io/sparql?default-graph-uri=${0}&amp;query=DESCRIBE%20%3Chttp%3A%2F%2Flinkeddata.uriburner.com%2Fabout%2Fid%2FentIPy%2F${0}%3E&amp;output=application%2Frdf%2Bxml"/>
+ 		<via:rdf rdf:resource="http://ec2-54-70-121-254.us-west-2.compute.amazonaws.com:1111/sparql/?default-graph-uri=${0}&amp;query=DESCRIBE%20%3Chttp%3A%2F%2Flinkeddata.uriburner.com%2Fabout%2Fid%2FentIPy%2F${0}%3E&amp;output=application%2Frdf%2Bxml"/>
  		<via:log>Collecting hyperdata for '${0}' using Virtuoso Sponger</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>
@@ -93,7 +93,7 @@
  	<via:EventHandler rdf:about="#virtuoso-sponger-sparql">
  		<via:config>myrudi-sparql</via:config>
  		<via:log>Collecting hyperdata for '${0}' using Virtuoso Sponger SPARQL endpoint</via:log> 		
- 		<via:rdf rdf:resource="http://myrudi.io/sparql"/>
+ 		<via:rdf rdf:resource="http://ec2-54-70-121-254.us-west-2.compute.amazonaws.com:1111/sparql/"/>
  		<via:query rdf:resource="#sponge"/>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>
@@ -108,7 +108,7 @@
  		<rdfs:comment>SPARQL Listener example</rdfs:comment>
  		<rdfs:label>SPARQL Listener example</rdfs:label>
  		<via:event rdf:resource="#get_videos"/>
-		<via:notify rdf:resource="#virtuoso-sponger"/>
+		<via:notify rdf:resource="#virtuoso-sponger-sparql"/>
  	</via:Listener>
 	
 	<via:TupleQuery rdf:about="#get_videos">

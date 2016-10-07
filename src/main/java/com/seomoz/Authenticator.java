@@ -40,22 +40,28 @@ public class Authenticator extends AbstractTemplateModule {
 	 */
 	private long expiresInterval = 300;
 
-	public Authenticator() {
-		Properties p = new Properties();
-		String resourceName = "api.config"; // could also be a constant
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		try (InputStream resourceStream = loader.getResourceAsStream(resourceName)) {
-			p.load(resourceStream);
-			this.accessID = p.getProperty("moz.id");
-			this.secretKey = p.getProperty("moz.key");
-			if (Config.getMap() != null && Config.getMap().containsKey("moz")) {
-				this.accessID = (Config.getMap().get("moz").hasId()) ? Config.getMap().get("moz").getId() : p.getProperty("moz.id");
-				this.secretKey = (Config.getMap().get("moz").hasKey()) ? Config.getMap().get("moz").getKey() : p.getProperty("moz.key");
-			}
+	public Authenticator() throws IllegalStateException {
+		// Properties p = new Properties();
+		// String resourceName = "api.config"; // could also be a constant
+		// ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		// try (InputStream resourceStream = loader.getResourceAsStream(resourceName)) {
+		// p.load(resourceStream);
+		// }
+		// catch (Exception ex) {
+		// logger.error(ex.getMessage(), ex);
+		// }
+		// this.accessID = p.getProperty("moz.id");
+		// this.secretKey = p.getProperty("moz.key");
+		if (Config.isConfigured("moz")) {
+			Config moz = Config.get("moz");
+			this.accessID = (moz.hasId()) ? moz.getId() : null;
+			this.secretKey = (moz.hasKey()) ? moz.getKey() : null;
 		}
-		catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
+		else {
+			throw new IllegalStateException("The moz api is not configured.");
 		}
+		if (this.accessID == null) { throw new IllegalStateException("Access id required but is found null."); }
+		if (this.secretKey == null) { throw new IllegalStateException("Secret key required but is found null."); }
 
 	}
 

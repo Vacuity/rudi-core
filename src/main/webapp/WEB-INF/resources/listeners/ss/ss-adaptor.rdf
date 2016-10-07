@@ -26,9 +26,9 @@
  		<via:config>ss</via:config>
  		<via:json rdf:resource="https://api.social-searcher.com/v2/search?q=${1}&amp;network=twitter,googleplus,instagram,tumblr,reddit,flickr,vimeo,vine&amp;key=${key}"/>
  		<!-- the rdfs:range is a via:Template -->
- 		<via:log>Fetching social posts for '${1}' from social-searcher.com.</via:log>
+ 		<via:log>Fetching social posts for '${1}' from ${domain}.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
-		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/ss/ss-api-results.xsl"/>
+		<via:translator rdf:resource="http://rudi.endpoint.placeholders.vacuity.ai/a/ss/ss-api-results.xsl"/>
  	</via:EventHandler>
 
 </rdf:RDF>

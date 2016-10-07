@@ -17,9 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
+import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
-import ai.vacuity.rudi.adaptors.hal.hao.GraphMaster;
+import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 import ai.vacuity.rudi.adaptors.types.Channel;
 import ai.vacuity.rudi.adaptors.types.Packet;
@@ -47,8 +48,8 @@ public class BaseController {
 			Response r = new Response();
 
 			UUID channelId = UUID.randomUUID();
-			IRI user = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "anon");
-			IRI channel = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
+			IRI user = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "anon");
+			IRI channel = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
 			long start = System.currentTimeMillis();
 			IndexableInput input = new IndexableInput(user, channel, q);
 			r.setLogs(DispatchService.dispatch(input));
@@ -56,8 +57,8 @@ public class BaseController {
 			String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
 			// String link = String.format("%s/query?action=exec&queryLn=SPARQL&query=%s&limit_query=100&infer=true&", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(describeChannel));
 
-			String link = String.format("%s/explore?resource=<%s>", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(channel.stringValue()));
-			if (Constants.SPARQL_ENDPOINT_RESPONSES.indexOf("rdf4j-server") > 0) link = link.replace(Constants.SPARQL_ENDPOINT_RESPONSES.substring(0, Constants.SPARQL_ENDPOINT_RESPONSES.indexOf("/rdf4j-server")), "http://" + Constants.RUDI_DOMAIN);
+			String link = String.format("%s/explore?resource=<%s>", Config.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(channel.stringValue()));
+			if (Config.SPARQL_ENDPOINT_RESPONSES.indexOf("rdf4j-server") > 0) link = link.replace(Config.SPARQL_ENDPOINT_RESPONSES.substring(0, Config.SPARQL_ENDPOINT_RESPONSES.indexOf("/rdf4j-server")), Config.getRudiContainer().toURL().toString());
 			// model.addAttribute("channel", channel.stringValue());
 			// model.addAttribute("link", link);
 			// model.addAttribute("test", "reached the controller");

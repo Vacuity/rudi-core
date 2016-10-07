@@ -25,8 +25,8 @@
  	<via:EventHandler rdf:about="#youtube-fetch-videos">
  		<via:config>youtube.data</via:config>
  		<via:json rdf:resource="https://www.googleapis.com/youtube/v3/search?part=snippet&amp;type=video&amp;q=${1}&amp;key=${key}"/>
-		<via:translator rdf:resource="http://localhost:8080/rudi-adaptors/a/youtube/youtube-api-results.xsl"/>
- 		<via:log>Checking youtube.com for videos about '${1}'</via:log>
+		<via:translator rdf:resource="http://rudi.endpoint.placeholders.vacuity.ai/a/youtube/youtube-api-results.xsl"/>
+ 		<via:log>Checking ${domain} for videos about '${1}'</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>
  	
@@ -34,5 +34,6 @@
  		<via:pattern rdf:datatype="&via;Regex">^youtube\s*(.*)</via:pattern>
  		<via:label_1>Youtube Search Terms</via:label_1>
  	</via:Input>
- 	 	
+
+	 	
 </rdf:RDF>

@@ -34,6 +34,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.event.RepositoryConnectionListener;
 import org.slf4j.LoggerFactory;
 
+import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.Tuple;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
@@ -47,10 +48,10 @@ import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 public class GraphListener extends Thread implements RepositoryConnectionListener {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphListener.class);
 
-	final static String indexDir = Constants.DIR_ALERTS + "index" + File.separator;
-	final static String queueDir = Constants.DIR_ALERTS + "queue" + File.separator;
+	final static String indexDir = Config.DIR_ALERTS + "index" + File.separator;
+	final static String queueDir = Config.DIR_ALERTS + "queue" + File.separator;
 
-	final static Repository repository = GraphMaster.parseSPARQLRepository(Constants.SPARQL_ENDPOINT_ALERTS);
+	final static Repository repository = GraphManager.parseSPARQLRepository(Config.SPARQL_ENDPOINT_ALERTS);
 	private final static HashMap<Value, Vector<IndexableQuery>> map = new HashMap<Value, Vector<IndexableQuery>>();
 
 	Vector<Tuple> tuples = new Vector<Tuple>();
@@ -124,7 +125,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 	private static void writeRaw(List<String> records, File file) throws IOException {
 		try {
 			FileWriter writer = new FileWriter(file);
-			System.out.print("Writing raw... ");
+			logger.debug("Writing raw... ");
 			write(records, writer);
 		}
 		finally {
@@ -138,7 +139,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 			FileWriter writer = new FileWriter(file);
 			BufferedWriter bufferedWriter = new BufferedWriter(writer, bufSize);
 
-			System.out.print("Writing buffered (buffer size: " + bufSize + ")... ");
+			logger.debug("Writing buffered (buffer size: " + bufSize + ")... ");
 			write(records, bufferedWriter);
 		}
 		finally {
@@ -299,7 +300,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 
 	private void add(Tuple t) {
 		for (Resource context : t.getContexts()) {
-			if (!GraphMaster.getInbox().contains(context)) return;
+			if (!GraphManager.getInbox().contains(context)) return;
 			add(t.getSubject(), context);
 			add(t.getPredicate(), context);
 			add(t.getObject(), context);

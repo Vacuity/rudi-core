@@ -9,3 +9,6 @@ TODO Implement caching of search results
 TODO Remove hardcoded namespaces, URIs, URLs, filepaths, etc
 TODO Multiple via:label_* elements need to collect in a common InputProtocol, current they each form separate protocols
 TODO Allow multiple <via:notify> per listener
+TODO GraphListener's queue cycle is n seconds, need to ensure this in memory queue can scale
+TODO Allow client to pass a channel id to be used instead of minting one on each request
+TODO Implement most specific regex match
