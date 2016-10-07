@@ -47,6 +47,7 @@ import ai.vacuity.rudi.adaptors.bo.Config;
 public class TokenService {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(TokenService.class);
 
+	static final String CONFIG_LABEL = "dm";
 	static final String PROPERTY_KEY = "dm.key";
 	static final String PROPERTY_TOKEN = "dm.token";
 	static final String PROPERTY_PORT = "dm.port";
@@ -76,9 +77,10 @@ public class TokenService {
 	private static Credential authorize() throws Exception {
 		// OAuth2ClientCredentials.errorIfNotSpecified();
 		// set up authorization code flow
-		AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(BearerToken.authorizationHeaderAccessMethod(), HTTP_TRANSPORT, JSON_FACTORY, new GenericUrl(TOKEN_SERVER_URL), new ClientParametersAuthentication(Config.getSettings().getProperty(TokenService.PROPERTY_KEY), Config.getSettings().getProperty(TokenService.PROPERTY_TOKEN)), Config.getSettings().getProperty(TokenService.PROPERTY_KEY), AUTHORIZATION_SERVER_URL).setScopes(Arrays.asList(SCOPE)).setDataStoreFactory(DATA_STORE_FACTORY).build();
+		Config config = Config.get(TokenService.CONFIG_LABEL);
+		AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(BearerToken.authorizationHeaderAccessMethod(), HTTP_TRANSPORT, JSON_FACTORY, new GenericUrl(TOKEN_SERVER_URL), new ClientParametersAuthentication(config.getKey(), config.getToken()), config.getKey(), AUTHORIZATION_SERVER_URL).setScopes(Arrays.asList(SCOPE)).setDataStoreFactory(DATA_STORE_FACTORY).build();
 		// authorize
-		LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost(Config.getSettings().getProperty(TokenService.PROPERTY_DOMAIN)).setPort(Integer.parseInt(Config.getSettings().getProperty(TokenService.PROPERTY_PORT))).build();
+		LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost(config.getHost()).setPort(config.getPort()).build();
 		return new AuthorizationCodeInstalledApp(flow, receiver).authorize("me");
 	}
 

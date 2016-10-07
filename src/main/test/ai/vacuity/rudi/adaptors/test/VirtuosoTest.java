@@ -62,9 +62,10 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.ntriples.NTriplesWriter;
 
+import com.openlink.virtuoso.rdf4j.driver.VirtuosoRepository;
+
 import virtuoso.jdbc4.VirtuosoExtendedString;
 import virtuoso.jdbc4.VirtuosoRdfBox;
-import virtuoso.rdf4j.driver.VirtuosoRepository;
 
 public class VirtuosoTest {
 

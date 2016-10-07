@@ -82,7 +82,7 @@ public class RestfulHAO extends AbstractHAO {
 		String xml = transform(json);
 		if (xml == null) return;
 		UUID uuid = UUID.randomUUID();
-		String fxmlStr = Constants.DIR_RESPONSES + host + File.separator + uuid + ".xml";
+		String fxmlStr = Config.DIR_RESPONSES + host + File.separator + uuid + ".xml";
 
 		File fxml = new File(fxmlStr);
 		if (!fxml.getParentFile().exists()) {
@@ -99,7 +99,7 @@ public class RestfulHAO extends AbstractHAO {
 		Transformer transformer = factory.newTransformer(xslStream);
 		StringReader srxml = new StringReader(xml);
 
-		String filePathStr = Constants.DIR_RESPONSES + host + File.separator + uuid + ".rdf";
+		String filePathStr = Config.DIR_RESPONSES + host + File.separator + uuid + ".rdf";
 		FileWriter fw = new FileWriter(fxml);
 		fw.write(xml);
 		fw.close();
@@ -117,22 +117,22 @@ public class RestfulHAO extends AbstractHAO {
 
 	private void index(String response) {
 		UUID replyId = UUID.randomUUID();
-		IRI replyIRI = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "r-" + replyId);
+		IRI replyIRI = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "r-" + replyId);
 
 		UUID responseId = UUID.randomUUID();
-		IRI responseIRI = GraphMaster.getValueFactory().createIRI(Constants.NS_VI + "r-" + responseId);
-		GraphMaster.addToRepository(response, responseIRI);
+		IRI responseIRI = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "r-" + responseId);
+		GraphManager.addToRepository(response, responseIRI);
 		Vector<Statement> tuples = new Vector<Statement>();
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "Item")));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "Communication_response")));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "response"), replyIRI));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.via_timestamp, GraphMaster.getValueFactory().createLiteral(new Date())));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "duration"), GraphMaster.getValueFactory().createLiteral(this.duration)));
-		tuples.add(GraphMaster.getValueFactory().createStatement(event.getIri(), GraphMaster.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), responseIRI));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "trigger"), event.getIri()));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "agent"), inputProtocol.getEventHandler().getIri()));
-		tuples.add(GraphMaster.getValueFactory().createStatement(responseIRI, GraphMaster.getValueFactory().createIRI(Constants.NS_NIX + "means"), GraphMaster.getValueFactory().createIRI(Config.getSettings().getProperty(inputProtocol.getEventHandler().getConfigLabel() + "." + Config.PROPERTY_SUFFIX_URL))));
-		GraphMaster.addToRepository(tuples, event.getIri());
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "Item")));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "Communication_response")));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "response"), replyIRI));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "duration"), GraphManager.getValueFactory().createLiteral(this.duration)));
+		tuples.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), responseIRI));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "trigger"), event.getIri()));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "agent"), inputProtocol.getEventHandler().getIri()));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "means"), GraphManager.getValueFactory().createIRI((inputProtocol.getEventHandler().isSecure() ? "https://" : "http://") + inputProtocol.getEventHandler().getEndpointDomain())));
+		GraphManager.addToRepository(tuples, event.getIri());
 	}
 
 	// FROM API CLIENT
@@ -177,10 +177,10 @@ public class RestfulHAO extends AbstractHAO {
 		// Call.ActivityFeed feed = new Call.ActivityFeed();
 		try {
 			String resp = response.parseAsString();
-			if (Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).hasResponseProcessor()) {
-				Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().process(resp, event);
-				resp = Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().getResponse();
-				event = Config.getMap().get(inputProtocol.getEventHandler().getConfigLabel()).getResponseProcessor().getEvent();
+			if (inputProtocol.getEventHandler().hasEndpointResponseModule()) {
+				inputProtocol.getEventHandler().getEndpointResponseModule().process(resp, event);
+				resp = inputProtocol.getEventHandler().getEndpointResponseModule().getResponse();
+				event = inputProtocol.getEventHandler().getEndpointResponseModule().getEvent();
 			}
 			// if (StringUtils.isNotBlank(resp)) resp = resp.replace("${0}", input);
 
@@ -191,7 +191,7 @@ public class RestfulHAO extends AbstractHAO {
 			}
 			else {
 				UUID uuid = UUID.randomUUID();
-				String fxmlStr = Constants.DIR_RESPONSES + response.getRequest().getUrl().getHost() + File.separator + uuid + ".rdf";
+				String fxmlStr = Config.DIR_RESPONSES + response.getRequest().getUrl().getHost() + File.separator + uuid + ".rdf";
 				File fxml = new File(fxmlStr);
 				if (!fxml.getParentFile().exists()) {
 					fxml.getParentFile().mkdirs();

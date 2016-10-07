@@ -1,9 +1,12 @@
 package ai.vacuity.rudi.adaptors.bo;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -18,20 +21,30 @@ import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
 public class Config {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Config.class);
 
-	private static final String FILE_NAME = "api.config";
+	private static final String FILE_NAME = "settings.ini";
 
 	private String key = "";
 	private String id = "";
 	private String token = "";
-	private GenericUrl url = null;
-	private ITemplateModule templateProcessor = null;
-	private IResponseModule responseProcessor = null;
+	private int port = 80;
+	private String host = "localhost";
+	private String path = "";
+	private String repoType = "sparql";
+	private boolean secure = false;
+	private String username = null;
+	private String password = null;
+	private ITemplateModule templateModule = null;
+	private IResponseModule responseModule = null;
 
 	final static HashMap<String, Config> map = new HashMap<String, Config>();
 	final static Properties settings = new Properties();
 	final static Vector<String> labels = new Vector<String>();
 
-	public static final String PROPERTY_REPO_TYPE_SUFFIX = "repo.type";
+	public static final String PROPERTY_RUDI_SYSTEM = "rudi.system";
+	public static final String PROPERTY_RUDI_CONTENT = "rudi.content";
+	public static final String PROPERTY_RUDI_ENDPOINT = "rudi.endpoint";
+
+	public static final String PROPERTY_SUFFIX_REPO_TYPE = "type";
 
 	public static final String REPO_TYPE_VIRTUOSO = "virtuoso";
 	public static final String REPO_TYPE_JENA = "jena";
@@ -43,12 +56,20 @@ public class Config {
 	public static final String PROPERTY_SUFFIX_LAZYADD = "lazyAdd";
 	public static final String PROPERTY_SUFFIX_DEFAULTGRAPH = "defaultGraph";
 
-	public static final String PROPERTY_SUFFIX_URL = "url";
+	public static final String PROPERTY_SUFFIX_HOST = "host";
+	public static final String PROPERTY_SUFFIX_PORT = "port";
+	public static final String PROPERTY_SUFFIX_PATH = "path";
+	public static final String PROPERTY_SUFFIX_SECURE = "secure";
 	static final String PROPERTY_SUFFIX_ID = "id";
 	static final String PROPERTY_SUFFIX_KEY = "key";
 	static final String PROPERTY_SUFFIX_TOKEN = "token";
 	static final String PROPERTY_SUFFIX_TEMPLATE_MODULE = "tm";
 	static final String PROPERTY_SUFFIX_RESPONSE_MODULE = "rm";
+
+	/**
+	 * Call limit, expressed as [total_calls,time_window,time_unit]
+	 */
+	private int[][] limit = new int[0][0];
 
 	static {
 		ClassLoader cLoader = Config.class.getClassLoader();
@@ -61,16 +82,60 @@ public class Config {
 		}
 	}
 
+	// these fields depend on the block above
+	public static final String RUDI_HOST = getSettings().getProperty("rudi.host");
+	public static final String RUDI_PORT_STR = getSettings().getProperty("rudi.port");
+	public static final String RUDI_PATH = getSettings().getProperty("rudi.path");
+	public static final String RUDI_SECURE = getSettings().getProperty("rudi.secure");
+
+	public static final String SPARQL_ENDPOINT_RESPONSES = getSettings().getProperty("rudi.repo.responses");
+
+	public static final String SPARQL_ENDPOINT_ALERTS = getSettings().getProperty("rudi.repo.alerts");
+
+	public static final String SPARQL_ENDPOINT_VIA = getSettings().getProperty("rudi.repo.via");
+
+	public static final String DIR_ALERTS = (getSettings().containsKey(Config.PROPERTY_RUDI_SYSTEM)) ? getSettings().getProperty(Config.PROPERTY_RUDI_SYSTEM) + "data/" : System.getProperty("user.home") + File.separator + "alerts/";
+
+	public static final String DIR_RESPONSES = (getSettings().containsKey(Config.PROPERTY_RUDI_SYSTEM)) ? getSettings().getProperty(Config.PROPERTY_RUDI_SYSTEM) + "responses/" : System.getProperty("user.home") + File.separator + "responses/";
+
+	public static final String DIR_LISTENERS = (getSettings().containsKey(Config.PROPERTY_RUDI_CONTENT)) ? getSettings().getProperty(Config.PROPERTY_RUDI_CONTENT) + "listeners/" : System.getProperty("user.home") + File.separator + "listeners/";
+
+	// public String getRudiHost() {
+	// return Config.RUDI_HOST;
+	// }
+
+	public static GenericUrl getRudiContainer() {
+		int rudiPort = 80;
+		try {
+			rudiPort = Integer.parseInt(RUDI_PORT_STR);
+		}
+		catch (NumberFormatException nfex) {
+			// port not required
+		}
+		return new GenericUrl((Boolean.parseBoolean(RUDI_SECURE) ? "https://" : "http://") + RUDI_HOST + ((rudiPort != 80) ? ":" + rudiPort : ""));
+	}
+
+	public static String getRudiEndpoint() {
+		int rudiPort = 80;
+		try {
+			rudiPort = Integer.parseInt(RUDI_PORT_STR);
+		}
+		catch (NumberFormatException nfex) {
+			// port not required
+		}
+		return (Boolean.parseBoolean(RUDI_SECURE) ? "https://" : "http://") + RUDI_HOST + ((rudiPort != 80) ? ":" + rudiPort : "") + RUDI_PATH;
+	}
+
 	public boolean hasId() {
 		return StringUtils.isNotBlank(getId());
 	}
 
-	public boolean hasTemplateProcessor() {
-		return getTemplateProcessor() != null;
+	public boolean hasTemplateModule() {
+		return getTemplateModule() != null;
 	}
 
-	public boolean hasResponseProcessor() {
-		return getResponseProcessor() != null;
+	public boolean hasResponseModule() {
+		return getResponseModule() != null;
 	}
 
 	public boolean hasToken() {
@@ -81,15 +146,16 @@ public class Config {
 		return StringUtils.isNotBlank(getKey());
 	}
 
-	public GenericUrl getUrl() {
-		return url;
+	public List<GenericUrl> getSandboxedEndpoints() {
+		List<GenericUrl> l = new ArrayList<GenericUrl>();
+		l.add(new GenericUrl((isSecure() ? "https://" : "http://") + getHost() + ":" + getPort() + (StringUtils.isNotBlank(getPath()) ? getPath() : "")));
+		if (getPort() == 80) {
+			l.add(new GenericUrl((isSecure() ? "https://" : "http://") + getHost() + (StringUtils.isNotBlank(getPath()) ? getPath() : "")));
+		}
+		return l;
 	}
 
-	public void setUrl(GenericUrl url) {
-		this.url = url;
-	}
-
-	public static Properties getSettings() {
+	private static Properties getSettings() {
 		return settings;
 	}
 
@@ -100,25 +166,49 @@ public class Config {
 	public static final void load() {
 		Enumeration<Object> keys = getSettings().keys();
 		while (keys.hasMoreElements()) {
-			String urlKey = ((String) keys.nextElement()).toLowerCase();
-			if (urlKey.endsWith("." + Config.PROPERTY_SUFFIX_URL)) {
-				String endpointLabel = urlKey.substring(0, urlKey.lastIndexOf(".url"));
-				Config e = Config.add(endpointLabel);
+			String findDomainKey = ((String) keys.nextElement()).toLowerCase();
+			if (findDomainKey.endsWith("." + Config.PROPERTY_SUFFIX_HOST)) {
+				String endpointLabel = findDomainKey.substring(0, findDomainKey.lastIndexOf("." + Config.PROPERTY_SUFFIX_HOST));
+				Config config = Config.add(endpointLabel);
 
-				String url = Config.getSettings().getProperty(urlKey);
-				if (StringUtils.isNotEmpty(url)) {
-					e.setUrl(new GenericUrl(url));
+				String domain = Config.getSettings().getProperty(findDomainKey);
+				if (StringUtils.isNotEmpty(domain)) {
+					config.setHost(domain);
 				}
-				e.setId(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_ID));
-				e.setKey(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_KEY));
-				e.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
+				else {
+					continue;
+				}
+				config.setRepoType(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_REPO_TYPE));
+				config.setUserName(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_USER));
+				config.setPassword(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PASS));
+				config.setPath(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PATH));
+				config.setId(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_ID));
+				config.setKey(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_KEY));
+				config.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
+				String portStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PORT);
+				if (StringUtils.isNotBlank(portStr)) {
+					try {
+						config.setPort(Integer.parseInt(portStr));
+					}
+					catch (NumberFormatException nfex) {
+						logger.error(nfex.getMessage(), nfex);
+					}
+					catch (NullPointerException npex) {
+						// port not required
+					}
+				}
+				config.setSecure(Boolean.parseBoolean(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_SECURE)));
+				config.setPath(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PATH));
+				config.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
+				config.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
 				String tpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TEMPLATE_MODULE);
 				String rpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_RESPONSE_MODULE);
+
 				if (StringUtils.isNotBlank(tpStr)) {
 					try {
 						Class clazz = Class.forName(tpStr);
 						ITemplateModule tp = (ITemplateModule) clazz.newInstance();
-						e.setTemplateProcessor(tp);
+						config.setTemplateModule(tp);
 					}
 					catch (ClassNotFoundException cnfex) {
 						logger.error(cnfex.getMessage(), cnfex);
@@ -130,12 +220,12 @@ public class Config {
 						logger.error(iaex.getMessage(), iaex);
 					}
 					catch (NullPointerException npex) {
-						// property is not required
+						// tm property is not required
 					}
 					try {
 						Class clazz = Class.forName(rpStr);
 						IResponseModule rp = (IResponseModule) clazz.newInstance();
-						e.setResponseProcessor(rp);
+						config.setResponseModule(rp);
 					}
 					catch (ClassNotFoundException cnfex) {
 						logger.error(cnfex.getMessage(), cnfex);
@@ -147,28 +237,35 @@ public class Config {
 						logger.error(iaex.getMessage(), iaex);
 					}
 					catch (NullPointerException npex) {
-						// property is not required
+						// rm property is not required
 					}
 				}
 			}
 		}
 	}
 
-	public static Config add(String endpoint) {
-		Config.getLabels().add(endpoint);
+	public static boolean isConfigured(String label) {
+		return getMap().get(label) != null;
+	}
+
+	public static Config get(String label) {
+		return getMap().get(label);
+	}
+
+	public String getProperty(String key) {
+		return getSettings().getProperty(key);
+	}
+
+	public static Config add(String label) {
+		Config.getLabels().add(label);
 		Config e = new Config();
-		Config.getMap().put(endpoint, e);
+		Config.getMap().put(label, e);
 		return e;
 	}
 
-	public static HashMap<String, Config> getMap() {
+	private static HashMap<String, Config> getMap() {
 		return map;
 	}
-
-	/**
-	 * Call limit, expressed as [total_calls,time_window,time_unit]
-	 */
-	private int[][] limit = new int[0][0];
 
 	public String getKey() {
 		return key;
@@ -202,20 +299,76 @@ public class Config {
 		this.limit = limit;
 	}
 
-	public ITemplateModule getTemplateProcessor() {
-		return templateProcessor;
+	public ITemplateModule getTemplateModule() {
+		return templateModule;
 	}
 
-	public void setTemplateProcessor(ITemplateModule processor) {
-		this.templateProcessor = processor;
+	public void setTemplateModule(ITemplateModule templateModule) {
+		this.templateModule = templateModule;
 	}
 
-	public IResponseModule getResponseProcessor() {
-		return responseProcessor;
+	public IResponseModule getResponseModule() {
+		return responseModule;
 	}
 
-	public void setResponseProcessor(IResponseModule responseProcessor) {
-		this.responseProcessor = responseProcessor;
+	public void setResponseModule(IResponseModule responseModule) {
+		this.responseModule = responseModule;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String domain) {
+		this.host = domain;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
+	public boolean isSecure() {
+		return secure;
+	}
+
+	public void setSecure(boolean secure) {
+		this.secure = secure;
+	}
+
+	public String getRepoType() {
+		return repoType;
+	}
+
+	public void setRepoType(String repoType) {
+		this.repoType = repoType;
+	}
+
+	public String getUserName() {
+		return username;
+	}
+
+	public void setUserName(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 }

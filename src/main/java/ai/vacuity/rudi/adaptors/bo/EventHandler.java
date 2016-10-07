@@ -1,5 +1,7 @@
 package ai.vacuity.rudi.adaptors.bo;
 
+import java.util.HashMap;
+
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.Repository;
 
@@ -7,7 +9,12 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.common.net.MediaType;
 
+import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
+import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
+
 public class EventHandler {
+
+	private static HashMap<String, Repository> repos = new HashMap<String, Repository>();
 
 	String configLabel = null;
 	HttpRequest request = null;
@@ -15,7 +22,7 @@ public class EventHandler {
 	MediaType contentType = null;
 	IRI iri = null;
 
-	Repository repository = null;
+	// Repository repository = null;
 	String sparql = null;
 	boolean hasSparqlQuery = false;
 
@@ -25,6 +32,58 @@ public class EventHandler {
 
 	public void setCall(String call) {
 		this.call = call;
+	}
+
+	public boolean isSecure() {
+		return Config.get(getConfigLabel()).isSecure();
+	}
+
+	public boolean hasEndpointTemplateModule() {
+		return Config.get(getConfigLabel()).hasTemplateModule();
+	}
+
+	public ITemplateModule getEndpointTemplateModule() {
+		return Config.get(getConfigLabel()).getTemplateModule();
+	}
+
+	public boolean hasEndpointResponseModule() {
+		return Config.get(getConfigLabel()).hasResponseModule();
+	}
+
+	public IResponseModule getEndpointResponseModule() {
+		return Config.get(getConfigLabel()).getResponseModule();
+	}
+
+	public boolean hasEndpointKey() {
+		return Config.get(getConfigLabel()).hasKey();
+	}
+
+	public boolean hasEndpointId() {
+		return Config.get(getConfigLabel()).hasId();
+	}
+
+	public boolean hasEndpointToken() {
+		return Config.get(getConfigLabel()).hasToken();
+	}
+
+	public String getEndpointKey() {
+		return Config.get(getConfigLabel()).getKey();
+	}
+
+	public String getEndpointId() {
+		return Config.get(getConfigLabel()).getId();
+	}
+
+	public String getEndpointDomain() {
+		return Config.get(getConfigLabel()).getHost();
+	}
+
+	public int getEndpointPort() {
+		return Config.get(getConfigLabel()).getPort();
+	}
+
+	public String getEndpointToken() {
+		return Config.get(getConfigLabel()).getToken();
 	}
 
 	GenericUrl translator = null;
@@ -75,12 +134,13 @@ public class EventHandler {
 	}
 
 	public Repository getRepository() {
-		return repository;
+		return EventHandler.repos.get(getConfigLabel());
 	}
 
-	public void setRepository(Repository repository) {
-		this.repository = repository;
-		this.repository.initialize();
+	public void addRepository(Repository repository) {
+		if (getRepository() != null) return;
+		repository.initialize();
+		EventHandler.repos.put(getConfigLabel(), repository);
 	}
 
 	public String getSparql() {

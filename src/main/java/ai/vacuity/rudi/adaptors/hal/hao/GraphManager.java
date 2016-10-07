@@ -4,12 +4,13 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -32,15 +33,15 @@ import org.slf4j.LoggerFactory;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.common.net.MediaType;
+import com.openlink.virtuoso.rdf4j.driver.VirtuosoRepository;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
 import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
-import virtuoso.rdf4j.driver.VirtuosoRepository;
 
-public class GraphMaster {
-	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphMaster.class);
+public class GraphManager {
+	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphManager.class);
 
 	// static String sparqlEndpoint = "http://www.tryrudi.io/sparql";
 	// static Repository repo = new SPARQLRepository(sparqlEndpoint);
@@ -48,7 +49,7 @@ public class GraphMaster {
 	// final static String indexes = "spoc,posc,cosp";
 	// static Repository repo = new SailRepository(new
 	// ForwardChainingRDFSInferencer(new NativeStore(dataDir, indexes)));
-	final static NotifyingRepositoryWrapper repository = new NotifyingRepositoryWrapper(GraphMaster.parseSPARQLRepository(Constants.SPARQL_ENDPOINT_VIA));
+	final static NotifyingRepositoryWrapper repository = new NotifyingRepositoryWrapper(GraphManager.parseSPARQLRepository(Config.SPARQL_ENDPOINT_VIA));
 	final static GraphListener listener = new GraphListener();
 	static final HashMap<String, TupleQuery> queries = new HashMap<String, TupleQuery>();
 
@@ -60,9 +61,9 @@ public class GraphMaster {
 	static final String QUERY_GET_ENDPOINT_LABELS = "get_endpoint_labels";
 	static final String QUERY_GET_QUERIES = "get_queries";
 	private static final int MAX_INPUTS = 100000;
-	private static final InputProtocol[] regexPatterns = new InputProtocol[GraphMaster.MAX_INPUTS];
-	private static final InputProtocol[] typedPatterns = new InputProtocol[GraphMaster.MAX_INPUTS];
-	private static final InputProtocol[] queryPatterns = new InputProtocol[GraphMaster.MAX_INPUTS];
+	private static final InputProtocol[] regexPatterns = new InputProtocol[GraphManager.MAX_INPUTS];
+	private static final InputProtocol[] typedPatterns = new InputProtocol[GraphManager.MAX_INPUTS];
+	private static final InputProtocol[] queryPatterns = new InputProtocol[GraphManager.MAX_INPUTS];
 
 	/**
 	 * Tracks altered contexts. Context added to inbox in each GraphMaster.add(... context) method. Context removed from context on each DispatchService.dispatch(... context). Context checked at the start of the GraphListener.add(... context) method.
@@ -70,13 +71,13 @@ public class GraphMaster {
 	private static final Set<Resource> inbox = new HashSet<Resource>();
 
 	static {
-		GraphMaster.getRepository().initialize();
-		GraphMaster.loadRepository(); // load rdf demo instance data, patterns,
+		GraphManager.getRepository().initialize();
+		GraphManager.loadRepository(); // load rdf demo instance data, patterns,
 										// and schema
-		GraphMaster.load(GraphMaster.QUERY_GET_LISTENER); // load adaptors
+		GraphManager.load(GraphManager.QUERY_GET_LISTENER); // load adaptors
 		// GraphMaster.load(GraphMaster.QUERY_GET_SUBSCRIPTIONS); // load adaptors
 
-		GraphMaster.getRepository().addRepositoryConnectionListener(listener);
+		GraphManager.getRepository().addRepositoryConnectionListener(listener);
 
 		// QuadStore.load(QuadStore.QUERY_GET_ADAPTOR_OUTPUT);
 		// QuadStore.load(QuadStore.QUERY_GET_ENDPOINT_LABELS);
@@ -171,7 +172,7 @@ public class GraphMaster {
 		try (RepositoryConnection con = getConnection()) {
 			String[] extensions = new String[] { "rdf", "rdfs" };
 			// IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
-			Iterator<File> iter = FileUtils.iterateFiles(new File(Constants.DIR_LISTENERS), extensions, true);
+			Iterator<File> iter = FileUtils.iterateFiles(new File(Config.DIR_LISTENERS), extensions, true);
 			Resource context = getValueFactory().createIRI(Constants.CONTEXT_VIA);
 			con.clear(context);
 			con.begin();
@@ -212,7 +213,7 @@ public class GraphMaster {
 
 					TupleQuery data = con.prepareTupleQuery(QueryLanguage.SPARQL, sparql.stringValue());
 					switch (queryLabel) {
-					case GraphMaster.QUERY_GET_LISTENER:
+					case GraphManager.QUERY_GET_LISTENER:
 						// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
 						try (TupleQueryResult r2 = data.evaluate()) {
 							Vector<Exception> err = new Vector<Exception>();
@@ -228,7 +229,7 @@ public class GraphMaster {
 								logger.debug("Translator: " + bs2.getValue("translator"));
 								logger.debug("Log: " + bs2.getValue("log"));
 								logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
-								logger.debug("Call: " + bs2.getValue("call"));
+								logger.debug("Endpoint: " + bs2.getValue("endpoint"));
 								logger.debug("Media Type: " + bs2.getValue("mediaType"));
 								logger.debug("Response Query: " + bs2.getValue("query"));
 
@@ -267,8 +268,26 @@ public class GraphMaster {
 								handler.setLog(bs2.getValue("log").stringValue());
 								handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
 								handler.setIri((IRI) bs2.getValue("output"));
-								if (bs2.getValue("translator") != null) handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
-								handler.setCall(bs2.getValue("call").stringValue());
+								if (bs2.getValue("translator") != null) {
+									handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue().replace("http://rudi.endpoint.placeholders.vacuity.ai", Config.getRudiEndpoint()).replace("http://rudi.host.placeholders.vacuity.ai", (Boolean.parseBoolean(Config.RUDI_SECURE) ? "https://" : "http://") + Config.RUDI_HOST)));
+								}
+								// ENDPOINT VALIDATION START //
+								handler.setCall(bs2.getValue("endpoint").stringValue());
+								boolean ok = false;
+								List<GenericUrl> l = Config.get(handler.getConfigLabel()).getSandboxedEndpoints();
+								for (GenericUrl g : l) {
+									if (StringUtils.startsWith(handler.getCall(), g.toURL().toString())) {
+										ok = true;
+										break;
+									}
+								}
+								if (!ok) {
+									SecurityException sex = new SecurityException("Error loading '" + bs2.getValue("input") + "'. Endpoint " + handler.getCall() + " not allowed by configuration: " + handler.getConfigLabel());
+									logger.error(sex.getMessage(), sex);
+									continue;
+								}
+								// ENDPOINT VALIDATION END //
+
 								// handler.setCall(Config.getSettings().getProperty(handler.getConfigLabel() + Config.PROPERTY_SUFFIX_URL) + bs2.getValue("call").stringValue());
 								i.setEventHandler(handler);
 
@@ -307,7 +326,7 @@ public class GraphMaster {
 										if (r3.hasNext()) { // expect a single result
 											BindingSet bs3 = r3.next();
 											handler.setSparql(bs3.getValue("s").stringValue());
-											handler.setRepository(GraphMaster.parseSPARQLRepository(handler.getCall(), bs2.getValue("config").stringValue()));
+											handler.addRepository(GraphManager.parseSPARQLRepository(handler.getCall(), bs2.getValue("config").stringValue()));
 											handler.hasSparqlQuery(true);
 										}
 									}
@@ -341,7 +360,7 @@ public class GraphMaster {
 							logger.error(iaex.getMessage(), iaex);
 						}
 						break;
-					case GraphMaster.QUERY_GET_SUBSCRIPTIONS:
+					case GraphManager.QUERY_GET_SUBSCRIPTIONS:
 						// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
 						try (TupleQueryResult r2 = data.evaluate()) {
 							Vector<Exception> err = new Vector<Exception>();
@@ -458,9 +477,9 @@ public class GraphMaster {
 							logger.error(iaex.getMessage(), iaex);
 						}
 						break;
-					case GraphMaster.QUERY_GET_ADAPTOR_WITH_CAPTURE:
+					case GraphManager.QUERY_GET_ADAPTOR_WITH_CAPTURE:
 						break;
-					case GraphMaster.QUERY_GET_ADAPTOR_OUTPUT:
+					case GraphManager.QUERY_GET_ADAPTOR_OUTPUT:
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
@@ -478,7 +497,7 @@ public class GraphMaster {
 							logger.error(qex.getMessage(), qex);
 						}
 						break;
-					case GraphMaster.QUERY_GET_ENDPOINT_LABELS:
+					case GraphManager.QUERY_GET_ENDPOINT_LABELS:
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
@@ -490,7 +509,7 @@ public class GraphMaster {
 							logger.error(qex.getMessage(), qex);
 						}
 						break;
-					case GraphMaster.QUERY_GET_PATTERN_LABELS:
+					case GraphManager.QUERY_GET_PATTERN_LABELS:
 						try (TupleQueryResult r2 = data.evaluate()) {
 							while (r2.hasNext()) {
 								BindingSet bs2 = r2.next();
@@ -502,7 +521,7 @@ public class GraphMaster {
 							logger.error(qex.getMessage(), qex);
 						}
 						break;
-					case GraphMaster.QUERY_GET_QUERIES:
+					case GraphManager.QUERY_GET_QUERIES:
 						break;
 					}
 
@@ -529,7 +548,7 @@ public class GraphMaster {
 				con.begin();
 				con.add(i, context);
 				con.commit();
-				GraphMaster.updateInbox(context);
+				GraphManager.updateInbox(context);
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -549,7 +568,7 @@ public class GraphMaster {
 				con.begin();
 				con.add(st, context);
 				con.commit();
-				GraphMaster.updateInbox(context);
+				GraphManager.updateInbox(context);
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -570,7 +589,7 @@ public class GraphMaster {
 				File f = new File(filePathStr);
 				con.add(f, null, RDFFormat.RDFXML, context);
 				con.commit();
-				GraphMaster.updateInbox(context);
+				GraphManager.updateInbox(context);
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
@@ -584,33 +603,31 @@ public class GraphMaster {
 		}
 	}
 
-	public static Repository parseSPARQLRepository(String url) {
-		return parseSPARQLRepository(url, null);
-	}
-
 	/**
 	 * Kept getting "Missing parameter: query" error on commits to rdf4j repos configured with SPARQLRepository. This method configures rdf4j URLs to use HTTPRepository instead.
 	 * 
 	 * See this post: https://groups.google.com/forum/#!searchin/rdf4j-users/"Missing$20parameter$3A$20query"|sort:relevance/rdf4j-users/7hS_U8MzXpI/osJNrzmfBQAJ
 	 * 
-	 * @param url
+	 * @param call
 	 * @return a Repository appropriate for the given URL
 	 */
-	public static Repository parseSPARQLRepository(String url, String config) {
-		String repoType = Config.getSettings().getProperty(config + "." + Config.getSettings().getProperty(Config.PROPERTY_REPO_TYPE_SUFFIX));
-		if (config == null || repoType == null) repoType = Config.REPO_TYPE_SPARQL;
-		if (StringUtils.isNoneBlank(repoType)) {
+	public static Repository parseSPARQLRepository(String call, String configLabel) throws IllegalArgumentException {
+		if (configLabel == null) throw new IllegalArgumentException("Null configuration label: " + call + ". Configuration label required.");
+		Config config = Config.get(configLabel);
+		String repoType = config.getRepoType();
+		if (StringUtils.isNotBlank(repoType)) {
 			switch (repoType) {
 			case Config.REPO_TYPE_VIRTUOSO: {
-				String user = Config.getSettings().getProperty(config + "." + Config.getSettings().getProperty(Config.PROPERTY_SUFFIX_USER));
-				String pass = Config.getSettings().getProperty(config + "." + Config.getSettings().getProperty(Config.PROPERTY_SUFFIX_PASS));
-				return new VirtuosoRepository("jdbc:virtuoso://" + url + "/log_enable=0", user, pass);
+				return new VirtuosoRepository("jdbc:virtuoso://" + config.getHost() + ":" + config.getPort() + "/log_enable=0", config.getUserName(), config.getPassword());
 			}
 			}
 		}
+		return new SPARQLRepository(call);
+	}
 
+	public static Repository parseSPARQLRepository(String url) {
 		String rdf4jPathIndicator = "rdf4j-server/repositories";
-		if (url.indexOf(rdf4jPathIndicator) > 0 || repoType.equals(Config.REPO_TYPE_RDF4J)) { return new HTTPRepository(url); }
+		if (url.indexOf(rdf4jPathIndicator) > 0) { return new HTTPRepository(url); }
 		return new SPARQLRepository(url);
 	}
 
@@ -623,19 +640,19 @@ public class GraphMaster {
 	}
 
 	public static void setRegexInputsCursor(int inputsCursor) {
-		GraphMaster.regexInputsCursor = inputsCursor;
+		GraphManager.regexInputsCursor = inputsCursor;
 	}
 
 	private static void incrementRegexInputsCursor() {
-		GraphMaster.regexInputsCursor++;
+		GraphManager.regexInputsCursor++;
 	}
 
 	private static void incrementTypedInputsCursor() {
-		GraphMaster.typedInputsCursor++;
+		GraphManager.typedInputsCursor++;
 	}
 
 	private static void incrementQueryInputsCursor() {
-		GraphMaster.queryInputsCursor++;
+		GraphManager.queryInputsCursor++;
 	}
 
 	public static NotifyingRepositoryWrapper getRepository() {
@@ -659,7 +676,7 @@ public class GraphMaster {
 	}
 
 	public static void setTypedInputsCursor(int typedInputsCursor) {
-		GraphMaster.typedInputsCursor = typedInputsCursor;
+		GraphManager.typedInputsCursor = typedInputsCursor;
 	}
 
 	public static InputProtocol[] getQueryPatterns() {
@@ -671,19 +688,19 @@ public class GraphMaster {
 	}
 
 	public static void setQueryInputsCursor(int queryInputsCursor) {
-		GraphMaster.queryInputsCursor = queryInputsCursor;
+		GraphManager.queryInputsCursor = queryInputsCursor;
 	}
 
 	public static Set<Resource> getInbox() {
-		return GraphMaster.inbox;
+		return GraphManager.inbox;
 	}
 
 	public static void removeFromInbox(Resource r) {
-		GraphMaster.getInbox().remove(r);
+		GraphManager.getInbox().remove(r);
 	}
 
 	private static void updateInbox(Resource r) {
-		GraphMaster.getInbox().add(r);
+		GraphManager.getInbox().add(r);
 	}
 
 }
