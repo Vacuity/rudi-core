@@ -12,3 +12,7 @@ TODO Allow multiple <via:notify> per listener
 TODO GraphListener's queue cycle is n seconds, need to ensure this in memory queue can scale
 TODO Allow client to pass a channel id to be used instead of minting one on each request
 TODO Implement most specific regex match
+TODO Implement XML Signatures
+TODO Consider converting settings.ini to settings.rdf, or at least settings.xml to improve maintainability
+TODO Add boolean arg to DispatchService.dispatch() to allow for match but not dispatch, for Spotlight search auto-complete
+TODO Associate match score with Response and Input bo's, order auto-complete matches by score (allow user to choose & train the engine)

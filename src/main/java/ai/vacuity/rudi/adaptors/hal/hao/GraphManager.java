@@ -1,11 +1,13 @@
 package ai.vacuity.rudi.adaptors.hal.hao;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.regex.Pattern;
 
@@ -14,10 +16,12 @@ import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryLanguage;
@@ -28,6 +32,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.event.base.NotifyingRepositoryWrapper;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
+import org.eclipse.rdf4j.repository.util.Connections;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +91,9 @@ public class GraphManager {
 	}
 
 	public final static IRI rdf_type = getValueFactory().createIRI(Constants.NS_RDF, "type");
+	public final static IRI rdf_List = getValueFactory().createIRI(Constants.NS_RDF, "List");
+	public final static IRI rdf_first = getValueFactory().createIRI(Constants.NS_RDF, "first");
+	public final static IRI rdf_nil = getValueFactory().createIRI(Constants.NS_RDF, "nil");
 
 	public final static IRI via_bindName = getValueFactory().createIRI(Constants.NS_VIA, "bindName");
 
@@ -221,7 +229,7 @@ public class GraphManager {
 								BindingSet bs2 = r2.next();
 								logger.debug("Listener: " + bs2.getValue("listener"));
 								logger.debug("Pattern: " + bs2.getValue("pattern"));
-								logger.debug("Label: " + bs2.getValue("i_label"));
+								logger.debug("Labels: " + bs2.getValue("i_labels"));
 								logger.debug("Query type: " + bs2.getValue("qtype"));
 								// logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
 								logger.debug("Event Handler: " + bs2.getValue("output"));
@@ -247,19 +255,50 @@ public class GraphManager {
 								// }
 
 								InputProtocol i = new InputProtocol();
-								if (bs2.getValue("pattern") != null) {
-									Literal pattern = (Literal) bs2.getValue("pattern");
+								Value pattern = bs2.getValue("pattern");
+								if (pattern != null) {
 									i.setTrigger(pattern);
-									i.setDataType(pattern.getDatatype());
-									if (pattern.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
-									else i.setPattern(i.getTrigger());
-								}
-								i.setLabel((Literal) bs2.getValue("i_label"));
+									if (pattern instanceof Literal) {
+										Literal patternLit = (Literal) pattern;
+										i.setDataType(patternLit.getDatatype());
+										if (patternLit.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
+										else i.setPattern(i.getTrigger());
+									}
+									else if (pattern instanceof IRI) {
+										IRI patternIRI = (IRI) pattern;
+										Model captures = Connections.getRDFCollection(getConnection(), patternIRI, new LinkedHashModel());
+										Iterator<Statement> m = captures.iterator();
+										List<Value> l = new ArrayList<Value>();
+										collect_list_element: while (m.hasNext()) {
+											Statement st = m.next();
+											Resource s = st.getSubject();
+											IRI p = st.getPredicate();
+											Value o = st.getObject();
 
-								if (bs2.getValue("capturePropertyType") != null) {
-									String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
-									int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
-									i.setCaptureIndex(captureIndex);
+											// ignore non list related properties
+											// CAREFUL, don't use the GraphManager constants in this method, since we're still in the static block of the class scope, which occurs prior to the loading of the static IRI fields
+											if (o.equals(getValueFactory().createIRI(Constants.NS_RDF, "nil"))) {
+												l.add(null); // place the capture at its corresponding position, but exclude rdf:nil
+												continue collect_list_element;
+											}
+											if (p.equals(getValueFactory().createIRI(Constants.NS_RDF, "first"))) {
+												l.add(o); // place the capture at its corresponding position, but exclude rdf:nil
+												continue collect_list_element;
+											}
+										}
+										i.setPattern(l);
+									}
+								}
+								String labels = bs2.getValue("i_labels").stringValue();
+								if (StringUtils.isNotBlank(labels)) {
+									String COMMA_ESCAPE = "::comma-rudi-replacement::";
+									labels = labels.replace("\\,", COMMA_ESCAPE);
+									StringTokenizer st = new StringTokenizer(labels, ",");
+									String[] sa = new String[st.countTokens()];
+									for (int j = 0; st.hasMoreTokens(); j++) {
+										sa[j] = st.nextToken().replace(COMMA_ESCAPE, ",");
+									}
+									i.setLabels(sa);
 								}
 
 								// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
@@ -403,11 +442,11 @@ public class GraphManager {
 								// }
 								// i.setLabel((Literal) bs2.getValue("i_label"));
 
-								if (bs2.getValue("capturePropertyType") != null) {
-									String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
-									int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
-									i.setCaptureIndex(captureIndex);
-								}
+								// if (bs2.getValue("capturePropertyType") != null) {
+								// String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
+								// int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
+								// i.setCaptureIndex(captureIndex);
+								// }
 
 								// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
 								// EventHandler handler = new EventHandler();

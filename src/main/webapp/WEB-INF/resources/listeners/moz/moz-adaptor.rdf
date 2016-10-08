@@ -3,6 +3,7 @@
 	<!ENTITY via "http://www.vacuity.ai/onto/via/1.0/">
 	<!ENTITY vi "http://www.vacuity.ai/onto/instances#">
     <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 ]>
 <rdf:RDF xml:base="http://www.vacuity.ai/onto/instances/1.0"
      xmlns:via="http://www.vacuity.ai/onto/via/1.0/"
@@ -25,9 +26,19 @@
  	<via:Input rdf:about="#moz-cmd">
  		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)</via:pattern>
  		<via:pattern rdf:datatype="&via;Regex">^do\s*(.*)</via:pattern>
- 		<via:label_1>Web URL</via:label_1>
- 		<via:capture_1 rdf:datatype="&via;URL">http://example.com</via:capture_1>
+ 		<via:labels>,Web URL</via:labels>
+ 		<via:captures rdf:resource="#moz-cmd-captures"/>
  	</via:Input>
+ 	
+ 	<rdf:List rdf:about="#moz-cmd-captures">
+ 		<rdf:first rdf:resource="&rdf;nil"/>
+ 		<rdf:rest rdf:resource="#moz-cmd-captures_1"/>
+ 	</rdf:List>
+ 	
+ 	<rdf:List rdf:about="#moz-cmd-captures_1">
+ 		<rdf:first rdf:datatype="&via;URL">http://example.com</rdf:first>
+ 		<rdf:rest rdf:resource="&rdf;nil"/>
+ 	</rdf:List>
  	
  	<via:EventHandler rdf:about="#moz-get-backlink-stats">
  		<via:config>moz</via:config>

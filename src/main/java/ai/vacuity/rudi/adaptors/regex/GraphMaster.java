@@ -1,5 +1,5 @@
 package ai.vacuity.rudi.adaptors.regex;
 
-public class GraphMasterII {
+public class GraphMaster {
 
 }

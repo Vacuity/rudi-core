@@ -1,4 +1,4 @@
-package ai.vacuity.rudi.adaptors.controller;
+package ai.vacuity.rudi.sensor;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;

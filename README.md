@@ -19,6 +19,10 @@ RUDI is a distributed index of event listeners and handlers coupled with an even
 
 At its core, RUDI is a platform for marshalling and federating linked data from dynamic sources (e.g. web service APIs) in response to open ended user queries. This is trivial with [RDF and SPARQL](https://www.informatik.hu-berlin.de/de/forschung/gebiete/wbi/research/publications/2008/DARQ-FINAL.pdf). The introduction of heterogenous APIs as data source endpoints solicits the development of specialized adaptors as well as the provisioning/maintanance of credentials for each API. One approach is to crowdsource the adaptor development and maintain the API credentials in a centralized store. This index would in turn collect the adaptor descriptions. A better approach is to decentralize the index of adaptors and their associated credentials, and route the user's query to the node housing the appropriate handler. Event routing is achieved when a RUDI instance subscribes to another RUDI. Members of a peer group simply pass their queries along to their peers in addition to dispatching the queries. A node selectively tunes in to its peers' broadcasts and dispatches the events which it can handle. The response is then published to the caller via an ephemeral listener wherein the caller is the handler.
 
+## Sensors
+
+A sensor monitors a 'physical channel' for events. The current implementation supports an HTTPSensor.
+
 ## Listeners
 
 A listener is a set of RDF statements that map an event to a handler. Events are of two types: free-form and semantic. Free-form events are described using `<via:pattern>`. Semantic events are described using `<via:sparql>`. Each event captures data in capture groups. Capture groups are ordered by number and can be labeled using the `<via:label_*>` property. Free-form events use Regex capture groups, or typed patterns. Queries use SPARQL projection items to capture groups. Unlike free form events, query events trigger a series of "result" events, each of which is dispatched to the `<via:notify>`.
@@ -47,7 +51,7 @@ Packet routing conforms to a special protocol. More specifically, RUDI generates
  	
  	<via:Input rdf:about="#youtube_cmd">
  		<via:pattern rdf:datatype="&via;Regex">^youtube\s*(.*)</via:pattern>
- 		<via:label_1>Youtube Search Terms</via:label_1>
+ 		<via:labels>,Youtube Search Terms</via:labels>
  	</via:Input>
 
  	<via:Listener rdf:about="#listening-adaptor">
@@ -67,7 +71,7 @@ Packet routing conforms to a special protocol. More specifically, RUDI generates
 	}
 ]]>
 		</via:sparql>
- 		<via:label_1>Listen for new Youtube vids submitted to the Index</via:label_1>
+ 		<via:labels>,Listen for new Youtube vids submitted to the Index</via:labels>
 </via:TupleQuery>
 
 <!-- 
@@ -129,7 +133,7 @@ Custom placeholders may be used, and are swapped by custom TemplateProcessors, w
 
 Events may be handled by a sponsor node which is configured by the RUDI peer. Once configured, EventHandlers which dispatch to the sponsor node may be registered with RUDI. A sponsor node collects listeners whose EventHandlers describe HTML5 content instead of endpoint invocations. Replies from sponsor nodes are transmitted back to the event originator along the Sponsor channel.
 
-Listener Specification
+## Listener Specification
 
 | Tag                  | Description                              |         Required         | Cardinality |
 | -------------------- | :--------------------------------------- | :----------------------: | :---------: |
@@ -139,18 +143,34 @@ Listener Specification
 | - via:event          | event to monitor; can be of type via:Input or via:Query |           true           |      n      |
 | - via:notify         | A via:EventHandler, the URI of an entity with via:cep properties, or a [LDN URI](https://www.w3.org/TR/2016/WD-ldn-20160726/) to which the via:event is passed |           true           |      n      |
 | **via:EventHandler** | accepts an event to disptach; the captured data is passed to via:call values via ${index} placeholders, where 'index' is the index of the captured datum |                          |             |
-| - via:config         | the config in the settings.ini file which registers the custom ${tags} to be used in this handler, and the endpoint attributes by which the via:call properties are sandboxed (the domain, port, and protocols must match or a Security violation is thrown) |           true           |      1      |
+| - via:config         | the config in the settings.ini file which registers the custom ${tags} to be used in this handler, and the endpoint attributes by which the via:call properties are sandboxed (the domain, port, and protocol assigned by the via:config must match thosed used in the via:call or a Security violation is thrown) |           true           |      1      |
 | - via:json           | a via:call property whose value is the web service call to which the captured data is dispatched, and which produces JSON; the JSON is RDFized and stored in the Index |          false           |      n      |
 | - via:rdf            | a via:call property whose value is the web service call to which the captured data is dispatched, and which produces RDF (of XML, n3, or turtle format); the RDF is stored in the Index |          false           |      n      |
-| - via:translator     | the URL of an XSLT sheet which translates the XMLized output of a via:json call into RDF+XML | when via:json is present |      1      |
+| - via:translator     | the URL of an XSLT sheet which translates the XMLized output of a via:json call into RDF+XML. The http://rudi.TAG.placeholders.vacuity.ai is a placeholder URL prefix which is substituted by RUDI for the URL prefix configured by the rudi.TAG property in settings.ini. This can, for example, point to a resource on the RUDI host. Trust of the via:translator URL is provided by via:signature. | when via:json is present |      1      |
 | - via:query          | the via:Query to which events are passed, the result set is RDFized and added to the Index |          false           |      n      |
 | - via:log            | logs the dispatch                        |          false           |      n      |
+| **via:signature**    | the [XML Signature](https://web-payments.org/vocabs/signature#XmlSignature) of the resource described by this property; the rudi.translators.validate and rudi.call.validate boolean properties in settings.ini control whether via:call and via:translator values are validated (***[TODO](http://docs.oracle.com/javase/7/docs/technotes/guides/security/xmldsig/XMLDigitalSignature.html)***). The Index will need to contain a nix:Trust idea linking the RUDI endpoint to the signer, and the idea needs to be signed by the RUDI endpoint. |          false           |             |
 | **via:Input**        | captures events at RUDI's sensors, e.g. the web service controller |                          |             |
 | - via:pattern        | captures data from a event pattern of type rdf:datatype |          false           |      n      |
 | - via:Regex          | a regular expression event pattern type, captures tokens in free-form input |           true           |             |
-| - via:label_*        | labels the datum at index *              |          false           |      n      |
-| - via:capture_*      | captures a token of ref:datatype at index * from the via:pattern |          false           |      n      |
+| - via:labels         | a comma-delimited list, each item labels the datum at the corresponding index in the event pattern. Escape comma using '\,' |          false           |      n      |
+| - via:capture        | the via:Input is a sub class of rdf:List and the via:captures and via:pattern are sub properties of rdf:first. The list items describe a hybrid pattern comprised of via:pattern and via:capture elements. The via:capture specifes a *typed pattern*, given by the rdf:datatype property. For type xsd:dateTime, the via:capture value specifies the date format. |          false           |      n      |
 | **via:Query**        | captures update events occuring in the Index; types are rdf:TupleQuery, rdf:GraphQuery, and rdf:BooleanQuery |                          |             |
 | - via:sparql         | the sparql query, captures projection items from the update event |           true           |      1      |
 | - via:label_*        | labels the datum captured at index *     |          false           |      n      |
 
+## Index Graph Structure
+
+The Index is designed to be RESTfully navigated. Here is a diagram of the Index graph's basic structure, followed by a description of the entity types:
+
+![RIGS](https://docs.google.com/drawings/d/1vOwOWbUxJytdbS8pVr21jkUnWY1vhGxi584WGTt9x-I/pub?w=1724&h=1052)
+
+* **User** - the IRI of the user who originated an event at a RUDI sensor
+* **Event Handler** - the IRI value of a via:notify
+* **via:Channel** - an IRI representing an event detected by RUDI at one of its sensors
+* **via:Response** - the IRI of the response generated by a via:call or via:query
+* **via:Communication_response** - the native idea model of the via:Response
+* **via:QueryResult** - a single result in the result set of a via:query
+* **via:Hit** - a single result in the result set of a via:event of type is via:Query
+* **via:Projection** - the projection variable/value binding contained in a via:QueryResult or via:Hit
+* **via:Alert** - the IRI of a stimulating Index update event scoped to a via:notify that ranges over a via:Query, and where the update event spans a document insert procedure, insertion of a list of statements, or insertion of a single statement. The via:notify should use the ${context} to restrict the results of the query to the context IRI provided by the update event, since this context is always the IRI of the via:

@@ -6,16 +6,17 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Value;
 
+import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 
 public class InputProtocol {
 
-	public final static IRI PARSE_TYPE_REGEX = GraphManager.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/Regex");
+	public final static IRI PARSE_TYPE_REGEX = GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "Regex");
 
 	Value trigger = null;
 	IRI dataType = null;
 
-	Literal label = null;
+	String[] labels = null;
 	HashMap<Integer, Literal> labelMap = new HashMap<Integer, Literal>();
 
 	EventHandler eventHandler = null;
@@ -23,18 +24,6 @@ public class InputProtocol {
 
 	IndexableQuery query = null;
 	// boolean hasSparqlQuery = false;
-
-	// by setting the default value to 0, all datatype patterns will default to zero.
-	// see QuadStore.processTemplate()
-	int captureIndex = 0;
-
-	public int getCaptureIndex() {
-		return captureIndex;
-	}
-
-	public void setCaptureIndex(int captureIndex) {
-		this.captureIndex = captureIndex;
-	}
 
 	public Object getPattern() {
 		return pattern;
@@ -52,12 +41,12 @@ public class InputProtocol {
 		this.trigger = trigger;
 	}
 
-	public Literal getLabel() {
-		return label;
+	public String[] getLabels() {
+		return labels;
 	}
 
-	public void setLabel(Literal label) {
-		this.label = label;
+	public void setLabels(String[] label) {
+		this.labels = label;
 	}
 
 	public HashMap<Integer, Literal> getLabelMap() {
