@@ -3,6 +3,7 @@ package ai.vacuity.rudi.adaptors.hal.service;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,7 +27,9 @@ import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
+import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
+import ai.vacuity.rudi.adaptors.bo.Match;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
@@ -61,44 +64,6 @@ public class DispatchService extends Thread {
 				getQueue().get(0).run();
 				getQueue().remove(0);
 			}
-		}
-	}
-
-	// TODO need to merge this with the other dispatch() method
-	public static void dispatch(int id, Resource context) throws IOException, IllegalArgumentException {
-		ArrayList<String> logs = new ArrayList<String>();
-		find_matches: for (InputProtocol ip : GraphManager.getQueryPatterns()) {
-			if (ip == null) break;
-			if (ip.getEventHandler() != null || ip.hasSparqlQuery()) { // assume the event notifies an eventhandler
-				String procedure = ip.getEventHandler().getCall(), log = ip.getEventHandler().getLog();
-				String[] processed = new String[] {};
-				AbstractHAO hao = null;
-
-				if (ip.getEventHandler().hasSparqlQuery()) {
-					procedure = ip.getEventHandler().getSparql();
-					processed = DispatchService.process(ip, id, context, procedure, log);
-					hao = new SPARQLHao();
-				}
-				else {
-					processed = DispatchService.process(ip, id, context, procedure, log);
-					hao = new RestfulHAO();
-				}
-				if (processed.length == 0) continue find_matches;
-
-				logs.add(processed[1]);
-				logger.debug("[Rudi]: " + processed[1]);
-
-				hao.setCall(processed[0]);
-				hao.setInputProtocol(ip);
-				hao.setEvent(ip.getQuery()); // send a label form of the query to the response pipeline
-				// hao.run();
-				DispatchService.add(hao);
-				GraphManager.removeFromInbox(context);
-			}
-			else {
-				logger.debug("[Rudi]: Notifying the delegate '" + ip.getQuery().getOwnerIri() + "'");
-			}
-			index(ip.getQuery());
 		}
 	}
 
@@ -147,6 +112,44 @@ public class DispatchService extends Thread {
 		return logs;
 	}
 
+	// TODO need to merge this with the other dispatch() method
+	public static void dispatch(int id, Resource context) throws IOException, IllegalArgumentException {
+		ArrayList<String> logs = new ArrayList<String>();
+		find_matches: for (InputProtocol ip : GraphManager.getQueryPatterns()) {
+			if (ip == null) break;
+			if (ip.getEventHandler() != null || ip.hasSparqlQuery()) { // assume the event notifies an eventhandler
+				String procedure = ip.getEventHandler().getCall(), log = ip.getEventHandler().getLog();
+				String[] processed = new String[] {};
+				AbstractHAO hao = null;
+
+				if (ip.getEventHandler().hasSparqlQuery()) {
+					procedure = ip.getEventHandler().getSparql();
+					processed = DispatchService.process(ip, id, context, procedure, log);
+					hao = new SPARQLHao();
+				}
+				else {
+					processed = DispatchService.process(ip, id, context, procedure, log);
+					hao = new RestfulHAO();
+				}
+				if (processed.length == 0) continue find_matches;
+
+				logs.add(processed[1]);
+				logger.debug("[Rudi]: " + processed[1]);
+
+				hao.setCall(processed[0]);
+				hao.setInputProtocol(ip);
+				hao.setEvent(ip.getQuery()); // send a label form of the query to the response pipeline
+				// hao.run();
+				DispatchService.add(hao);
+				GraphManager.removeFromInbox(context);
+			}
+			else {
+				logger.debug("[Rudi]: Notifying the delegate '" + ip.getQuery().getOwnerIri() + "'");
+			}
+			index(ip.getQuery());
+		}
+	}
+
 	/**
 	 * Matches the given input against the input protocol, then processes the associated response protocol templates
 	 * 
@@ -162,11 +165,17 @@ public class DispatchService extends Thread {
 		// 1. swap captured groups' placeholders first
 		// FIRST MATCH GATE
 		boolean found = false;
-		if (ip.getDataType().equals(InputProtocol.PARSE_TYPE_REGEX) && ip.getPattern() instanceof Pattern) {
+		if (ip.getDataType() != null && ip.getDataType().equals(InputProtocol.PARSE_TYPE_REGEX) && ip.getPattern() instanceof Pattern) {
 			Matcher matcher = ((Pattern) ip.getPattern()).matcher(event.getLabel());
 			while (matcher.find()) {
 				if (!found) {
 					// logger.debug("Match: " + ip.getTrigger().stringValue());
+					if (event instanceof IndexableInput) {
+						Match m = new Match();
+						m.setPattern(ip.getPattern().toString());
+						m.setScore(m.getPattern().length());
+						((IndexableInput) event).addMatch(m);
+					}
 					found = true;
 				}
 				int groups = matcher.groupCount();
@@ -175,47 +184,71 @@ public class DispatchService extends Thread {
 					for (int i = 0; i < templates.length; i++)
 						templates[i] = templates[i].replace("${" + gp + "}", matcher.group(gp));
 				}
+
+				// if ${0} remains, assume no pattern group matched it, so set it to the entire
+				// input event
 				for (int i = 0; i < templates.length; i++)
 					templates[i] = templates[i].replace("${0}", matcher.group());
 			}
 		}
 
 		// SECOND MATCH GATE
-		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.vacuity.ai/onto/via/1.0/URL"))) {
-			try {
-				new URL(event.getLabel());
-				found = true;
-			}
-			catch (MalformedURLException mfuex) {
-				return new String[0];
-			}
-		}
-		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#anyURI"))) {
-			try {
-				GraphManager.getValueFactory().createIRI(event.getLabel());
-				found = true;
-			}
-			catch (IllegalArgumentException iaex) {
-				return new String[0];
-			}
-		}
-		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#integer"))) {
-			try {
-				Integer.parseInt(event.getLabel());
-				found = true;
-			}
-			catch (NumberFormatException nfex) {
-				return new String[0];
-			}
-		}
-		if (ip.getDataType().equals(GraphManager.getValueFactory().createIRI("http://www.w3.org/2001/XMLSchema#dateTime"))) {
-			try {
-				// for type dateTime, the value is the date format
-				new SimpleDateFormat(((Value) ip.getPattern()).stringValue());
-				found = true;
-			}
-			catch (NumberFormatException nfex) {
-				return new String[0];
+		if (ip.getPattern() instanceof List) {
+			List<Value> l = (List<Value>) ip.getPattern();
+			for (int j = 0; j < l.size(); j++) {
+				Value value = l.get(j);
+				if (value == null) continue;
+				if (value instanceof Literal) {
+					// if()
+					Literal lit = (Literal) value;
+					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "URL"))) {
+						try {
+							new URL(event.getLabel());
+							found = true;
+						}
+						catch (MalformedURLException mfuex) {
+							return new String[0];
+						}
+					}
+					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "anyURI"))) {
+						try {
+							GraphManager.getValueFactory().createIRI(event.getLabel());
+							found = true;
+						}
+						catch (IllegalArgumentException iaex) {
+							return new String[0];
+						}
+					}
+					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "integer"))) {
+						try {
+							Integer.parseInt(event.getLabel());
+							found = true;
+						}
+						catch (NumberFormatException nfex) {
+							return new String[0];
+						}
+					}
+					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "dateTime"))) {
+						try {
+							// for type dateTime, the value specifies the date format
+							new SimpleDateFormat(lit.stringValue()).parse(event.getLabel());
+							found = true;
+						}
+						catch (ParseException e) {
+							return new String[0];
+						}
+					}
+
+					// if ${number} tags are remaining, assume the typed patterns matched and the regex patterns did not,
+					// in this case, swap the capture group TODO corresponding to the current input region (for now, just
+					// swap the first non-empty capture result
+					for (int i = 0; i < templates.length; i++) {
+						if (StringUtils.isNotBlank(templates[i])) {
+							templates[i] = templates[i].replace("${" + j + "}", event.getLabel());
+						}
+					}
+					break;
+				}
 			}
 		}
 
@@ -233,7 +266,6 @@ public class DispatchService extends Thread {
 				// allow the template processor to transform user input prior to user input being filled in template
 				event = ip.getEventHandler().getEndpointTemplateModule().getEvent();
 			}
-			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${" + ip.getCaptureIndex() + "}", event.getLabel());
 
 			// 3. swap any remaining reserved placed holders
 			if (ip.getEventHandler().hasEndpointKey()) templates[i] = templates[i].replace("${key}", ip.getEventHandler().getEndpointKey());
@@ -267,7 +299,7 @@ public class DispatchService extends Thread {
 				Resource owner = ip.getQuery().getOwnerIri();
 				if (owner == null) owner = ip.getEventHandler().getIri();
 				if (owner == null) owner = GraphManager.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
-				tuples.add(GraphManager.getValueFactory().createStatement(alertIRI, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_owner"), owner));
+				tuples.add(GraphManager.getValueFactory().createStatement(owner, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "owner_of"), alertIRI));
 				tuples.add(GraphManager.getValueFactory().createStatement(alertIRI, GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "context"), context));
 			}
 			for (int j = 0; alerts.hasNext(); j++) {
@@ -332,7 +364,23 @@ public class DispatchService extends Thread {
 				// allow the template processor to transform user input prior to user input being filled in template
 				ip.getQuery().setLabel(Config.get(ip.getEventHandler().getConfigLabel()).getTemplateModule().getEvent().getLabel());
 			}
-			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${" + ip.getCaptureIndex() + "}", ip.getQuery().getLabel());
+			// if ${number} tags are remaining, assume the typed patterns matched and the regex patterns did not,
+			// in this case, swap the capture group TODO corresponding to the current input region (for now, just
+			// swap the first non-empty capture result
+			// if (StringUtils.isNotBlank(templates[i])) {
+			// if (ip.getPattern() instanceof Model) {
+			// Iterator<Statement> m = ((Model) ip.getPattern()).iterator();
+			// for (int j = 0; m.hasNext(); j++) {
+			// Statement st = m.next();
+			// if (st == null) continue;
+			// templates[i] = templates[i].replace("${" + j + "}", ip.getQuery().getLabel());
+			// break;
+			// }
+			// }
+			// }
+
+			// if ${0} remains, assume no projection items replaced it, so set 0 = the entire query event
+			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${0}", ip.getQuery().getDelegate().toString());
 
 			// 3. swap any remaining reserved placed holders
 			if (ip.getEventHandler().hasEndpointKey()) templates[i] = templates[i].replace("${key}", ip.getEventHandler().getEndpointKey());

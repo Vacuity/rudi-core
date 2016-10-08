@@ -24,14 +24,14 @@
  	
  	<via:Input rdf:about="#catchAll">
  		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z\s]*)$</via:pattern>
- 		<via:label_1>Keywords</via:label_1>
+ 		<via:labels>,Keywords</via:labels>
  	</via:Input>
  	
  	<!-- IPs -->
  	
  	<via:Input rdf:about="#email">
  		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$</via:pattern>
- 		<via:label_0>Email Address</via:label_0>
+ 		<via:labels>Email Address</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#email_cmd">
@@ -40,7 +40,7 @@
  	
  	<via:Input rdf:about="#phone_number">
  		<via:pattern rdf:datatype="&via;Regex">^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$</via:pattern>
- 		<via:label_0>Phone Number</via:label_0>
+ 		<via:labels>Phone Number</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#phone_number_cmd">
@@ -49,37 +49,37 @@
  	
  	<via:Input rdf:about="#url">
  		<via:pattern rdf:datatype="&via;URL">http://example.com</via:pattern>
- 		<via:label_0>URL</via:label_0>
+ 		<via:labels>URL</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#uri">
  		<via:pattern rdf:datatype="&xsd;anyURI">http://example.com</via:pattern>
- 		<via:label_0>URI</via:label_0>
+ 		<via:labels>URI</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#date">
  		<via:pattern rdf:datatype="&xsd;dateTime">date</via:pattern>
- 		<via:label_0>Date or Time</via:label_0>
+ 		<via:labels>Date or Time</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#address">
  		<via:pattern rdf:datatype="&via;address">address</via:pattern>
- 		<via:label_0>Address</via:label_0>
+ 		<via:labels>Address</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#geo">
  		<via:pattern rdf:datatype="&via;geo">-32.715, -77.03201</via:pattern>
- 		<via:label_0>Geo Coordinates</via:label_0>
+ 		<via:labels>Geo Coordinates</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#handle">
  		<via:pattern>^@\w*</via:pattern>
- 		<via:label_0>Handle</via:label_0>
+ 		<via:labels>Handle</via:labels>
  	</via:Input>
  	
  	<via:Input rdf:about="#hashtag">
  		<via:pattern>^#\w*</via:pattern>
- 		<via:label_0>Hashtag</via:label_0>
+ 		<via:labels>Hashtag</via:labels>
  	</via:Input>
  	
  	<!-- Sponger Output -->
@@ -127,7 +127,20 @@ select ?0 ?1 ?2 ?context where {
 }
 ]]>
 		</via:sparql>
- 		<via:label_1>Listen for new Youtube vids submitted to the Index</via:label_1>
+ 		<via:labels_1>Listen for new Youtube vids submitted to the Index</via:labels_1>
+	</via:TupleQuery> 	
+
+	<via:TupleQuery rdf:about="#set_up_sponger">
+		<rdfs:label>sponge</rdfs:label>
+ 		<via:sparql>
+<![CDATA[
+DEFINE get:soft "soft"
+SELECT ?s
+FROM <${0}>
+WHERE {?s ?p ?o. FILTER (contains(xsd:string(?s), 'linkeddata'))}
+]]>
+		</via:sparql>
+ 		<via:labels_1>Sponge</via:labels_1>
 	</via:TupleQuery> 	
 
 
@@ -141,7 +154,7 @@ FROM <${0}>
 WHERE {?s ?p ?o. FILTER (contains(xsd:string(?s), 'linkeddata'))}
 ]]>
 		</via:sparql>
- 		<via:label_1>Sponge</via:label_1>
+ 		<via:labels_1>Sponge</via:labels_1>
 	</via:TupleQuery> 	
 
 

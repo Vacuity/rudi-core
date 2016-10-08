@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
- <!DOCTYPE rdf:RDF []>
+ <!DOCTYPE rdf:RDF [
+     <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ ]>
  <rdf:RDF xmlns="http://www.vacuity.ai/onto/via/1.0/rdfs#"
      xml:base="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -23,68 +25,21 @@
     ///////////////////////////////////////////////////////////////////////////
      -->
       
-	<owl:DatatypeProperty rdf:about="label">
+	<owl:DatatypeProperty rdf:about="labels">
 	</owl:DatatypeProperty>
      
-	<owl:DatatypeProperty rdf:about="label_0">
-		<rdfs:subPropertyOf rdf:resource="label"/>
-	</owl:DatatypeProperty>
-	
-	<owl:DatatypeProperty rdf:about="label_1">
-		<rdfs:subPropertyOf rdf:resource="label"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="label_2">
-		<rdfs:subPropertyOf rdf:resource="label"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="label_3">
-		<rdfs:subPropertyOf rdf:resource="label"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="label_4">
-		<rdfs:subPropertyOf rdf:resource="label"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="label_5">
-		<rdfs:subPropertyOf rdf:resource="label"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="label_6">
-		<rdfs:subPropertyOf rdf:resource="label"/>
-	</owl:DatatypeProperty>
-    
 	<owl:DatatypeProperty rdf:about="capture">
+		<rdfs:subPropertyOf rdf:resource="&rdf;first"/>
 	</owl:DatatypeProperty>
      
-	<owl:DatatypeProperty rdf:about="capture_0">
-		<rdfs:subPropertyOf rdf:resource="capture"/>
+	<owl:DatatypeProperty rdf:about="pattern">
+		<rdfs:subPropertyOf rdf:resource="&rdf;first"/>
 	</owl:DatatypeProperty>
 	
-	<owl:DatatypeProperty rdf:about="capture_1">
-		<rdfs:subPropertyOf rdf:resource="capture"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="capture_2">
-		<rdfs:subPropertyOf rdf:resource="capture"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="capture_3">
-		<rdfs:subPropertyOf rdf:resource="capture"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="capture_4">
-		<rdfs:subPropertyOf rdf:resource="capture"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="capture_5">
-		<rdfs:subPropertyOf rdf:resource="capture"/>
-	</owl:DatatypeProperty>
-
-	<owl:DatatypeProperty rdf:about="capture_6">
-		<rdfs:subPropertyOf rdf:resource="capture"/>
-	</owl:DatatypeProperty>
-
+	<owl:Class rdf:about="Input">
+		<rdfs:subClassOf rdf:resource="&rdf;List"/>
+	</owl:Class>
+	
 	<owl:ObjectProperty rdf:about="serviceReplyType">
 	</owl:ObjectProperty>
 

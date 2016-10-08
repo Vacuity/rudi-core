@@ -32,7 +32,7 @@
  	
  	<via:Input rdf:about="#youtube_cmd">
  		<via:pattern rdf:datatype="&via;Regex">^youtube\s*(.*)</via:pattern>
- 		<via:label_1>Youtube Search Terms</via:label_1>
+ 		<via:labels>,Youtube Search Terms</via:labels>
  	</via:Input>
 
 	 	

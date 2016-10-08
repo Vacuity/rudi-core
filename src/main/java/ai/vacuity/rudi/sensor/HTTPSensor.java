@@ -1,4 +1,4 @@
-package ai.vacuity.rudi.adaptors.controller;
+package ai.vacuity.rudi.sensor;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -27,12 +27,12 @@ import ai.vacuity.rudi.adaptors.types.Packet;
 import ai.vacuity.rudi.adaptors.types.Response;
 
 @Controller
-public class BaseController {
+public class HTTPSensor {
 
 	private static int counter = 0;
 	private static final String VIEW_RESULTS = "results";
 	private static final String VIEW_LOOKUP = "lookup";
-	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(BaseController.class);
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(HTTPSensor.class);
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String get(@RequestParam(value = "q", required = false) String q, ModelMap model) {

@@ -46,7 +46,7 @@ public class SPARQLHao extends AbstractHAO {
 						results.add(GraphManager.getValueFactory().createStatement(result, GraphManager.rdf_type, GraphManager.via_QueryResult));
 						results.add(GraphManager.getValueFactory().createStatement(result, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
 						results.add(GraphManager.getValueFactory().createStatement(result, GraphManager.via_query, inputProtocol.getEventHandler().getIri()));
-						results.add(GraphManager.getValueFactory().createStatement(result, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_creator"), inputProtocol.getEventHandler().getIri()));
+						results.add(GraphManager.getValueFactory().createStatement(inputProtocol.getEventHandler().getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "owner_of"), result));
 						results.add(GraphManager.getValueFactory().createStatement(result, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), reply));
 						while (capture_names.hasNext()) {
 							String name = capture_names.next();
