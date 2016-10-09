@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
-import ai.vacuity.rudi.adaptors.bo.Match;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
@@ -37,6 +36,8 @@ import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.SPARQLHao;
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
+import ai.vacuity.rudi.adaptors.types.Match;
+import ai.vacuity.rudi.adaptors.types.Report;
 
 public class DispatchService extends Thread {
 
@@ -67,10 +68,15 @@ public class DispatchService extends Thread {
 		}
 	}
 
-	public static List<String> dispatch(IEvent event) throws IOException, IllegalArgumentException {
+	public static Report process(IEvent event) throws IOException, IllegalArgumentException {
+		return process(event, true);
+	}
+
+	public static Report process(IEvent event, boolean dispatch) throws IOException, IllegalArgumentException {
 		index(event);
 
-		ArrayList<String> logs = new ArrayList<String>();
+		Report report = new Report();
+
 		InputProtocol[] protocols = GraphManager.getTypedPatterns();
 		find_matches: for (int i = 0; i < protocols.length; i++) {
 			InputProtocol ip = protocols[i];
@@ -92,28 +98,30 @@ public class DispatchService extends Thread {
 
 			if (ip.getEventHandler().hasSparqlQuery()) {
 				procedure = ip.getEventHandler().getSparql();
-				processed = DispatchService.process(ip, event, procedure, log);
+				processed = DispatchService.process(ip, event, report, procedure, log);
 				hao = new SPARQLHao();
 			}
 			else {
-				processed = DispatchService.process(ip, event, procedure, log);
+				processed = DispatchService.process(ip, event, report, procedure, log);
 				hao = new RestfulHAO();
 			}
 			if (processed.length == 0) continue find_matches;
 
-			logs.add(processed[1]);
+			report.getLogs().add(processed[1]);
 			logger.debug("[Rudi]: " + processed[1]);
 
-			hao.setCall(processed[0]);
-			hao.setInputProtocol(ip);
-			hao.setEvent(event);
-			DispatchService.add(hao);
+			if (dispatch) {
+				hao.setCall(processed[0]);
+				hao.setInputProtocol(ip);
+				hao.setEvent(event);
+				DispatchService.add(hao);
+			}
 		}
-		return logs;
+		return report;
 	}
 
 	// TODO need to merge this with the other dispatch() method
-	public static void dispatch(int id, Resource context) throws IOException, IllegalArgumentException {
+	public static void process(int id, Resource context) throws IOException, IllegalArgumentException {
 		ArrayList<String> logs = new ArrayList<String>();
 		find_matches: for (InputProtocol ip : GraphManager.getQueryPatterns()) {
 			if (ip == null) break;
@@ -161,7 +169,7 @@ public class DispatchService extends Thread {
 	 *            the template associated with the response protocol
 	 * @return
 	 */
-	private static String[] process(InputProtocol ip, IEvent event, String... templates) {
+	private static String[] process(InputProtocol ip, IEvent event, Report report, String... templates) {
 		// 1. swap captured groups' placeholders first
 		// FIRST MATCH GATE
 		boolean found = false;
@@ -172,9 +180,9 @@ public class DispatchService extends Thread {
 					// logger.debug("Match: " + ip.getTrigger().stringValue());
 					if (event instanceof IndexableInput) {
 						Match m = new Match();
-						m.setPattern(ip.getPattern().toString());
-						m.setScore(m.getPattern().length());
-						((IndexableInput) event).addMatch(m);
+						m.setLabels(ip.getPattern().toString());
+						m.setScore(m.getLabels().length() + "");
+						report.getMatches().add(m);
 					}
 					found = true;
 				}
@@ -321,7 +329,11 @@ public class DispatchService extends Thread {
 						if (value == null) value = "-- null value --";
 						for (int i = 0; i < templates.length; i++) {
 							if (StringUtils.isNotBlank(templates[i])) {
-								templates[i] = templates[i].replace("${" + name + "}", value);
+								String captureIndex = name;
+								if (captureIndex.indexOf("_") > 0) {
+									captureIndex = captureIndex.substring(0, captureIndex.indexOf("_"));
+								}
+								templates[i] = templates[i].replace("${" + captureIndex + "}", value);
 							}
 						}
 

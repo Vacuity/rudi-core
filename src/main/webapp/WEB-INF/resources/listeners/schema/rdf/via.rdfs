@@ -28,13 +28,12 @@
 	<owl:DatatypeProperty rdf:about="labels">
 	</owl:DatatypeProperty>
      
-	<owl:DatatypeProperty rdf:about="capture">
-		<rdfs:subPropertyOf rdf:resource="&rdf;first"/>
-	</owl:DatatypeProperty>
+	<owl:ObjectProperty rdf:about="captures">
+	</owl:ObjectProperty>
      
-	<owl:DatatypeProperty rdf:about="pattern">
+	<rdf:Property rdf:about="pattern">
 		<rdfs:subPropertyOf rdf:resource="&rdf;first"/>
-	</owl:DatatypeProperty>
+	</rdf:Property>
 	
 	<owl:Class rdf:about="Input">
 		<rdfs:subClassOf rdf:resource="&rdf;List"/>
@@ -65,7 +64,7 @@
 		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
 	</owl:ObjectProperty>
 
-	<owl:ObjectProperty rdf:about="rdf">
+	<owl:ObjectProperty rdf:about="rdf-xml">
 		<rdfs:subPropertyOf rdf:resource="serviceReplyType"/>
 		<rdfs:label>application/rdf+xml</rdfs:label>
 	</owl:ObjectProperty>

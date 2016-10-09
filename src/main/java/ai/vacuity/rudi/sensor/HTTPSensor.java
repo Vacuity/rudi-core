@@ -1,6 +1,5 @@
 package ai.vacuity.rudi.sensor;
 
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.util.UUID;
@@ -24,7 +23,7 @@ import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 import ai.vacuity.rudi.adaptors.types.Channel;
 import ai.vacuity.rudi.adaptors.types.Packet;
-import ai.vacuity.rudi.adaptors.types.Response;
+import ai.vacuity.rudi.adaptors.types.Report;
 
 @Controller
 public class HTTPSensor {
@@ -42,17 +41,17 @@ public class HTTPSensor {
 	}
 
 	@RequestMapping(value = "/json", method = RequestMethod.GET)
-	public @ResponseBody Response get(@RequestParam(value = "q", required = false) String q) {
+	public @ResponseBody Report get(@RequestParam(value = "q", required = false) String q, @RequestParam(value = "d", required = false) boolean d) {
 		// logger.debug("Reached the controller.");
 		try {
-			Response r = new Response();
+			Report r = new Report();
 
 			UUID channelId = UUID.randomUUID();
 			IRI user = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "anon");
 			IRI channel = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
 			long start = System.currentTimeMillis();
 			IndexableInput input = new IndexableInput(user, channel, q);
-			r.setLogs(DispatchService.dispatch(input));
+			r = DispatchService.process(input, d);
 			long end = System.currentTimeMillis();
 			String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
 			// String link = String.format("%s/query?action=exec&queryLn=SPARQL&query=%s&limit_query=100&infer=true&", Constants.SPARQL_ENDPOINT_RESPONSES.replace("rdf4j-server", "rdf4j-workbench"), URLEncoder.encode(describeChannel));
@@ -68,9 +67,7 @@ public class HTTPSensor {
 			r.setChannelId(channel.stringValue());
 			r.setMsg("Ok, I'm listening.");
 			return r;
-		}
-		catch (IOException e) {
-			logger.error(e.getMessage(), e);
+			// return null;
 		}
 		catch (Exception e) {
 			logger.error(e.getMessage(), e);

@@ -23,12 +23,16 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.event.base.NotifyingRepositoryWrapper;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
@@ -79,7 +83,9 @@ public class GraphManager {
 		GraphManager.getRepository().initialize();
 		GraphManager.loadRepository(); // load rdf demo instance data, patterns,
 										// and schema
+
 		GraphManager.load(GraphManager.QUERY_GET_LISTENER); // load adaptors
+
 		// GraphMaster.load(GraphMaster.QUERY_GET_SUBSCRIPTIONS); // load adaptors
 
 		GraphManager.getRepository().addRepositoryConnectionListener(listener);
@@ -150,11 +156,43 @@ public class GraphManager {
 		}
 	}
 
-	public static void getQueries() {
+	public static void remove(String queryLabel) {
 		try (RepositoryConnection con = getConnection()) {
 			TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q rdfs:label ?l . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
-			// tupleQuery.setBinding("label",
-			// getValueFactory().createLiteral("get_queries"));
+			tupleQuery.setBinding("l", getValueFactory().createLiteral(queryLabel));
+			try (TupleQueryResult result = tupleQuery.evaluate()) {
+				while (result.hasNext()) { // iterate over the result
+					BindingSet bindingSet = result.next();
+					Value q = bindingSet.getValue("q");
+					Value label = bindingSet.getValue("l");
+					Value sparql = bindingSet.getValue("s");
+					// logger.debug("Value: " + q.stringValue());
+					// logger.debug("Label: " + label.stringValue());
+					// logger.debug("SPARQL: " + sparql.stringValue());
+
+					GraphQuery data = con.prepareGraphQuery(QueryLanguage.SPARQL, sparql.stringValue());
+					try (GraphQueryResult gr = ((GraphQuery) data).evaluate()) {
+						Model m = QueryResults.asModel(gr);
+						con.remove(m);
+					}
+					catch (QueryEvaluationException qex) {
+						logger.error(qex.getMessage(), qex);
+					}
+				}
+			}
+			catch (QueryEvaluationException qex) {
+				logger.error(qex.getMessage(), qex);
+			}
+		}
+		catch (Exception ex) {
+			logger.error(ex.getMessage(), ex);
+		}
+	}
+
+	public static void execute(String queryLabel) {
+		try (RepositoryConnection con = getConnection()) {
+			TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q rdfs:label ?l . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
+			tupleQuery.setBinding("l", getValueFactory().createLiteral(queryLabel));
 			try (TupleQueryResult result = tupleQuery.evaluate()) {
 				while (result.hasNext()) { // iterate over the result
 					BindingSet bindingSet = result.next();
@@ -164,7 +202,25 @@ public class GraphManager {
 					logger.debug("Value: " + q.stringValue());
 					logger.debug("Label: " + label.stringValue());
 					logger.debug("SPARQL: " + sparql.stringValue());
-					// do something interesting with the values here...
+
+					GraphQuery data = con.prepareGraphQuery(QueryLanguage.SPARQL, sparql.stringValue());
+					try (GraphQueryResult gr = ((GraphQuery) data).evaluate()) {
+						Vector<Statement> results = new Vector<Statement>();
+						while (result.hasNext()) { // iterate over the result
+							Statement st = gr.next();
+							// Resource s = st.getSubject();
+							// Resource p = st.getPredicate();
+							// Value o = st.getObject();
+							results.add(st);
+							// // logger.debug("Subject: " + s.stringValue());
+							// // logger.debug("Property: " + p.stringValue());
+							// // logger.debug("Value: " + o.stringValue());
+						}
+						GraphManager.addToRepository(results, getValueFactory().createIRI(Constants.CONTEXT_DEMO));
+					}
+					catch (QueryEvaluationException qex) {
+						logger.error(qex.getMessage(), qex);
+					}
 				}
 			}
 			catch (QueryEvaluationException qex) {
@@ -265,28 +321,37 @@ public class GraphManager {
 										else i.setPattern(i.getTrigger());
 									}
 									else if (pattern instanceof IRI) {
-										IRI patternIRI = (IRI) pattern;
-										Model captures = Connections.getRDFCollection(getConnection(), patternIRI, new LinkedHashModel());
-										Iterator<Statement> m = captures.iterator();
-										List<Value> l = new ArrayList<Value>();
-										collect_list_element: while (m.hasNext()) {
-											Statement st = m.next();
-											Resource s = st.getSubject();
-											IRI p = st.getPredicate();
-											Value o = st.getObject();
+										try {
+											IRI patternIRI = (IRI) pattern;
+											Model captures = Connections.getRDFCollection(getConnection(), patternIRI, new LinkedHashModel());
+											Iterator<Statement> m = captures.iterator();
+											List<Value> l = new ArrayList<Value>();
+											collect_list_element: while (m.hasNext()) {
+												Statement st = m.next();
+												Resource s = st.getSubject();
+												IRI p = st.getPredicate();
+												Value o = st.getObject();
 
-											// ignore non list related properties
-											// CAREFUL, don't use the GraphManager constants in this method, since we're still in the static block of the class scope, which occurs prior to the loading of the static IRI fields
-											if (o.equals(getValueFactory().createIRI(Constants.NS_RDF, "nil"))) {
-												l.add(null); // place the capture at its corresponding position, but exclude rdf:nil
-												continue collect_list_element;
+												// ignore non list related properties
+												// CAREFUL, don't use the GraphManager constants in this method, since we're still in the static block of the class scope, which occurs prior to the loading of the static IRI fields
+
+												// check via:pattern, even though right now rdf4j isn't recognizing via:pattern as a sub property of rdf:first (perhaps later they will)
+												if (p.equals(getValueFactory().createIRI(Constants.NS_VIA, "pattern")) || p.equals(getValueFactory().createIRI(Constants.NS_RDF, "first"))) {
+													if (o.equals(getValueFactory().createIRI(Constants.NS_RDF, "nil"))) {
+														l.add(null); // give the nils indices
+														continue collect_list_element;
+													}
+													else {
+														l.add(o);
+														continue collect_list_element;
+													}
+												}
 											}
-											if (p.equals(getValueFactory().createIRI(Constants.NS_RDF, "first"))) {
-												l.add(o); // place the capture at its corresponding position, but exclude rdf:nil
-												continue collect_list_element;
-											}
+											i.setPattern(l);
 										}
-										i.setPattern(l);
+										catch (RepositoryException rex) {
+											logger.error(rex.getMessage(), rex);
+										}
 									}
 								}
 								String labels = bs2.getValue("i_labels").stringValue();
