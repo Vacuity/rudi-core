@@ -90,6 +90,15 @@
          <rdfs:comment></rdfs:comment>
          <rdfs:subClassOf rdf:resource="Query"/>
     </owl:Class>
+	
+    <owl:Class rdf:about="QueryResult">
+         <rdfs:comment></rdfs:comment>
+    </owl:Class>
+	
+    <owl:Class rdf:about="Hit">
+         <rdfs:comment></rdfs:comment>
+         <rdfs:subClassOf rdf:resource="QueryResult"/>
+    </owl:Class>
      
              
  </rdf:RDF>
