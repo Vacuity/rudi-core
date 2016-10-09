@@ -15,6 +15,12 @@
 		"duration": {
 			"type": "string"
 		},
+		"matches": {
+			"type": "array",
+			"items": {
+				"$ref": "./match"
+			}
+		},
         "logs": {
             "type": "array",
             "items": {

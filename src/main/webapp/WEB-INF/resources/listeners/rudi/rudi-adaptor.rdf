@@ -93,7 +93,7 @@
  	<via:EventHandler rdf:about="#virtuoso-sponger-sparql">
  		<via:config>myrudi-sparql</via:config>
  		<via:log>Collecting hyperdata for '${0}' using Virtuoso Sponger SPARQL endpoint</via:log> 		
- 		<via:rdf rdf:resource="http://ec2-54-70-121-254.us-west-2.compute.amazonaws.com:1111/sparql/"/>
+ 		<via:rdf-xml rdf:resource="http://ec2-54-70-121-254.us-west-2.compute.amazonaws.com:1111/sparql/"/>
  		<via:query rdf:resource="#sponge"/>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>

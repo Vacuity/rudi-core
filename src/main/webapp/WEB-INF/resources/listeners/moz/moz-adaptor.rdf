@@ -27,18 +27,18 @@
  		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)</via:pattern>
  		<via:pattern rdf:datatype="&via;Regex">^do\s*(.*)</via:pattern>
  		<via:labels>,Web URL</via:labels>
- 		<via:captures rdf:resource="#moz-cmd-captures"/>
+ 		<via:pattern rdf:resource="#moz-cmd-captures"/>
  	</via:Input>
  	
- 	<rdf:List rdf:about="#moz-cmd-captures">
+ 	<rdf:Input rdf:about="#moz-cmd-captures">
  		<rdf:first rdf:resource="&rdf;nil"/>
  		<rdf:rest rdf:resource="#moz-cmd-captures_1"/>
- 	</rdf:List>
+ 	</rdf:Input>
  	
- 	<rdf:List rdf:about="#moz-cmd-captures_1">
+ 	<rdf:Input rdf:about="#moz-cmd-captures_1">
  		<rdf:first rdf:datatype="&via;URL">http://example.com</rdf:first>
  		<rdf:rest rdf:resource="&rdf;nil"/>
- 	</rdf:List>
+ 	</rdf:Input>
  	
  	<via:EventHandler rdf:about="#moz-get-backlink-stats">
  		<via:config>moz</via:config>

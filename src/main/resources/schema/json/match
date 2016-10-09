@@ -1,0 +1,17 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"description": "",
+	"type": "object",
+	"properties": {
+		"labels": {
+			"type": "string"
+		},
+		"score": {
+			"type": "string"
+		}
+	},
+	"required": [
+		"caller",
+		"callee"
+	]
+}

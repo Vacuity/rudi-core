@@ -1,8 +1,5 @@
 package ai.vacuity.rudi.adaptors.bo;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.eclipse.rdf4j.model.IRI;
 
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
@@ -13,7 +10,7 @@ public class IndexableInput implements IEvent {
 	private IRI iri = null;
 	private String input = null;
 	private IRI[] called = new IRI[] {};
-	private SortedSet<Match> matches = new TreeSet<Match>();
+	// private SortedSet<Match> matches = new TreeSet<Match>();
 
 	public IndexableInput(IRI userIri, IRI iri, String input) {
 		this.input = input;
@@ -57,16 +54,16 @@ public class IndexableInput implements IEvent {
 		this.called = called;
 	}
 
-	public SortedSet<Match> getMatches() {
-		return matches;
-	}
-
-	public void setMatches(SortedSet<Match> matches) {
-		this.matches = matches;
-	}
-
-	public void addMatch(Match m) {
-		getMatches().add(m);
-	}
+	// public SortedSet<Match> getMatches() {
+	// return matches;
+	// }
+	//
+	// public void setMatches(SortedSet<Match> matches) {
+	// this.matches = matches;
+	// }
+	//
+	// public void addMatch(Match m) {
+	// getMatches().add(m);
+	// }
 
 }

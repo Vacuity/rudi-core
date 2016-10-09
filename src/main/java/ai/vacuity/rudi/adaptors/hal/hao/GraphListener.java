@@ -333,7 +333,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 						// File queryQueueRQFile = new File(queueDir + queryLabelHashFile.getName() + ".rq"); // fetch the query and run it'
 
 						try {
-							DispatchService.dispatch(qhash, context);
+							DispatchService.process(qhash, context);
 							renew(qhash, context); // renew the queue
 							return;
 						}

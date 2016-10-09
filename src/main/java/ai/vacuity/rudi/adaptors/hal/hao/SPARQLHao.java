@@ -19,7 +19,6 @@ import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryException;
 import org.slf4j.LoggerFactory;
 
 public class SPARQLHao extends AbstractHAO {
@@ -27,9 +26,8 @@ public class SPARQLHao extends AbstractHAO {
 
 	@Override
 	public void run() {
-		RepositoryConnection con = getInputProtocol().getEventHandler().getRepository().getConnection();
-		Query q = con.prepareQuery(QueryLanguage.SPARQL, getCall());
-		try {
+		try (RepositoryConnection con = getInputProtocol().getEventHandler().getRepository().getConnection()) {
+			Query q = con.prepareQuery(QueryLanguage.SPARQL, getCall());
 			if (q instanceof TupleQuery) {
 				try (TupleQueryResult r = ((TupleQuery) q).evaluate()) {
 					Vector<Statement> results = new Vector<Statement>();
@@ -105,16 +103,6 @@ public class SPARQLHao extends AbstractHAO {
 		}
 		catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
-		}
-		finally {
-			if (con != null) {
-				try {
-					con.close();
-				}
-				catch (RepositoryException ex) {
-					logger.error(ex.getMessage(), ex);
-				}
-			}
 		}
 		// UUID uuid = UUID.randomUUID();
 		// String fxmlStr = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/" + new GenericUrl(getInputProtocol().getResponseProtocol().getCall()).getHost() + "-" + uuid + ".rdf";
