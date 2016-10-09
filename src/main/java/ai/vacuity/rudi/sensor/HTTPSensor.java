@@ -65,7 +65,7 @@ public class HTTPSensor {
 			r.setDuration(df.format(new Float((end - start) / 1000f).doubleValue()));
 			r.setLink(link);
 			r.setChannelId(channel.stringValue());
-			r.setMsg("Ok, I'm listening.");
+			r.setMsg((d) ? "Ok, I'm listening." : "");
 			return r;
 			// return null;
 		}

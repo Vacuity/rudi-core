@@ -1,6 +1,8 @@
 package ai.vacuity.rudi.adaptors.bo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -16,11 +18,12 @@ public class InputProtocol {
 	Value trigger = null;
 	IRI dataType = null;
 
-	String[] labels = null;
+	List<String> labels = new ArrayList<String>();
 	HashMap<Integer, Literal> labelMap = new HashMap<Integer, Literal>();
 
 	EventHandler eventHandler = null;
 	Object pattern = null;
+	double patternScore = 0;
 
 	IndexableQuery query = null;
 	// boolean hasSparqlQuery = false;
@@ -41,12 +44,12 @@ public class InputProtocol {
 		this.trigger = trigger;
 	}
 
-	public String[] getLabels() {
+	public List<String> getLabels() {
 		return labels;
 	}
 
-	public void setLabels(String[] label) {
-		this.labels = label;
+	public void setLabels(List<String> labels) {
+		this.labels = labels;
 	}
 
 	public HashMap<Integer, Literal> getLabelMap() {
@@ -83,6 +86,14 @@ public class InputProtocol {
 
 	public boolean hasSparqlQuery() {
 		return this.query != null;
+	}
+
+	public double getPatternScore() {
+		return patternScore;
+	}
+
+	public void setPatternScore(double patternScore) {
+		this.patternScore = patternScore;
 	}
 
 	// public void hasSparqlQuery(boolean hasSparqlQuery) {

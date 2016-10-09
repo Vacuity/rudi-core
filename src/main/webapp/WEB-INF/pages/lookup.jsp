@@ -108,14 +108,32 @@ body{
 			if ( $( "#channel" ).length ) {
 		        $('#channel').remove();
 			}
+			if ( $( "#duration" ).length ) {
+		        $('#duration').remove();
+			}
+			if ( $( "#logs" ).length ) {
+		        $('#logs').remove();
+			}
 			if ( $( "#link" ).length ) {
 		        $('#link').remove();
+			}
+			while ( $( "#label" ).length ) {
+		        $('#label').remove();
+			}
+			while ( $( "#score" ).length ) {
+		        $('#score').remove();
+			}
+			while ( $( "#duration" ).length ) {
+		        $('#duration').remove();
 			}
 		    if (e.which == "13") {
 		    	getResponse();
 		        /**/
 		        //enter pressed 
 		        
+		    }
+		    else {
+		    	doSpotlight();
 		    }
 		    if ($(':focus:not("input")').length){
 		    }
@@ -154,21 +172,21 @@ body{
         	    .html("<div class='double-bounce1'></div><div class='double-bounce2'></div>")
         	    .appendTo($("body")); //main div
 
-	        $.getJSON( "json?q=" + query, function( data ) {
+	        $.getJSON( "json?d=true&q=" + query, function( data ) {
 	        	
 	        	
 	        	$.each(data.logs, function(i, item) {
 		        	d = document.createElement('div');
 		        	$(d).addClass('response')
 		        	    .html("> " + item)
-			        	.attr("id","channel")
+			        	.attr("id","logs")
 		        	    .appendTo($("body")); //main div
 	        	});
         	    	        	
 	        	d = document.createElement('div');
 	        	$(d).addClass('response')
 	        	    .html("> Total match time: " + data.duration + " seconds")
-		        	.attr("id","channel")
+		        	.attr("id","duration")
 	        	    .appendTo($("body")); //main div
 	        	
 	        	d = document.createElement('div');
@@ -187,6 +205,45 @@ body{
 	        	ready(data.msg);
 		        	    
 		        $('#spinner').remove();
+	        });
+		}
+		
+		function doSpotlight(){	        
+	        query = $('#inp').val();
+		    
+		    
+	        $.getJSON( "json?q=" + query, function( data ) {
+	        	
+ 	        	$.each(data.matches, function(i, match) {
+ 	        		
+		        	$.each(match.labels, function(j, l) {
+		        		d = document.createElement('div');		        	
+			        	$(d).addClass('response')
+			        		.html("> Label[" + i + "." + j + "]: " + l)
+				        	.attr("id","label")
+			        	    .appendTo($("body")); 
+		        	});
+
+		        	  
+	        		d = document.createElement('div');		        	
+		        	$(d).addClass('response')
+		        		.html("> Score[" + i + "]: " + match.score)
+		        		.attr("id","score")
+	        	    	.appendTo($("body")); 
+		        	
+ 	        		 
+ 	        	});
+		        	    
+	        	
+	        	
+	        	d = document.createElement('div');
+	        	$(d).addClass('response')
+	        	    .html("> Total match time: " + data.duration + " seconds")
+		        	.attr("id","duration")
+	        	    .appendTo($("body")); //main div
+	        	
+		        	    
+		        
 	        });
 		}
 		

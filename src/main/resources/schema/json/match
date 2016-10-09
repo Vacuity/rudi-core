@@ -3,11 +3,16 @@
 	"description": "",
 	"type": "object",
 	"properties": {
-		"labels": {
-			"type": "string"
-		},
+        "labels": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 0,
+            "uniqueItems": false
+        },
 		"score": {
-			"type": "string"
+			"type": "number"
 		}
 	},
 	"required": [

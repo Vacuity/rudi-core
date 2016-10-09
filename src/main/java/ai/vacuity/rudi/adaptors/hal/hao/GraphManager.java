@@ -317,6 +317,9 @@ public class GraphManager {
 									if (pattern instanceof Literal) {
 										Literal patternLit = (Literal) pattern;
 										i.setDataType(patternLit.getDatatype());
+										String patternStr = patternLit.stringValue();
+										patternStr = patternStr.replaceAll("\\[.*\\]", "");
+										i.setPatternScore(patternStr.length());
 										if (patternLit.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
 										else i.setPattern(i.getTrigger());
 									}
@@ -354,16 +357,16 @@ public class GraphManager {
 										}
 									}
 								}
-								String labels = bs2.getValue("i_labels").stringValue();
-								if (StringUtils.isNotBlank(labels)) {
+								String labelsStr = bs2.getValue("i_labels").stringValue();
+								if (StringUtils.isNotBlank(labelsStr)) {
 									String COMMA_ESCAPE = "::comma-rudi-replacement::";
-									labels = labels.replace("\\,", COMMA_ESCAPE);
-									StringTokenizer st = new StringTokenizer(labels, ",");
-									String[] sa = new String[st.countTokens()];
-									for (int j = 0; st.hasMoreTokens(); j++) {
-										sa[j] = st.nextToken().replace(COMMA_ESCAPE, ",");
+									labelsStr = labelsStr.replace("\\,", COMMA_ESCAPE);
+									StringTokenizer st = new StringTokenizer(labelsStr, ",");
+									List<String> labels = new ArrayList<String>();
+									while (st.hasMoreTokens()) {
+										labels.add(st.nextToken().replace(COMMA_ESCAPE, ","));
 									}
-									i.setLabels(sa);
+									i.setLabels(labels);
 								}
 
 								// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
