@@ -1,9 +1,11 @@
 package ai.vacuity.rudi.sensor;
 
 import java.net.URLEncoder;
+import java.nio.channels.Channel;
 import java.text.DecimalFormat;
 import java.util.UUID;
 
+import org.bouncycastle.bcpg.Packet;
 import org.eclipse.rdf4j.model.IRI;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -21,8 +23,6 @@ import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
-import ai.vacuity.rudi.adaptors.types.Channel;
-import ai.vacuity.rudi.adaptors.types.Packet;
 import ai.vacuity.rudi.adaptors.types.Report;
 
 @Controller

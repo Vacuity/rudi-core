@@ -51,7 +51,7 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 	final static String indexDir = Config.DIR_ALERTS + "index" + File.separator;
 	final static String queueDir = Config.DIR_ALERTS + "queue" + File.separator;
 
-	final static Repository repository = GraphManager.parseSPARQLRepository(Config.SPARQL_ENDPOINT_ALERTS);
+	final static Repository repository = GraphManager.parseSPARQLRepository(Config.SPARQL_ENDPOINT_ALERTS, Config.SPARQL_ENDPOINT_ALERTS_LABEL);
 	private final static HashMap<Value, Vector<IndexableQuery>> map = new HashMap<Value, Vector<IndexableQuery>>();
 
 	Vector<Tuple> tuples = new Vector<Tuple>();
@@ -64,7 +64,8 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 		GraphListener.getRepository().initialize();
 		try (RepositoryConnection con = GraphListener.getRepository().getConnection()) {
 			Resource context = con.getValueFactory().createIRI(Constants.CONTEXT_DEMO);
-			con.clear(context); // TODO careful, the listeners were in there
+			// TODO careful, the listeners were in there
+			con.clear(context);
 
 			File dir = new File(indexDir);
 			if (!dir.exists()) {

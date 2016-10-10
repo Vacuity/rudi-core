@@ -76,9 +76,10 @@ public class Config {
 		InputStream is = cLoader.getResourceAsStream(Config.FILE_NAME);
 		try {
 			Config.getSettings().load(is);
+			Config.load();
 		}
 		catch (IOException ioex) {
-			ioex.printStackTrace();
+			logger.error(ioex.getMessage(), ioex);
 		}
 	}
 
@@ -88,11 +89,19 @@ public class Config {
 	public static final String RUDI_PATH = getSettings().getProperty("rudi.path");
 	public static final String RUDI_SECURE = getSettings().getProperty("rudi.secure");
 
-	public static final String SPARQL_ENDPOINT_RESPONSES = getSettings().getProperty("rudi.repo.responses");
+	public static final String SPARQL_ENDPOINT_RESPONSES_LABEL = "rudi.repo.responses";
 
-	public static final String SPARQL_ENDPOINT_ALERTS = getSettings().getProperty("rudi.repo.alerts");
+	public static final String SPARQL_ENDPOINT_ALERTS_LABEL = "rudi.repo.alerts";
 
-	public static final String SPARQL_ENDPOINT_VIA = getSettings().getProperty("rudi.repo.via");
+	public static final String SPARQL_ENDPOINT_VIA_LABEL = "rudi.repo.via";
+
+	public static final String PREFIX_RUDI_REPO = "rudi.repo";
+
+	public static final String SPARQL_ENDPOINT_RESPONSES = getSettings().getProperty(Config.SPARQL_ENDPOINT_RESPONSES_LABEL);
+
+	public static final String SPARQL_ENDPOINT_ALERTS = getSettings().getProperty(Config.SPARQL_ENDPOINT_RESPONSES_LABEL);
+
+	public static final String SPARQL_ENDPOINT_VIA = getSettings().getProperty(Config.SPARQL_ENDPOINT_RESPONSES_LABEL);
 
 	public static final String DIR_ALERTS = (getSettings().containsKey(Config.PROPERTY_RUDI_SYSTEM)) ? getSettings().getProperty(Config.PROPERTY_RUDI_SYSTEM) + "data/" : System.getProperty("user.home") + File.separator + "alerts/";
 
@@ -166,26 +175,27 @@ public class Config {
 	public static final void load() {
 		Enumeration<Object> keys = getSettings().keys();
 		while (keys.hasMoreElements()) {
-			String findDomainKey = ((String) keys.nextElement()).toLowerCase();
-			if (findDomainKey.endsWith("." + Config.PROPERTY_SUFFIX_HOST)) {
-				String endpointLabel = findDomainKey.substring(0, findDomainKey.lastIndexOf("." + Config.PROPERTY_SUFFIX_HOST));
-				Config config = Config.add(endpointLabel);
+			String findHostKey = ((String) keys.nextElement()).toLowerCase();
+			if (findHostKey.endsWith("." + Config.PROPERTY_SUFFIX_HOST)) {
+				String configLabel = findHostKey.substring(0, findHostKey.lastIndexOf("." + Config.PROPERTY_SUFFIX_HOST));
+				Config config = Config.add(configLabel);
 
-				String domain = Config.getSettings().getProperty(findDomainKey);
-				if (StringUtils.isNotEmpty(domain)) {
-					config.setHost(domain);
+				String host = Config.getSettings().getProperty(findHostKey);
+
+				if (StringUtils.isNotEmpty(host)) {
+					config.setHost(host);
 				}
 				else {
 					continue;
 				}
-				config.setRepoType(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_REPO_TYPE));
-				config.setUserName(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_USER));
-				config.setPassword(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PASS));
-				config.setPath(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PATH));
-				config.setId(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_ID));
-				config.setKey(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_KEY));
-				config.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
-				String portStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PORT);
+				config.setRepoType(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_REPO_TYPE));
+				config.setUserName(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_USER));
+				config.setPassword(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_PASS));
+				config.setPath(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_PATH));
+				config.setId(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_ID));
+				config.setKey(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_KEY));
+				config.setToken(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
+				String portStr = Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_PORT);
 				if (StringUtils.isNotBlank(portStr)) {
 					try {
 						config.setPort(Integer.parseInt(portStr));
@@ -197,12 +207,12 @@ public class Config {
 						// port not required
 					}
 				}
-				config.setSecure(Boolean.parseBoolean(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_SECURE)));
-				config.setPath(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_PATH));
-				config.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
-				config.setToken(Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
-				String tpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_TEMPLATE_MODULE);
-				String rpStr = Config.getSettings().getProperty(endpointLabel + "." + Config.PROPERTY_SUFFIX_RESPONSE_MODULE);
+				config.setSecure(Boolean.parseBoolean(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_SECURE)));
+				config.setPath(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_PATH));
+				config.setToken(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
+				config.setToken(Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_TOKEN));
+				String tpStr = Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_TEMPLATE_MODULE);
+				String rpStr = Config.getSettings().getProperty(configLabel + "." + Config.PROPERTY_SUFFIX_RESPONSE_MODULE);
 
 				if (StringUtils.isNotBlank(tpStr)) {
 					try {

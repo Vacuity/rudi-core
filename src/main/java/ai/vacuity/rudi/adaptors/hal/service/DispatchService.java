@@ -1,6 +1,8 @@
 package ai.vacuity.rudi.adaptors.hal.service;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -21,9 +23,12 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
@@ -61,14 +66,16 @@ public class DispatchService extends Thread {
 			// catch (InterruptedException e) {
 			// logger.error(e.getMessage(), e);
 			// }
-			while (getQueue().size() > 0) {
-				getQueue().get(0).run();
-				getQueue().remove(0);
+
+			synchronized (getQueue()) {
+				while (getQueue().size() > 0) {
+					getQueue().remove(0).run();
+				}
 			}
 		}
 	}
 
-	public static Report process(IEvent event) throws IOException, IllegalArgumentException {
+	public static ai.vacuity.rudi.adaptors.types.Report process(IEvent event) throws IOException, IllegalArgumentException {
 		return process(event, true);
 	}
 
@@ -76,6 +83,7 @@ public class DispatchService extends Thread {
 		index(event);
 
 		Report report = new Report();
+		List<AbstractHAO> haos = new ArrayList<AbstractHAO>();
 
 		InputProtocol[] protocols = GraphManager.getTypedPatterns();
 		find_matches: for (int i = 0; i < protocols.length; i++) {
@@ -98,24 +106,42 @@ public class DispatchService extends Thread {
 
 			if (ip.getEventHandler().hasSparqlQuery()) {
 				procedure = ip.getEventHandler().getSparql();
-				processed = DispatchService.process(ip, event, report, procedure, log);
+				processed = DispatchService.begin(ip, event, report, procedure, log);
 				hao = new SPARQLHao();
 			}
 			else {
-				processed = DispatchService.process(ip, event, report, procedure, log);
+				processed = DispatchService.begin(ip, event, report, procedure, log);
 				hao = new RestfulHAO();
 			}
 			if (processed.length == 0) continue find_matches;
 
 			report.getLogs().add(processed[1]);
-			logger.debug("[Rudi]: " + processed[1]);
 
 			if (dispatch) {
 				hao.setCall(processed[0]);
 				hao.setInputProtocol(ip);
 				hao.setEvent(event);
-				DispatchService.add(hao);
+				haos.add(hao);
 			}
+		}
+		double highest = 0;
+		for (Match m : report.getMatches()) {
+			if (m.getScore() > highest) highest = m.getScore();
+		}
+		for (int i = 0; i < report.getMatches().size(); i++) {
+			Match m = report.getMatches().get(i);
+			if (m.getScore() < highest) {
+				report.getMatches().remove(i);
+				report.getLogs().remove(i);
+				if (dispatch) haos.remove(i);
+				i--;
+			}
+		}
+		for (AbstractHAO hao : haos) {
+			DispatchService.add(hao);
+		}
+		for (String log : report.getLogs()) {
+			logger.debug("[Rudi]: " + log);
 		}
 		return report;
 	}
@@ -173,17 +199,18 @@ public class DispatchService extends Thread {
 		// 1. swap captured groups' placeholders first
 		// FIRST MATCH GATE
 		boolean found = false;
+		Match m = new Match();
+		m.setLabels(ip.getLabels());
+		m.setScore(ip.getPatternScore());
 		if (ip.getDataType() != null && ip.getDataType().equals(InputProtocol.PARSE_TYPE_REGEX) && ip.getPattern() instanceof Pattern) {
 			Matcher matcher = ((Pattern) ip.getPattern()).matcher(event.getLabel());
-			while (matcher.find()) {
+			// TODO for now, only allow one run of the matcher per input, to allow a full run, the added matches will need to correspond to the added HAOs in the process() caller
+			if (matcher.find()) {
 				if (!found) {
-					// logger.debug("Match: " + ip.getTrigger().stringValue());
 					if (event instanceof IndexableInput) {
-						Match m = new Match();
-						m.setLabels(ip.getPattern().toString());
-						m.setScore(m.getLabels().length() + "");
 						report.getMatches().add(m);
 					}
+					// logger.debug("Match: " + ip.getTrigger().stringValue());
 					found = true;
 				}
 				int groups = matcher.groupCount();
@@ -212,6 +239,7 @@ public class DispatchService extends Thread {
 					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "URL"))) {
 						try {
 							new URL(event.getLabel());
+							report.getMatches().add(m);
 							found = true;
 						}
 						catch (MalformedURLException mfuex) {
@@ -221,6 +249,7 @@ public class DispatchService extends Thread {
 					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "anyURI"))) {
 						try {
 							GraphManager.getValueFactory().createIRI(event.getLabel());
+							report.getMatches().add(m);
 							found = true;
 						}
 						catch (IllegalArgumentException iaex) {
@@ -230,6 +259,7 @@ public class DispatchService extends Thread {
 					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "integer"))) {
 						try {
 							Integer.parseInt(event.getLabel());
+							report.getMatches().add(m);
 							found = true;
 						}
 						catch (NumberFormatException nfex) {
@@ -240,6 +270,7 @@ public class DispatchService extends Thread {
 						try {
 							// for type dateTime, the value specifies the date format
 							new SimpleDateFormat(lit.stringValue()).parse(event.getLabel());
+							report.getMatches().add(m);
 							found = true;
 						}
 						catch (ParseException e) {
@@ -290,83 +321,132 @@ public class DispatchService extends Thread {
 		return templates;
 	}
 
+	private static String[] begin(InputProtocol ip, IEvent event, Report report, String... templates) {
+		List<String> imports = ip.getEventHandler().getImports();
+		if (ip.getEventHandler().getImports().size() > 0) {
+			try {
+				Method m = DispatchService.class.getDeclaredMethod("process", new Class[] { InputProtocol.class, IEvent.class, Report.class, String[].class });
+				m.setAccessible(true);
+				Object[] args = new Object[4];
+				args[0] = ip;
+				args[1] = event;
+				args[2] = report;
+				int len = templates.length;
+				String[] sa = new String[len + imports.size()];
+				for (int i = 0; i < len; i++) {
+					sa[i] = templates[i];
+				}
+				for (int i = len; i < len + imports.size(); i++) {
+					sa[i] = imports.get(i - len);
+				}
+				args[3] = sa;
+				try {
+					templates = (String[]) m.invoke(new DispatchService(), args);
+					templates = process(report, len, sa);
+				}
+				catch (IllegalAccessException e) {
+					logger.error(e.getMessage(), e);
+				}
+				catch (IllegalArgumentException e) {
+					logger.error(e.getMessage(), e);
+				}
+				catch (InvocationTargetException e) {
+					logger.error(e.getMessage(), e);
+				}
+				return templates;
+			}
+			catch (NoSuchMethodException e) {
+				logger.error(e.getMessage(), e);
+			}
+			catch (SecurityException e) {
+				logger.error(e.getMessage(), e);
+			}
+			return templates;
+		}
+		else {
+			return process(ip, event, report, templates);
+		}
+	}
+
 	private static String[] process(InputProtocol ip, int id, Resource context, String... templates) {
 		if (ip.getQuery().getId() != id) return null;
 		String query = ip.getQuery().getDelegate().toString().replace("\n", "").replace("\t", "");
 
-		logger.debug("Context: " + context);
+		// logger.debug("Context: " + context);
 
-		TupleQuery alertQuery = GraphManager.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, query);
-		alertQuery.setBinding("context", context);
-		try (TupleQueryResult alerts = alertQuery.evaluate()) {
-			if (!alerts.hasNext()) return new String[0];
-			UUID u = UUID.randomUUID();
-			IRI alertIRI = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "alrt-" + u);
-			Vector<Statement> tuples = new Vector<Statement>();
-			if (alerts.hasNext()) {
-				Resource owner = ip.getQuery().getOwnerIri();
-				if (owner == null) owner = ip.getEventHandler().getIri();
-				if (owner == null) owner = GraphManager.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
-				tuples.add(GraphManager.getValueFactory().createStatement(owner, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "owner_of"), alertIRI));
-				tuples.add(GraphManager.getValueFactory().createStatement(alertIRI, GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "context"), context));
-			}
-			for (int j = 0; alerts.hasNext(); j++) {
-				try {
-					UUID uuid = UUID.randomUUID();
-					IRI hit = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
-					BindingSet captures = alerts.next();
-					Iterator<String> capture_names = captures.getBindingNames().iterator();
-					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.rdf_type, GraphManager.via_Hit));
-					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), alertIRI));
-					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
-					tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.via_query, ip.getQuery().getIri()));
-					while (capture_names.hasNext()) {
-						String name = capture_names.next();
-						if (captures.getValue(name) == null) {
-							AbstractTemplateModule.logger.error("Null value for capture: " + name + "\nQuery:\n" + query);
-						}
-						String value = captures.getValue(name).stringValue();
-						if (value == null) value = "-- null value --";
-						for (int i = 0; i < templates.length; i++) {
-							if (StringUtils.isNotBlank(templates[i])) {
-								String captureIndex = name;
-								if (captureIndex.indexOf("_") > 0) {
-									captureIndex = captureIndex.substring(0, captureIndex.indexOf("_"));
-								}
-								templates[i] = templates[i].replace("${" + captureIndex + "}", value);
+		try (RepositoryConnection con = GraphManager.getConnection()) {
+			TupleQuery alertQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
+			alertQuery.setBinding("context", context);
+			try (TupleQueryResult alerts = alertQuery.evaluate()) {
+				if (!alerts.hasNext()) return new String[0];
+				UUID u = UUID.randomUUID();
+				IRI alertIRI = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "alrt-" + u);
+				Vector<Statement> tuples = new Vector<Statement>();
+				if (alerts.hasNext()) {
+					Resource owner = ip.getQuery().getOwnerIri();
+					if (owner == null) owner = ip.getEventHandler().getIri();
+					if (owner == null) owner = GraphManager.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
+					tuples.add(GraphManager.getValueFactory().createStatement(owner, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "owner_of"), alertIRI));
+					tuples.add(GraphManager.getValueFactory().createStatement(alertIRI, GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "context"), context));
+				}
+				for (int j = 0; alerts.hasNext(); j++) {
+					try {
+						UUID uuid = UUID.randomUUID();
+						IRI hit = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
+						BindingSet captures = alerts.next();
+						Iterator<String> capture_names = captures.getBindingNames().iterator();
+						tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.rdf_type, GraphManager.via_Hit));
+						tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), alertIRI));
+						tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
+						tuples.add(GraphManager.getValueFactory().createStatement(hit, GraphManager.via_query, ip.getQuery().getIri()));
+						while (capture_names.hasNext()) {
+							String name = capture_names.next();
+							if (captures.getValue(name) == null) {
+								AbstractTemplateModule.logger.error("Null value for capture: " + name + "\nQuery:\n" + query);
 							}
-						}
+							String value = captures.getValue(name).stringValue();
+							if (value == null) value = "-- null value --";
+							for (int i = 0; i < templates.length; i++) {
+								if (StringUtils.isNotBlank(templates[i])) {
+									String captureIndex = name;
+									if (captureIndex.indexOf("_") > 0) {
+										captureIndex = captureIndex.substring(0, captureIndex.indexOf("_"));
+									}
+									templates[i] = templates[i].replace("${" + captureIndex + "}", value);
+								}
+							}
 
-						AbstractTemplateModule.logger.debug("SPARQL Capture Value (" + name + "." + j + "): " + value);
+							AbstractTemplateModule.logger.debug("SPARQL Capture Value (" + name + "." + j + "): " + value);
 
-						Literal valueLit = GraphManager.getValueFactory().createLiteral(name);
+							Literal valueLit = GraphManager.getValueFactory().createLiteral(name);
 
-						try {
-							valueLit = GraphManager.getValueFactory().createLiteral(Integer.parseInt(name)); // try to make the capture's datatype granular
+							try {
+								valueLit = GraphManager.getValueFactory().createLiteral(Integer.parseInt(name)); // try to make the capture's datatype granular
+							}
+							catch (NumberFormatException nfex) {
+							}
+							UUID puuid = UUID.randomUUID();
+							IRI p = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "p-" + puuid);
+							tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.rdf_type, GraphManager.via_Projection));
+							tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.via_bindName, valueLit));
+							tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.via_value, captures.getValue(name)));
+							tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), hit));
 						}
-						catch (NumberFormatException nfex) {
-						}
-						UUID puuid = UUID.randomUUID();
-						IRI p = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "p-" + puuid);
-						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.rdf_type, GraphManager.via_Projection));
-						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.via_bindName, valueLit));
-						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.via_value, captures.getValue(name)));
-						tuples.add(GraphManager.getValueFactory().createStatement(p, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_container"), hit));
 					}
+					catch (Exception e) {
+						logger.error(e.getMessage(), e);
+						continue;
+					}
+					GraphManager.addToRepository(tuples, alertIRI);
 				}
-				catch (Exception e) {
-					logger.error(e.getMessage(), e);
-					continue;
-				}
-				GraphManager.addToRepository(tuples, alertIRI);
+			}
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
+				return new String[0];
 			}
 		}
-		catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			return new String[0];
-		}
-		finally {
-			GraphManager.getConnection().close();
+		catch (RepositoryException rex) {
+			logger.error(rex.getMessage(), rex);
 		}
 		for (int i = 0; i < templates.length; i++) {
 			if (ip.getEventHandler().hasEndpointTemplateModule()) {
@@ -406,6 +486,38 @@ public class DispatchService extends Thread {
 			templates[i] = templates[i].replace("${port}", ip.getEventHandler().getEndpointPort() + "");
 		}
 
+		return templates;
+	}
+
+	public static String[] process(Report report, int onset, String... templates) {
+		for (int i = onset; i < templates.length; i++) {
+			String query = templates[i];
+			try (RepositoryConnection con = GraphManager.getConnection()) {
+				TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
+				try (TupleQueryResult r3 = ipQuery.evaluate()) {
+					if (r3.hasNext()) { // expect a single result
+						BindingSet bindings = r3.next();
+						Iterator<String> binding_names = bindings.getBindingNames().iterator();
+						while (binding_names.hasNext()) {
+							String name = binding_names.next();
+							String value = bindings.getValue(name).stringValue();
+							if (value == null) value = "-- null value --";
+							for (int j = 0; j < templates.length; j++) {
+								if (StringUtils.isNotBlank(templates[j])) {
+									templates[j] = templates[j].replace("${" + name + "}", value);
+								}
+							}
+						}
+					}
+				}
+				catch (QueryEvaluationException qex) {
+					logger.error(qex.getMessage(), qex);
+				}
+			}
+			catch (RepositoryException rex) {
+				logger.error(rex.getMessage(), rex);
+			}
+		}
 		return templates;
 	}
 

@@ -1,0 +1,1 @@
+<http://myopenlink.net/dataspace/person/kidehen> <http://myopenlink.net/foaf/name> "Kingsley Idehen" .

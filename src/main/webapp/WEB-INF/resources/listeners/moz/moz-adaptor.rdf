@@ -24,8 +24,8 @@
  	</via:Listener>
  	
  	<via:Input rdf:about="#moz-cmd">
- 		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)</via:pattern>
- 		<via:pattern rdf:datatype="&via;Regex">^do\s*(.*)</via:pattern>
+ 		<via:pattern rdf:datatype="&via;Regex">^moz\s*(.*)$</via:pattern>
+ 		<via:pattern rdf:datatype="&via;Regex">^do\s*(.*)$</via:pattern>
  		<via:labels>,Web URL</via:labels>
  		<via:pattern rdf:resource="#moz-cmd-captures"/>
  	</via:Input>
@@ -41,14 +41,33 @@
  	</rdf:Input>
  	
  	<via:EventHandler rdf:about="#moz-get-backlink-stats">
+ 		<via:import rdf:resource="#test-imports"/>
  		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&amp;Scope=page_to_page&amp;Sort=domains_linking_page&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=${token}"/>
  		<!-- the rdfs:range is a via:Template -->
- 		<via:log>Fetching backlinks for '${1}' from ${domain}.</via:log>
+ 		<via:log>Fetching backlinks for '${name}' from ${domain}.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
 		<via:translator rdf:resource="http://rudi.endpoint.placeholders.vacuity.ai/a/moz/moz-api-results.xsl"/>
  	</via:EventHandler>
  	
+ 	<via:TupleQuery rdf:about="#test-imports">
+		<rdfs:label>test-imports</rdfs:label>
+		
+ 		<via:sparql>
+<![CDATA[
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+
+SELECT ?name
+WHERE {
+			<${1}> rdf:type <http://www.w3.org/ns/ma-ont/VideoTrack> .
+			<${1}> dc:title ?name .
+		}
+]]>
+		</via:sparql>
+ 		<via:labels_1>test-imports</via:labels_1>
+	</via:TupleQuery> 	
+	
  	<via:EventHandler rdf:about="#moz-get-url-stats">
  		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/url-metrics/${1}?144115188075855876=2048&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=%${token}"/>

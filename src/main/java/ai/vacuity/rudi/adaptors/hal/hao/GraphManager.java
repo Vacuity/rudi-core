@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.RDF4JException;
+import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -48,7 +49,14 @@ import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
 import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
+import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 
+/**
+ * Manages the Index.
+ * 
+ * @author In Lak'ech.
+ *
+ */
 public class GraphManager {
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphManager.class);
 
@@ -58,17 +66,17 @@ public class GraphManager {
 	// final static String indexes = "spoc,posc,cosp";
 	// static Repository repo = new SailRepository(new
 	// ForwardChainingRDFSInferencer(new NativeStore(dataDir, indexes)));
-	final static NotifyingRepositoryWrapper repository = new NotifyingRepositoryWrapper(GraphManager.parseSPARQLRepository(Config.SPARQL_ENDPOINT_VIA));
+	final static NotifyingRepositoryWrapper repository = new NotifyingRepositoryWrapper(GraphManager.parseSPARQLRepository(Config.SPARQL_ENDPOINT_VIA, Config.SPARQL_ENDPOINT_VIA_LABEL));
 	final static GraphListener listener = new GraphListener();
 	static final HashMap<String, TupleQuery> queries = new HashMap<String, TupleQuery>();
 
-	static final String QUERY_GET_LISTENER = "get_listener";
-	static final String QUERY_GET_SUBSCRIPTIONS = "get_subscriptions";
-	static final String QUERY_GET_ADAPTOR_WITH_CAPTURE = "get_adaptor_with_capture";
-	static final String QUERY_GET_ADAPTOR_OUTPUT = "get_adaptor_output";
-	static final String QUERY_GET_PATTERN_LABELS = "get_pattern_labels";
-	static final String QUERY_GET_ENDPOINT_LABELS = "get_endpoint_labels";
-	static final String QUERY_GET_QUERIES = "get_queries";
+	static final String QUERY_GET_LISTENER = Constants.NS_VI + "get_listener";
+	// static final String QUERY_GET_SUBSCRIPTIONS = "get_subscriptions";
+	// static final String QUERY_GET_ADAPTOR_WITH_CAPTURE = "get_adaptor_with_capture";
+	// static final String QUERY_GET_ADAPTOR_OUTPUT = "get_adaptor_output";
+	// static final String QUERY_GET_PATTERN_LABELS = "get_pattern_labels";
+	// static final String QUERY_GET_ENDPOINT_LABELS = "get_endpoint_labels";
+	// static final String QUERY_GET_QUERIES = "get_queries";
 	private static final int MAX_INPUTS = 100000;
 	private static final InputProtocol[] regexPatterns = new InputProtocol[GraphManager.MAX_INPUTS];
 	private static final InputProtocol[] typedPatterns = new InputProtocol[GraphManager.MAX_INPUTS];
@@ -84,7 +92,7 @@ public class GraphManager {
 		GraphManager.loadRepository(); // load rdf demo instance data, patterns,
 										// and schema
 
-		GraphManager.load(GraphManager.QUERY_GET_LISTENER); // load adaptors
+		GraphManager.load(getValueFactory().createIRI(GraphManager.QUERY_GET_LISTENER)); // load adaptors
 
 		// GraphMaster.load(GraphMaster.QUERY_GET_SUBSCRIPTIONS); // load adaptors
 
@@ -96,6 +104,7 @@ public class GraphManager {
 		// QuadStore.load(QuadStore.QUERY_GET_QUERIES);
 	}
 
+	public final static IRI rdf_label = getValueFactory().createIRI(Constants.NS_RDFS, "label");
 	public final static IRI rdf_type = getValueFactory().createIRI(Constants.NS_RDF, "type");
 	public final static IRI rdf_List = getValueFactory().createIRI(Constants.NS_RDF, "List");
 	public final static IRI rdf_first = getValueFactory().createIRI(Constants.NS_RDF, "first");
@@ -260,11 +269,10 @@ public class GraphManager {
 		}
 	}
 
-	public static void load(String queryLabel) {
-		Config.load();
+	public static void load(IRI queryIRI) {
 		try (RepositoryConnection con = getConnection()) {
-			TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q rdfs:label ?l . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
-			tupleQuery.setBinding("l", getValueFactory().createLiteral(queryLabel));
+			TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q <" + Constants.NS_RDFS + "label> ?l . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
+			tupleQuery.setBinding("q", queryIRI);
 			try (TupleQueryResult result = tupleQuery.evaluate()) {
 				while (result.hasNext()) { // iterate over the result
 					BindingSet bindingSet = result.next();
@@ -276,360 +284,385 @@ public class GraphManager {
 					logger.debug("SPARQL: " + sparql.stringValue());
 
 					TupleQuery data = con.prepareTupleQuery(QueryLanguage.SPARQL, sparql.stringValue());
-					switch (queryLabel) {
-					case GraphManager.QUERY_GET_LISTENER:
-						// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
-						try (TupleQueryResult r2 = data.evaluate()) {
-							Vector<Exception> err = new Vector<Exception>();
-							while (r2.hasNext()) {
-								BindingSet bs2 = r2.next();
-								logger.debug("Listener: " + bs2.getValue("listener"));
-								logger.debug("Pattern: " + bs2.getValue("pattern"));
-								logger.debug("Labels: " + bs2.getValue("i_labels"));
-								logger.debug("Query type: " + bs2.getValue("qtype"));
-								// logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
-								logger.debug("Event Handler: " + bs2.getValue("output"));
-								logger.debug("Config: " + bs2.getValue("config"));
-								logger.debug("Translator: " + bs2.getValue("translator"));
-								logger.debug("Log: " + bs2.getValue("log"));
-								logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
-								logger.debug("Endpoint: " + bs2.getValue("endpoint"));
-								logger.debug("Media Type: " + bs2.getValue("mediaType"));
-								logger.debug("Response Query: " + bs2.getValue("query"));
+					switch (queryIRI.stringValue()) {
+						case GraphManager.QUERY_GET_LISTENER:
+							// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
+							try (TupleQueryResult r2 = data.evaluate()) {
+								Vector<Exception> err = new Vector<Exception>();
+								while (r2.hasNext()) {
+									try {
+										BindingSet bs2 = r2.next();
+										logger.debug("Listener: " + bs2.getValue("listener"));
+										logger.debug("Pattern: " + bs2.getValue("pattern"));
+										logger.debug("Labels: " + bs2.getValue("i_labels"));
+										logger.debug("Query type: " + bs2.getValue("qtype"));
+										// logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
+										logger.debug("Event Handler: " + bs2.getValue("output"));
+										logger.debug("Config: " + bs2.getValue("config"));
+										logger.debug("Translator: " + bs2.getValue("translator"));
+										logger.debug("Log: " + bs2.getValue("log"));
+										logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
+										logger.debug("Endpoint: " + bs2.getValue("endpoint"));
+										logger.debug("Media Type: " + bs2.getValue("mediaType"));
+										logger.debug("Response Query: " + bs2.getValue("query"));
 
-								// TODO a hack validator in lieu of a better query semantics
-								if (bs2.getValue("pattern") == null && bs2.getValue("i_query") == null && bs2.getValue("i_label") == null) {
-									IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("input") + ". via:Input must contain a via:pattern, via:capture_*, or via:query predicate.");
-									logger.error(ilaex.getMessage(), ilaex);
-									continue;
-								}
+										// TODO a hack validator in lieu of a better query semantics
+										if (bs2.getValue("pattern") == null && bs2.getValue("i_query") == null && bs2.getValue("i_label") == null) {
+											IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("input") + ". via:Input must contain a via:pattern, via:capture_*, or via:query predicate.");
+											logger.error(ilaex.getMessage(), ilaex);
+											continue;
+										}
 
-								// if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
-								// IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
-								// logger.error(ilaex.getMessage(), ilaex);
-								// continue;
-								// }
+										// if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
+										// IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
+										// logger.error(ilaex.getMessage(), ilaex);
+										// continue;
+										// }
 
-								InputProtocol i = new InputProtocol();
-								Value pattern = bs2.getValue("pattern");
-								if (pattern != null) {
-									i.setTrigger(pattern);
-									if (pattern instanceof Literal) {
-										Literal patternLit = (Literal) pattern;
-										i.setDataType(patternLit.getDatatype());
-										String patternStr = patternLit.stringValue();
-										patternStr = patternStr.replaceAll("\\[.*\\]", "");
-										i.setPatternScore(patternStr.length());
-										if (patternLit.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
-										else i.setPattern(i.getTrigger());
-									}
-									else if (pattern instanceof IRI) {
-										try {
-											IRI patternIRI = (IRI) pattern;
-											Model captures = Connections.getRDFCollection(getConnection(), patternIRI, new LinkedHashModel());
-											Iterator<Statement> m = captures.iterator();
-											List<Value> l = new ArrayList<Value>();
-											collect_list_element: while (m.hasNext()) {
-												Statement st = m.next();
-												Resource s = st.getSubject();
-												IRI p = st.getPredicate();
-												Value o = st.getObject();
-
-												// ignore non list related properties
-												// CAREFUL, don't use the GraphManager constants in this method, since we're still in the static block of the class scope, which occurs prior to the loading of the static IRI fields
-
-												// check via:pattern, even though right now rdf4j isn't recognizing via:pattern as a sub property of rdf:first (perhaps later they will)
-												if (p.equals(getValueFactory().createIRI(Constants.NS_VIA, "pattern")) || p.equals(getValueFactory().createIRI(Constants.NS_RDF, "first"))) {
-													if (o.equals(getValueFactory().createIRI(Constants.NS_RDF, "nil"))) {
-														l.add(null); // give the nils indices
-														continue collect_list_element;
-													}
-													else {
-														l.add(o);
-														continue collect_list_element;
-													}
+										InputProtocol i = new InputProtocol();
+										Value pattern = bs2.getValue("pattern");
+										if (pattern != null) {
+											i.setTrigger(pattern);
+											if (pattern instanceof Literal) {
+												Literal patternLit = (Literal) pattern;
+												i.setDataType(patternLit.getDatatype());
+												String patternStr = patternLit.stringValue();
+												i.setPatternScore(GraphMaster.score(patternStr));
+												if (patternLit.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
+												else {
+													List<Value> l = new ArrayList<Value>();
+													l.add(pattern);
+													i.setPatternScore(100.0);
+													i.setPattern(l);
 												}
 											}
-											i.setPattern(l);
+											else if (pattern instanceof IRI) {
+												try {
+													IRI patternIRI = (IRI) pattern;
+													Model captures = Connections.getRDFCollection(getConnection(), patternIRI, new LinkedHashModel());
+													Iterator<Statement> m = captures.iterator();
+													List<Value> l = new ArrayList<Value>();
+													collect_list_element: while (m.hasNext()) {
+														Statement st = m.next();
+														Resource s = st.getSubject();
+														IRI p = st.getPredicate();
+														Value o = st.getObject();
+
+														// ignore non list related properties
+														// don't use the GraphManager constants in this method, since we're still in the static block of the class scope, which occurs prior to the loading of the static IRI fields
+														// check via:pattern, even though right now rdf4j isn't recognizing via:pattern as a sub property of rdf:first (perhaps later they will)
+														if (p.equals(getValueFactory().createIRI(Constants.NS_VIA, "pattern")) || p.equals(getValueFactory().createIRI(Constants.NS_RDF, "first"))) {
+															if (o.equals(getValueFactory().createIRI(Constants.NS_RDF, "nil"))) {
+																l.add(null); // give the nils indices
+															}
+															else {
+																l.add(o);
+															}
+														}
+													}
+													i.setPatternScore(100.0);
+													i.setPattern(l);
+												}
+												catch (RepositoryException rex) {
+													logger.error(rex.getMessage(), rex);
+												}
+											}
 										}
-										catch (RepositoryException rex) {
-											logger.error(rex.getMessage(), rex);
+										String labelsStr = bs2.getValue("i_labels").stringValue();
+										if (StringUtils.isNotBlank(labelsStr)) {
+											String COMMA_ESCAPE = "::comma-rudi-replacement::";
+											labelsStr = labelsStr.replace("\\,", COMMA_ESCAPE);
+											StringTokenizer st = new StringTokenizer(labelsStr, ",");
+											List<String> labels = new ArrayList<String>();
+											while (st.hasMoreTokens()) {
+												labels.add(st.nextToken().replace(COMMA_ESCAPE, ","));
+											}
+											i.setLabels(labels);
 										}
-									}
-								}
-								String labelsStr = bs2.getValue("i_labels").stringValue();
-								if (StringUtils.isNotBlank(labelsStr)) {
-									String COMMA_ESCAPE = "::comma-rudi-replacement::";
-									labelsStr = labelsStr.replace("\\,", COMMA_ESCAPE);
-									StringTokenizer st = new StringTokenizer(labelsStr, ",");
-									List<String> labels = new ArrayList<String>();
-									while (st.hasMoreTokens()) {
-										labels.add(st.nextToken().replace(COMMA_ESCAPE, ","));
-									}
-									i.setLabels(labels);
-								}
 
-								// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
-								EventHandler handler = new EventHandler();
-								handler.setConfigLabel(bs2.getValue("config").stringValue());
-								handler.setLog(bs2.getValue("log").stringValue());
-								handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
-								handler.setIri((IRI) bs2.getValue("output"));
-								if (bs2.getValue("translator") != null) {
-									handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue().replace("http://rudi.endpoint.placeholders.vacuity.ai", Config.getRudiEndpoint()).replace("http://rudi.host.placeholders.vacuity.ai", (Boolean.parseBoolean(Config.RUDI_SECURE) ? "https://" : "http://") + Config.RUDI_HOST)));
-								}
-								// ENDPOINT VALIDATION START //
-								handler.setCall(bs2.getValue("endpoint").stringValue());
-								boolean ok = false;
-								List<GenericUrl> l = Config.get(handler.getConfigLabel()).getSandboxedEndpoints();
-								for (GenericUrl g : l) {
-									if (StringUtils.startsWith(handler.getCall(), g.toURL().toString())) {
-										ok = true;
-										break;
-									}
-								}
-								if (!ok) {
-									SecurityException sex = new SecurityException("Error loading '" + bs2.getValue("input") + "'. Endpoint " + handler.getCall() + " not allowed by configuration: " + handler.getConfigLabel());
-									logger.error(sex.getMessage(), sex);
-									continue;
-								}
-								// ENDPOINT VALIDATION END //
-
-								// handler.setCall(Config.getSettings().getProperty(handler.getConfigLabel() + Config.PROPERTY_SUFFIX_URL) + bs2.getValue("call").stringValue());
-								i.setEventHandler(handler);
-
-								// if sparql
-								// Create a new Repo, set its URL to the value o.getCall()
-								// retrive query resource from repo
-								if (bs2.getValue("qtype") != null) {
-									IRI query = (IRI) bs2.getValue("input");
-									TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
-									ipQuery.setBinding("q", query);
-									try (TupleQueryResult r3 = ipQuery.evaluate()) {
-										if (r3.hasNext()) { // expect a single result
-											BindingSet bs3 = r3.next();
-											String queryStr = bs3.getValue("s").stringValue();
-											IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
-											iq.setId(bs2.getValue("input").stringValue().hashCode());
-											iq.setLabel(bs2.getValue("i_label").stringValue());
-											iq.setIri((IRI) bs2.getValue("input"));
-											iq.setOwnerIri((IRI) bs2.getValue("notifies"));
-											GraphListener.register(iq);
-											i.setQuery(iq);
-											// i.hasSparqlQuery(true);
+										// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
+										EventHandler handler = new EventHandler();
+										handler.setConfigLabel(bs2.getValue("config").stringValue());
+										handler.setLog(bs2.getValue("log").stringValue());
+										if (bs2.getValue("mediaType") != null) handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
+										handler.setIri((IRI) bs2.getValue("output"));
+										if (bs2.getValue("translator") != null) {
+											handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue().replace("http://rudi.endpoint.placeholders.vacuity.ai", Config.getRudiEndpoint()).replace("http://rudi.host.placeholders.vacuity.ai", (Boolean.parseBoolean(Config.RUDI_SECURE) ? "https://" : "http://") + Config.RUDI_HOST)));
 										}
-									}
-									catch (QueryEvaluationException qex) {
-										logger.error(qex.getMessage(), qex);
-									}
-								}
-
-								// response query
-								if (bs2.getValue("query") != null) {
-									IRI query = (IRI) bs2.getValue("query");
-									TupleQuery rpQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
-									rpQuery.setBinding("q", query);
-									try (TupleQueryResult r3 = rpQuery.evaluate()) {
-										if (r3.hasNext()) { // expect a single result
-											BindingSet bs3 = r3.next();
-											handler.setSparql(bs3.getValue("s").stringValue());
-											handler.addRepository(GraphManager.parseSPARQLRepository(handler.getCall(), bs2.getValue("config").stringValue()));
-											handler.hasSparqlQuery(true);
+										// ENDPOINT VALIDATION START //
+										if (bs2.getValue("endpoint") != null) {
+											handler.setCall(bs2.getValue("endpoint").stringValue());
+											boolean ok = false;
+											List<GenericUrl> l = Config.get(handler.getConfigLabel()).getSandboxedEndpoints();
+											for (GenericUrl g : l) {
+												if (StringUtils.startsWith(handler.getCall(), g.toURL().toString())) {
+													ok = true;
+													break;
+												}
+											}
+											if (!ok) {
+												SecurityException sex = new SecurityException("Error loading '" + bs2.getValue("output") + "'. Endpoint " + handler.getCall() + " not allowed by configuration: " + handler.getConfigLabel());
+												logger.error(sex.getMessage(), sex);
+												continue;
+											}
 										}
-									}
-									catch (QueryEvaluationException qex) {
-										logger.error(qex.getMessage(), qex);
-									}
-								}
+										// ENDPOINT VALIDATION END //
 
-								// do o.setSparql() for the sparql of the query URI
-								// set o.isSparqlEndpoint = true
+										// handler.setCall(Config.getSettings().getProperty(handler.getConfigLabel() + Config.PROPERTY_SUFFIX_URL) + bs2.getValue("call").stringValue());
+										i.setEventHandler(handler);
 
-								if (i.getPattern() != null) {
-									getRegexPatterns()[getRegexInputsCursor()] = i;
-									incrementRegexInputsCursor();
-								}
-								else if (i.hasSparqlQuery()) {
-									getQueryPatterns()[getQueryInputsCursor()] = i;
-									incrementQueryInputsCursor();
-								}
-								else {
-									getTypedPatterns()[getTypedInputsCursor()] = i;
-									incrementTypedInputsCursor();
-								}
-
-							}
-						}
-						catch (QueryEvaluationException qex) {
-							logger.error(qex.getMessage(), qex);
-						}
-						catch (IllegalArgumentException iaex) {
-							logger.error(iaex.getMessage(), iaex);
-						}
-						break;
-					case GraphManager.QUERY_GET_SUBSCRIPTIONS:
-						// data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
-						try (TupleQueryResult r2 = data.evaluate()) {
-							Vector<Exception> err = new Vector<Exception>();
-							while (r2.hasNext()) {
-								BindingSet bs2 = r2.next();
-								logger.debug("Listener: " + bs2.getValue("listener"));
-								logger.debug("Pattern: " + bs2.getValue("pattern"));
-								logger.debug("Label: " + bs2.getValue("i_label"));
-								logger.debug("Input Query: " + bs2.getValue("i_query"));
-								logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
-								logger.debug("Notifies: " + bs2.getValue("notifies"));
-								// logger.debug("Config: " + bs2.getValue("config"));
-								// logger.debug("Translator: " + bs2.getValue("translator"));
-								// logger.debug("Log: " + bs2.getValue("log"));
-								// logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
-								// logger.debug("Call: " + bs2.getValue("call"));
-								// logger.debug("Media Type: " + bs2.getValue("mediaType"));
-								// logger.debug("Response Query: " + bs2.getValue("query"));
-
-								// TODO a hack validator in lieu of a better query semantics
-								// if (bs2.getValue("i_query") == null && bs2.getValue("i_label") == null) {
-								// IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("input") + ". via:Input must contain a via:pattern, via:capture_*, or via:query predicate.");
-								// logger.error(ilaex.getMessage(), ilaex);
-								// continue;
-								// }
-
-								if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
-									IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
-									logger.error(ilaex.getMessage(), ilaex);
-									continue;
-								}
-
-								InputProtocol i = new InputProtocol();
-								// if (bs2.getValue("pattern") != null) {
-								// Literal pattern = (Literal) bs2.getValue("pattern");
-								// i.setTrigger(pattern);
-								// i.setDataType(pattern.getDatatype());
-								// if (pattern.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
-								// else i.setPattern(i.getTrigger());
-								// }
-								// i.setLabel((Literal) bs2.getValue("i_label"));
-
-								// if (bs2.getValue("capturePropertyType") != null) {
-								// String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
-								// int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
-								// i.setCaptureIndex(captureIndex);
-								// }
-
-								// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
-								// EventHandler handler = new EventHandler();
-								// handler.setConfigLabel(bs2.getValue("config").stringValue());
-								// handler.setLog(bs2.getValue("log").stringValue());
-								// handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
-								// if (bs2.getValue("translator") != null) handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
-								// handler.setCall(bs2.getValue("call").stringValue());
-								// i.setEventHandler(handler);
-								//
-								// // if sparql
-								// // Create a new Repo, set its URL to the value o.getCall()
-								// // retrive query resource from repo
-								if (bs2.getValue("i_query") != null) {
-									IRI query = (IRI) bs2.getValue("i_query");
-									TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
-									ipQuery.setBinding("q", query);
-									try (TupleQueryResult r3 = ipQuery.evaluate()) {
-										if (r3.hasNext()) { // expect a single result
-											BindingSet bs3 = r3.next();
-											String queryStr = bs3.getValue("s").stringValue();
-											IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
-											iq.setId(bs2.getValue("i_query").stringValue().hashCode());
-											iq.setLabel(bs2.getValue("i_query_label").stringValue());
-											iq.setIri((IRI) bs2.getValue("i_query"));
-											iq.setOwnerIri((IRI) bs2.getValue("notifies")); // this notifier is a non-EventHandler, see #get_subscriptions query
-											GraphListener.register(iq);
-											i.setQuery(iq);
-											// i.hasSparqlQuery(true);
+										// fetch imports
+										List<Statement> imports = Iterations.asList(con.getStatements(handler.getIri(), getValueFactory().createIRI(Constants.NS_VIA, "import"), null));
+										for (Statement imp : imports) {
+											TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <" + Constants.NS_VIA + "TupleQuery> . ?q <" + Constants.NS_VIA + "sparql> ?s . }");
+											ipQuery.setBinding("q", imp.getObject());
+											try (TupleQueryResult r3 = ipQuery.evaluate()) {
+												if (r3.hasNext()) { // expect a single result
+													BindingSet bs3 = r3.next();
+													handler.getImports().add(bs3.getValue("s").stringValue());
+												}
+											}
+											catch (QueryEvaluationException qex) {
+												logger.error(qex.getMessage(), qex);
+											}
 										}
+
+										// if sparql
+										// Create a new Repo, set its URL to the value o.getCall()
+										// retrive query resource from repo
+										if (bs2.getValue("qtype") != null) {
+											IRI query = (IRI) bs2.getValue("input");
+											TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <" + Constants.NS_VIA + "TupleQuery> . ?q <" + Constants.NS_VIA + "sparql> ?s . }");
+											ipQuery.setBinding("q", query);
+											try (TupleQueryResult r3 = ipQuery.evaluate()) {
+												if (r3.hasNext()) { // expect a single result
+													BindingSet bs3 = r3.next();
+													String queryStr = bs3.getValue("s").stringValue();
+													IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
+													iq.setId(bs2.getValue("input").stringValue().hashCode());
+													iq.setLabel(bs2.getValue("i_label").stringValue());
+													iq.setIri((IRI) bs2.getValue("input"));
+													iq.setOwnerIri((IRI) bs2.getValue("notifies"));
+													GraphListener.register(iq);
+													i.setQuery(iq);
+													// i.hasSparqlQuery(true);
+												}
+											}
+											catch (QueryEvaluationException qex) {
+												logger.error(qex.getMessage(), qex);
+											}
+										}
+
+										// response query
+										if (bs2.getValue("query") != null) {
+											IRI query = (IRI) bs2.getValue("query");
+											TupleQuery rpQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <" + Constants.NS_VIA + "TupleQuery> . ?q <" + Constants.NS_VIA + "sparql> ?s . }");
+											rpQuery.setBinding("q", query);
+											try (TupleQueryResult r3 = rpQuery.evaluate()) {
+												if (r3.hasNext()) { // expect a single result
+													BindingSet bs3 = r3.next();
+													handler.setSparql(bs3.getValue("s").stringValue());
+													handler.addRepository(GraphManager.parseSPARQLRepository(handler.getCall(), bs2.getValue("config").stringValue()));
+													handler.hasSparqlQuery(true);
+												}
+											}
+											catch (QueryEvaluationException qex) {
+												logger.error(qex.getMessage(), qex);
+											}
+										}
+
+										// do o.setSparql() for the sparql of the query URI
+										// set o.isSparqlEndpoint = true
+
+										if (i.getPattern() instanceof List) {
+											getTypedPatterns()[getTypedInputsCursor()] = i;
+											incrementTypedInputsCursor();
+										}
+										else if (i.getPattern() != null) {
+											getRegexPatterns()[getRegexInputsCursor()] = i;
+											incrementRegexInputsCursor();
+										}
+										else if (i.hasSparqlQuery()) {
+											getQueryPatterns()[getQueryInputsCursor()] = i;
+											incrementQueryInputsCursor();
+										}
+
 									}
-									catch (QueryEvaluationException qex) {
-										logger.error(qex.getMessage(), qex);
+									catch (Exception ex) {
+										logger.error(ex.getMessage(), ex);
 									}
-								}
-
-								// if (bs2.getValue("query") != null) {
-								// IRI query = (IRI) bs2.getValue("query");
-								// TupleQuery rpQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
-								// rpQuery.setBinding("q", query);
-								// try (TupleQueryResult r3 = rpQuery.evaluate()) {
-								// if (r3.hasNext()) { // expect a single result
-								// BindingSet bs3 = r3.next();
-								// handler.setSparql(bs3.getValue("s").stringValue());
-								// handler.setRepository(new SPARQLRepository(handler.getCall()));
-								// handler.hasSparqlQuery(true);
-								// }
-								// }
-								// catch (QueryEvaluationException qex) {
-								// logger.error(qex.getMessage(), qex);
-								// }
-								// }
-
-								// do o.setSparql() for the sparql of the query URI
-								// set o.isSparqlEndpoint = true
-
-								if (i.hasSparqlQuery()) {
-									getQueryPatterns()[getQueryInputsCursor()] = i;
-									incrementQueryInputsCursor();
-								}
+								} // while query hasResults
 							}
-						}
-						catch (QueryEvaluationException qex) {
-							logger.error(qex.getMessage(), qex);
-						}
-						catch (IllegalArgumentException iaex) {
-							logger.error(iaex.getMessage(), iaex);
-						}
-						break;
-					case GraphManager.QUERY_GET_ADAPTOR_WITH_CAPTURE:
-						break;
-					case GraphManager.QUERY_GET_ADAPTOR_OUTPUT:
-						try (TupleQueryResult r2 = data.evaluate()) {
-							while (r2.hasNext()) {
-								BindingSet bs2 = r2.next();
-								logger.debug("Value: " + bs2.getValue("adaptor"));
-								logger.debug("Pattern: " + bs2.getValue("pattern"));
-								logger.debug("Label: " + bs2.getValue("i_label"));
-								logger.debug("Config: " + bs2.getValue("config"));
-								logger.debug("Translator: " + bs2.getValue("translator"));
-								logger.debug("Log: " + bs2.getValue("log"));
-								logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
-								logger.debug("Call: " + bs2.getValue("call"));
+							catch (QueryEvaluationException qex) {
+								logger.error(qex.getMessage(), qex);
 							}
-						}
-						catch (QueryEvaluationException qex) {
-							logger.error(qex.getMessage(), qex);
-						}
-						break;
-					case GraphManager.QUERY_GET_ENDPOINT_LABELS:
-						try (TupleQueryResult r2 = data.evaluate()) {
-							while (r2.hasNext()) {
-								BindingSet bs2 = r2.next();
-								logger.debug("X: " + bs2.getValue("x"));
-								logger.debug("Y: " + bs2.getValue("y"));
+							catch (IllegalArgumentException iaex) {
+								logger.error(iaex.getMessage(), iaex);
 							}
-						}
-						catch (QueryEvaluationException qex) {
-							logger.error(qex.getMessage(), qex);
-						}
-						break;
-					case GraphManager.QUERY_GET_PATTERN_LABELS:
-						try (TupleQueryResult r2 = data.evaluate()) {
-							while (r2.hasNext()) {
-								BindingSet bs2 = r2.next();
-								logger.debug("Pattern: " + bs2.getValue("pattern"));
-								logger.debug("Label: " + bs2.getValue("i_label"));
-							}
-						}
-						catch (QueryEvaluationException qex) {
-							logger.error(qex.getMessage(), qex);
-						}
-						break;
-					case GraphManager.QUERY_GET_QUERIES:
-						break;
+							break;
+						// case GraphManager.QUERY_GET_SUBSCRIPTIONS:
+						// // data.setBinding("patternPropertyType", getValueFactory().createIRI("http://www.vacuity.ai/onto/via/pattern"));
+						// try (TupleQueryResult r2 = data.evaluate()) {
+						// Vector<Exception> err = new Vector<Exception>();
+						// while (r2.hasNext()) {
+						// BindingSet bs2 = r2.next();
+						// logger.debug("Listener: " + bs2.getValue("listener"));
+						// logger.debug("Pattern: " + bs2.getValue("pattern"));
+						// logger.debug("Label: " + bs2.getValue("i_label"));
+						// logger.debug("Input Query: " + bs2.getValue("i_query"));
+						// logger.debug("Input Query Label: " + bs2.getValue("i_query_label"));
+						// logger.debug("Notifies: " + bs2.getValue("notifies"));
+						// // logger.debug("Config: " + bs2.getValue("config"));
+						// // logger.debug("Translator: " + bs2.getValue("translator"));
+						// // logger.debug("Log: " + bs2.getValue("log"));
+						// // logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
+						// // logger.debug("Call: " + bs2.getValue("call"));
+						// // logger.debug("Media Type: " + bs2.getValue("mediaType"));
+						// // logger.debug("Response Query: " + bs2.getValue("query"));
+						//
+						// // TODO a hack validator in lieu of a better query semantics
+						// // if (bs2.getValue("i_query") == null && bs2.getValue("i_label") == null) {
+						// // IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("input") + ". via:Input must contain a via:pattern, via:capture_*, or via:query predicate.");
+						// // logger.error(ilaex.getMessage(), ilaex);
+						// // continue;
+						// // }
+						//
+						// if (bs2.getValue("i_query") != null && !(bs2.getValue("i_query") instanceof IRI)) {
+						// IllegalArgumentException ilaex = new IllegalArgumentException("Error on query: " + bs2.getValue("i_query") + ". via:Query must be a IRI resource.");
+						// logger.error(ilaex.getMessage(), ilaex);
+						// continue;
+						// }
+						//
+						// InputProtocol i = new InputProtocol();
+						// // if (bs2.getValue("pattern") != null) {
+						// // Literal pattern = (Literal) bs2.getValue("pattern");
+						// // i.setTrigger(pattern);
+						// // i.setDataType(pattern.getDatatype());
+						// // if (pattern.getDatatype().equals(InputProtocol.PARSE_TYPE_REGEX)) i.setPattern(Pattern.compile(i.getTrigger().stringValue()));
+						// // else i.setPattern(i.getTrigger());
+						// // }
+						// // i.setLabel((Literal) bs2.getValue("i_label"));
+						//
+						// // if (bs2.getValue("capturePropertyType") != null) {
+						// // String pptStr = ((IRI) bs2.getValue("capturePropertyType")).stringValue();
+						// // int captureIndex = Integer.parseInt(pptStr.substring(pptStr.lastIndexOf("_") + 1));
+						// // i.setCaptureIndex(captureIndex);
+						// // }
+						//
+						// // event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
+						// // EventHandler handler = new EventHandler();
+						// // handler.setConfigLabel(bs2.getValue("config").stringValue());
+						// // handler.setLog(bs2.getValue("log").stringValue());
+						// // handler.setContentType(MediaType.parse(bs2.getValue("mediaType").stringValue()));
+						// // if (bs2.getValue("translator") != null) handler.setTranslator(new GenericUrl(bs2.getValue("translator").stringValue()));
+						// // handler.setCall(bs2.getValue("call").stringValue());
+						// // i.setEventHandler(handler);
+						// //
+						// // // if sparql
+						// // // Create a new Repo, set its URL to the value o.getCall()
+						// // // retrive query resource from repo
+						// if (bs2.getValue("i_query") != null) {
+						// IRI query = (IRI) bs2.getValue("i_query");
+						// TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
+						// ipQuery.setBinding("q", query);
+						// try (TupleQueryResult r3 = ipQuery.evaluate()) {
+						// if (r3.hasNext()) { // expect a single result
+						// BindingSet bs3 = r3.next();
+						// String queryStr = bs3.getValue("s").stringValue();
+						// IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
+						// iq.setId(bs2.getValue("i_query").stringValue().hashCode());
+						// iq.setLabel(bs2.getValue("i_query_label").stringValue());
+						// iq.setIri((IRI) bs2.getValue("i_query"));
+						// iq.setOwnerIri((IRI) bs2.getValue("notifies")); // this notifier is a non-EventHandler, see #get_subscriptions query
+						// GraphListener.register(iq);
+						// i.setQuery(iq);
+						// // i.hasSparqlQuery(true);
+						// }
+						// }
+						// catch (QueryEvaluationException qex) {
+						// logger.error(qex.getMessage(), qex);
+						// }
+						// }
+						//
+						// // if (bs2.getValue("query") != null) {
+						// // IRI query = (IRI) bs2.getValue("query");
+						// // TupleQuery rpQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s WHERE { ?q rdf:type <http://www.vacuity.ai/onto/via/1.0/TupleQuery> . ?q <http://www.vacuity.ai/onto/via/1.0/sparql> ?s . }");
+						// // rpQuery.setBinding("q", query);
+						// // try (TupleQueryResult r3 = rpQuery.evaluate()) {
+						// // if (r3.hasNext()) { // expect a single result
+						// // BindingSet bs3 = r3.next();
+						// // handler.setSparql(bs3.getValue("s").stringValue());
+						// // handler.setRepository(new SPARQLRepository(handler.getCall()));
+						// // handler.hasSparqlQuery(true);
+						// // }
+						// // }
+						// // catch (QueryEvaluationException qex) {
+						// // logger.error(qex.getMessage(), qex);
+						// // }
+						// // }
+						//
+						// // do o.setSparql() for the sparql of the query URI
+						// // set o.isSparqlEndpoint = true
+						//
+						// if (i.hasSparqlQuery()) {
+						// getQueryPatterns()[getQueryInputsCursor()] = i;
+						// incrementQueryInputsCursor();
+						// }
+						// }
+						// }
+						// catch (QueryEvaluationException qex) {
+						// logger.error(qex.getMessage(), qex);
+						// }
+						// catch (IllegalArgumentException iaex) {
+						// logger.error(iaex.getMessage(), iaex);
+						// }
+						// break;
+						// case GraphManager.QUERY_GET_ADAPTOR_WITH_CAPTURE:
+						// break;
+						// case GraphManager.QUERY_GET_ADAPTOR_OUTPUT:
+						// try (TupleQueryResult r2 = data.evaluate()) {
+						// while (r2.hasNext()) {
+						// BindingSet bs2 = r2.next();
+						// logger.debug("Value: " + bs2.getValue("adaptor"));
+						// logger.debug("Pattern: " + bs2.getValue("pattern"));
+						// logger.debug("Label: " + bs2.getValue("i_label"));
+						// logger.debug("Config: " + bs2.getValue("config"));
+						// logger.debug("Translator: " + bs2.getValue("translator"));
+						// logger.debug("Log: " + bs2.getValue("log"));
+						// logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
+						// logger.debug("Call: " + bs2.getValue("call"));
+						// }
+						// }
+						// catch (QueryEvaluationException qex) {
+						// logger.error(qex.getMessage(), qex);
+						// }
+						// break;
+						// case GraphManager.QUERY_GET_ENDPOINT_LABELS:
+						// try (TupleQueryResult r2 = data.evaluate()) {
+						// while (r2.hasNext()) {
+						// BindingSet bs2 = r2.next();
+						// logger.debug("X: " + bs2.getValue("x"));
+						// logger.debug("Y: " + bs2.getValue("y"));
+						// }
+						// }
+						// catch (QueryEvaluationException qex) {
+						// logger.error(qex.getMessage(), qex);
+						// }
+						// break;
+						// case GraphManager.QUERY_GET_PATTERN_LABELS:
+						// try (TupleQueryResult r2 = data.evaluate()) {
+						// while (r2.hasNext()) {
+						// BindingSet bs2 = r2.next();
+						// logger.debug("Pattern: " + bs2.getValue("pattern"));
+						// logger.debug("Label: " + bs2.getValue("i_label"));
+						// }
+						// }
+						// catch (QueryEvaluationException qex) {
+						// logger.error(qex.getMessage(), qex);
+						// }
+						// break;
+						// case GraphManager.QUERY_GET_QUERIES:
+						// break;
 					}
 
 					// do something interesting with the values here...
@@ -719,24 +752,34 @@ public class GraphManager {
 	 * @return a Repository appropriate for the given URL
 	 */
 	public static Repository parseSPARQLRepository(String call, String configLabel) throws IllegalArgumentException {
-		if (configLabel == null) throw new IllegalArgumentException("Null configuration label: " + call + ". Configuration label required.");
+		String rdf4jPathIndicator = "rdf4j-server/repositories";
+		if (call.indexOf(rdf4jPathIndicator) > 0) { return new HTTPRepository(call); }
+		if (configLabel == null) throw new IllegalArgumentException("Empty configuration label for '" + call + "'. Configuration label required for custom repositories.");
 		Config config = Config.get(configLabel);
-		String repoType = config.getRepoType();
-		if (StringUtils.isNotBlank(repoType)) {
-			switch (repoType) {
-			case Config.REPO_TYPE_VIRTUOSO: {
-				return new VirtuosoRepository("jdbc:virtuoso://" + config.getHost() + ":" + config.getPort() + "/log_enable=0", config.getUserName(), config.getPassword());
-			}
+		if (configLabel.startsWith(Config.PREFIX_RUDI_REPO) && config == null) {
+			config = Config.get(Config.PREFIX_RUDI_REPO);
+		}
+		if (config != null) {
+			String repoType = config.getRepoType();
+			if (StringUtils.isNotBlank(repoType)) {
+				switch (repoType) {
+					case Config.REPO_TYPE_VIRTUOSO: {
+						return new VirtuosoRepository("jdbc:virtuoso://" + config.getHost() + ":" + config.getPort() + "/log_enable=0", config.getUserName(), config.getPassword());
+					}
+					case Config.REPO_TYPE_RDF4J: {
+						return new HTTPRepository(call);
+					}
+				}
 			}
 		}
 		return new SPARQLRepository(call);
 	}
 
-	public static Repository parseSPARQLRepository(String url) {
-		String rdf4jPathIndicator = "rdf4j-server/repositories";
-		if (url.indexOf(rdf4jPathIndicator) > 0) { return new HTTPRepository(url); }
-		return new SPARQLRepository(url);
-	}
+	// public static Repository parseSPARQLRepository(String url) {
+	// String rdf4jPathIndicator = "rdf4j-server/repositories";
+	// if (url.indexOf(rdf4jPathIndicator) > 0) { return new HTTPRepository(url); }
+	// return new SPARQLRepository(url);
+	// }
 
 	public static InputProtocol[] getRegexPatterns() {
 		return regexPatterns;

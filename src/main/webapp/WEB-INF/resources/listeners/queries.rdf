@@ -8,37 +8,46 @@
 
  
  	<via:TupleQuery rdf:about="#get_listener">
-		<rdfs:label>get_listener</rdfs:label>
+		<rdfs:label>Get Listeners</rdfs:label>
  		<via:sparql>
+ 		
+# via:imports are pulled in a separate fetch
+ 		
 <![CDATA[
 PREFIX via: <http://www.vacuity.ai/onto/via/1.0/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select distinct ?listener ?input ?pattern ?i_labels ?qtype ?output ?capturePropertyType ?config ?translator ?log ?replyTypeProp ?endpoint ?mediaType ?query where {
+select distinct ?listener ?input ?pattern ?i_labels ?qtype ?output ?config ?translator ?log ?replyTypeProp ?endpoint ?mediaType ?query where {
   
   ?listener rdf:type via:Listener .
   ?listener via:event ?input .
   ?input via:labels ?i_labels .
   {
-   {?input via:pattern ?pattern .}
-    UNION {
-	  ?input via:captures ?pattern .
-    }  
-    UNION {
+  	# rdf:first patterns are collected in a separate fetch using rdf4j's Connections.getRDFCollection
+   	{?input via:pattern ?pattern .}
+   	UNION
+	{
 	  	?input rdf:type ?qtype .
 	  	?qtype rdfs:subClassOf via:Query .
     }
   }
   ?listener via:notify ?output .
-  ?output via:config ?config .
-  OPTIONAL {?output via:translator ?translator .}
   ?output via:log ?log .
-  ?output ?replyTypeProp ?endpoint .
-  ?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
-  ?replyTypeProp rdfs:label ?mediaType .
-  
-  
-  OPTIONAL {?output via:query ?query .}
+  ?output via:config ?config .
 
+	{
+		{
+	  		?output ?replyTypeProp ?endpoint .
+	  		?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
+	  		?replyTypeProp rdfs:label ?mediaType .
+	  		OPTIONAL {?output via:translator ?translator .}
+  		}	
+  		UNION 
+  		{
+	  		?output via:execute ?query .
+  		}
+  	
+  
+	}
 }
 ]]>
 		</via:sparql>
