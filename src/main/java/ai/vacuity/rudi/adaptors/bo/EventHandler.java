@@ -1,6 +1,8 @@
 package ai.vacuity.rudi.adaptors.bo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.Repository;
@@ -21,6 +23,7 @@ public class EventHandler {
 	String call = "";
 	MediaType contentType = null;
 	IRI iri = null;
+	List<String> imports = new ArrayList<String>();
 
 	// Repository repository = null;
 	String sparql = null;
@@ -165,6 +168,14 @@ public class EventHandler {
 
 	public void setIri(IRI iri) {
 		this.iri = iri;
+	}
+
+	public List<String> getImports() {
+		return imports;
+	}
+
+	public void setImports(List<String> imports) {
+		this.imports = imports;
 	}
 
 }

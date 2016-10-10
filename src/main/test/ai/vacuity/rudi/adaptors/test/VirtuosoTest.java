@@ -26,13 +26,16 @@ package ai.vacuity.rudi.adaptors.test;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import org.eclipse.rdf4j.model.BNode;
@@ -64,6 +67,7 @@ import org.eclipse.rdf4j.rio.ntriples.NTriplesWriter;
 
 import com.openlink.virtuoso.rdf4j.driver.VirtuosoRepository;
 
+import ai.vacuity.rudi.adaptors.bo.Config;
 import virtuoso.jdbc4.VirtuosoExtendedString;
 import virtuoso.jdbc4.VirtuosoRdfBox;
 
@@ -195,14 +199,19 @@ public class VirtuosoTest {
 
 			// test add data from a flat file
 			startTest();
-			String fstr = "virtuoso_driver" + File.separator + "data.nt";
-			log("Loading data from file: " + fstr);
+			// String fstr = "virtuoso_driver" + File.separator + "data.nt";
+			ClassLoader cLoader = Config.class.getClassLoader();
+			InputStream is = cLoader.getResourceAsStream("data.nt");
+			log("Loading data from file: data.nt");
 			try {
 				ok = true;
-				File dataFile = new File(fstr);
-				con.add(dataFile, "", RDFFormat.NTRIPLES, context);
-				query = "SELECT * FROM <" + context + "> WHERE {?s ?p ?o} LIMIT 1";
-				results = doTupleQuery(con, query);
+				// File dataFile = new File(fstr);
+				con.add(is, "", RDFFormat.NTRIPLES, context);
+				query = "SELECT ?s FROM <" + context + "> WHERE {?s ?p ?o} LIMIT 1";
+				HashMap<String, Value> bind = new HashMap<String, Value>();
+				bind.put("s", repository.getValueFactory().createIRI("http://myopenlink.net/dataspace/person/kidehen"));
+				bind.put("o", repository.getValueFactory().createLiteral("Kingsley Idehen"));
+				results = doTupleQuery(con, query, bind);
 			}
 			catch (Exception e) {
 				log("Error[" + e + "]");
@@ -545,9 +554,16 @@ public class VirtuosoTest {
 	}
 
 	private static Value[][] doTupleQuery(RepositoryConnection con, String query) throws RepositoryException, MalformedQueryException, QueryEvaluationException {
-		TupleQuery resultsTable = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
-		TupleQueryResult bindings = resultsTable.evaluate();
+		return doTupleQuery(con, query, new HashMap<String, Value>());
+	}
 
+	private static Value[][] doTupleQuery(RepositoryConnection con, String query, HashMap<String, Value> bind) throws RepositoryException, MalformedQueryException, QueryEvaluationException {
+		TupleQuery resultsTable = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
+		Set<String> keys = bind.keySet();
+		for (String bindName : keys) {
+			resultsTable.setBinding(bindName, bind.get(bindName));
+		}
+		TupleQueryResult bindings = resultsTable.evaluate();
 		Vector<Value[]> results = new Vector<Value[]>();
 		for (int row = 0; bindings.hasNext(); row++) {
 			// System.out.println("RESULT " + (row + 1) + ": ");
