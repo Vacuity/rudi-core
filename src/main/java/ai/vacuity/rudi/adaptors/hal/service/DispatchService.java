@@ -342,7 +342,8 @@ public class DispatchService extends Thread {
 				args[3] = sa;
 				try {
 					templates = (String[]) m.invoke(new DispatchService(), args);
-					templates = process(report, len, sa);
+					if (templates.length > 0) templates = process(report, len, sa);
+					else return new String[0];
 				}
 				catch (IllegalAccessException e) {
 					logger.error(e.getMessage(), e);
