@@ -23,13 +23,17 @@ import rice.p2p.scribe.ScribeContent;
  */
 public class Packet implements Message, ScribeContent {
 	private static final long serialVersionUID = 265675863194010712L;
+	private static final double VERSION_1_0 = 1.0;
 
-	Id from;
-	Object to;
+	private Id from;
+	private Object to;
 
-	IndexableInput event;
-	Object response;
-	Integer priority = Message.LOW_PRIORITY;
+	private IndexableInput event;
+	private Object response;
+	private Integer priority = Message.LOW_PRIORITY;
+
+	private double version = Packet.VERSION_1_0;
+	private Object more;
 
 	public Packet() {
 
@@ -126,6 +130,22 @@ public class Packet implements Message, ScribeContent {
 
 	public void setResponse(Object response) {
 		this.response = response;
+	}
+
+	public double getVersion() {
+		return this.version;
+	}
+
+	public void setVersion(double version) {
+		this.version = version;
+	}
+
+	public Object getMore() {
+		return more;
+	}
+
+	public void setMore(Object more) {
+		this.more = more;
 	}
 
 }

@@ -1,5 +1,3 @@
-# Getting Started
-
 ## Requirements
 
 - [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
@@ -15,19 +13,21 @@
    `example.id=your API consumer id`
    `example.key=your API key`
    `example.token=your API secret`
-   4. Add a listener for an API, see `./src/main/webapp/WEB-INF/resources/listeners` for examples(details below)
-4. Build `rudi-adaptors.war` (see below)
-5. Deploy the `rudi-adaptors.war` file to a web application container
-6. Start the web application container (assuming it's listening on port 8080)
-7. Visit localhost:8080/rudi-adaptors?q=some+keywords
+4. Add a listener for an API, see `./src/main/webapp/WEB-INF/resources/listeners` for examples (details below)
+5. Add some peers, see `./src/main/webapp/WEB-INF/resources/api.config` for examples
+6. Build `rudi-adaptors.war` (see below)
+7. Deploy the `rudi-adaptors.war` file to a web application container
+8. Start the web application container (assuming it's listening on port 8080)
+9. Visit localhost:8080/rudi-adaptors?q=some+keywords
 
 ### How to Build RUDI
 1. Install [Maven](http://maven.apache.org/download.cgi)
 2. Install [Git](https://git-scm.com/downloads)
 3. Run `git clone https://github.com/Vacuity/rudi-core`
-4. Download the [virtjdbc4.jar](http://opldownload.s3.amazonaws.com/uda/virtuoso/7.2/jdbc/virtjdbc4.jar) and [virt_rdf4j.jar](https://github.com/sdmonroe/virtuoso-opensource/blob/develop/7/binsrc/rdf4j/virt_rdf4.jar) jars, and add them to your local Maven repo with the following commands:
-   `mvn install:install-file -Dfile=<path-to-virtjdbc.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-jdbc4 -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
-   `mvn install:install-file -Dfile=<path-to-virt_rdf4j.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-rdf4j -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
+4. Download the [virtjdbc4.jar](http://opldownload.s3.amazonaws.com/uda/virtuoso/7.2/jdbc/virtjdbc4.jar), [virt_rdf4j.jar](https://github.com/sdmonroe/virtuoso-opensource/blob/develop/7/binsrc/rdf4j/virt_rdf4.jar), [FreePastry-2.1.jar](http://www.freepastry.org/FreePastry/FreePastry-2.1.jar) jars, and add them to your local Maven repo with the following commands:
+   - `mvn install:install-file -Dfile=<path-to-virtjdbc.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-jdbc4 -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
+   - `mvn install:install-file -Dfile=<path-to-virt_rdf4j.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-rdf4j -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
+   - `mvn install:install-file -Dfile=<path-to-FreePastry-2.1.jar> -DgroupId=rice.pastry -DartifactId=freepastry -Dversion=2.1 -Dpackaging=jar -DgeneratePom=true`
 5. `cd` to the root of the rudi-adaptors project directory and run `mvn clean install`
 
 ## RDF Universal Distributed Index (RUDI) Overview
@@ -48,7 +48,7 @@ The dispatch algorithm rewards event patterns based on *specificity*. The intuit
 
 ## Sensors
 
-A sensor monitors a 'physical channel' for events. The current implementation supports HTTPSensor (web traffic) and OverlaySensor (P2P traffic).
+A sensor monitors a 'physical channel' for events. The current implementation supports HTTPSensor (web traffic), OverlaySensor (P2P traffic), and GraphSensor (Index state changes).
 
 ## Listeners
 
@@ -178,7 +178,8 @@ Events may be handled by a sponsor node which is configured by the RUDI peer. On
 | - via:translator     | the URL of an XSLT sheet which translates the XMLized output of a via:json call into RDF+XML. The http://rudi.TAG.placeholders.vacuity.ai is a placeholder URL prefix which is substituted by RUDI for the URL path configured by the `rudi.TAG` property in settings.ini. The property can, for example, point to a resource path on the RUDI host. The path property must be absolute. Trust of the via:translator URL is provided by `via:signature`. | when via:json is present |      1      |
 | - via:query          | the `via:Query` to which events are passed, the result set is RDFized and added to the Index |          false           |      n      |
 | - via:log            | logs the dispatch                        |          false           |      n      |
-| **via:signature**    | the [XML Signature](https://web-payments.org/vocabs/signature#XmlSignature) of the resource described by this property; the `rudi.translators.validate` and `rudi.call.validate` boolean properties in settings.ini control whether via:call and via:translator values are validated (***[TODO](http://docs.oracle.com/javase/7/docs/technotes/guides/security/xmldsig/XMLDigitalSignature.html)***). The Index will need to contain a nix:Trust idea linking the RUDI endpoint to the signer, and the idea needs to be signed by the RUDI endpoint. |          false           |             |
+| - via:import         | the `via:Query` whose projection elements may serve as placeholders for their values in this `via:EventHandler` |          false           |      n      |
+| **via:signature**    | the [XML Signature](https://web-payments.org/vocabs/signature#XmlSignature) of the resource described by this property; the `rudi.translators.validate` and `rudi.call.validate` boolean properties in settings.ini control whether via:call and via:translator values are validated (***[TODO](http://docs.oracle.com/javase/7/docs/technotes/guides/security/xmldsig/XMLDigitalSignature.html)***). The Index will need to contain a nix:Trust idea linking the RUDI endpoint to the signer, and the idea needs to be signed by the RUDI endpoint. |          false           |      1      |
 | **via:Input**        | captures events at RUDI's sensors, e.g. the web service controller |                          |             |
 | - via:pattern        | captures data from an event pattern of type `rdf:datatype`. The `via:Input` is a `rdfs:subClass` of `rdf:List` and `via:pattern` is a `rdfs:subProperty` of `rdf:first`. The `rdf:first`- ness of `via:pattern` is merely a cosmetic feature. Since some quad store frameworks may not support inferring sub properties of `rdf:first`, it is safer to use `rdf:first` explicily. The list items describe a hybrid pattern comprised of patterns of various `rdf:datatype`. The `via:pattern` specifes a *typed pattern* if its `rdf:datatype` property is a value other than `via:Regex`. For type `xsd:dateTime`, the `via:pattern` value specifies the date format. All other non-regex patterns have sample values which conform to the `rdf:datatype`. A list of supported typed patterns are provided in `rudi-adaptor.rdf`. |           true           |      n      |
 | - via:labels         | a comma-delimited list, each item labels the datum at the corresponding index in the event pattern. Escape comma using '\,' |          false           |      n      |
