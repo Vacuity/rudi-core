@@ -3,11 +3,13 @@ package ai.vacuity.rudi.adaptors.bo;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.Vector;
 
 import org.apache.commons.lang.StringUtils;
@@ -17,6 +19,7 @@ import com.google.api.client.http.GenericUrl;
 
 import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
+import ai.vacuity.rudi.sensor.Router;
 
 public class Config {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Config.class);
@@ -56,6 +59,8 @@ public class Config {
 	public static final String PROPERTY_SUFFIX_LAZYADD = "lazyAdd";
 	public static final String PROPERTY_SUFFIX_DEFAULTGRAPH = "defaultGraph";
 
+	public static final String PROPERTY_P2P_PEERS = "p2p.peers";
+	public static final String PROPERTY_P2P_PORT = "p2p.port";
 	public static final String PROPERTY_SUFFIX_HOST = "host";
 	public static final String PROPERTY_SUFFIX_PORT = "port";
 	public static final String PROPERTY_SUFFIX_PATH = "path";
@@ -173,14 +178,43 @@ public class Config {
 	}
 
 	public static final void load() {
+		StringTokenizer st = new StringTokenizer(getSettings().getProperty(Config.PROPERTY_P2P_PEERS));
+		InetSocketAddress[] peers = new InetSocketAddress[st.countTokens()];
+		while (st.hasMoreTokens()) {
+			String peer = st.nextToken();
+			String host = getSettings().getProperty(peer + "." + "host");
+			int port = Router.PORT_DEFAULT;
+			try {
+				port = Integer.parseInt(getSettings().getProperty(peer + "." + "port"));
+			}
+			catch (NumberFormatException nfex) {
+
+			}
+			Router.add(new InetSocketAddress(host, port));
+		}
+		if (peers.length > 0) {
+			int localPort = Router.PORT_DEFAULT;
+			try {
+				localPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
+			}
+			catch (NumberFormatException nfex) {
+
+			}
+			try {
+				new Router(localPort, peers);
+			}
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
 		Enumeration<Object> keys = getSettings().keys();
 		while (keys.hasMoreElements()) {
-			String findHostKey = ((String) keys.nextElement()).toLowerCase();
-			if (findHostKey.endsWith("." + Config.PROPERTY_SUFFIX_HOST)) {
-				String configLabel = findHostKey.substring(0, findHostKey.lastIndexOf("." + Config.PROPERTY_SUFFIX_HOST));
+			String key = ((String) keys.nextElement()).toLowerCase();
+			if (key.endsWith("." + Config.PROPERTY_SUFFIX_HOST)) {
+				String configLabel = key.substring(0, key.lastIndexOf("." + Config.PROPERTY_SUFFIX_HOST));
 				Config config = Config.add(configLabel);
 
-				String host = Config.getSettings().getProperty(findHostKey);
+				String host = Config.getSettings().getProperty(key);
 
 				if (StringUtils.isNotEmpty(host)) {
 					config.setHost(host);

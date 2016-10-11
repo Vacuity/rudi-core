@@ -13,6 +13,9 @@
         },
 		"score": {
 			"type": "number"
+		},
+		"pattern": {
+			"type": "string"
 		}
 	},
 	"required": [

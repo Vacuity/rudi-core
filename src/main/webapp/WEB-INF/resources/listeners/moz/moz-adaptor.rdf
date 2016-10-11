@@ -45,7 +45,7 @@
  		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&amp;Scope=page_to_page&amp;Sort=domains_linking_page&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=${token}"/>
  		<!-- the rdfs:range is a via:Template -->
- 		<via:log>Fetching backlinks for '${name}' from ${domain}.</via:log>
+ 		<via:log>Fetching backlinks for '${1}' from ${domain}.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
 		<via:translator rdf:resource="http://rudi.endpoint.placeholders.vacuity.ai/a/moz/moz-api-results.xsl"/>
  	</via:EventHandler>
@@ -55,14 +55,16 @@
 		
  		<via:sparql>
 <![CDATA[
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
 
 SELECT ?name
-WHERE {
+WHERE 
+{
 			<${1}> rdf:type <http://www.w3.org/ns/ma-ont/VideoTrack> .
 			<${1}> dc:title ?name .
-		}
+}
 ]]>
 		</via:sparql>
  		<via:labels_1>test-imports</via:labels_1>
