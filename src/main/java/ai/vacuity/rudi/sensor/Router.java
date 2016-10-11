@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Cache;
+import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import rice.environment.Environment;
@@ -165,6 +166,8 @@ public class Router {
 	 * Usage: java [-cp FreePastry-<version>.jar] rice.tutorial.lesson3.DistTutorial localbindport bootIP bootPort example java rice.tutorial.DistTutorial 9001 pokey.cs.almamater.edu 9001
 	 */
 	public static void main(String[] args) throws Exception {
+
+		Config.get("test");
 
 		try {
 			// build the bootaddress from the command line args
