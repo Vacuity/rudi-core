@@ -25,9 +25,9 @@
 2. Install [Git](https://git-scm.com/downloads)
 3. Run `git clone https://github.com/Vacuity/rudi-core`
 4. Download the [virtjdbc4.jar](http://opldownload.s3.amazonaws.com/uda/virtuoso/7.2/jdbc/virtjdbc4.jar), [virt_rdf4j.jar](https://github.com/sdmonroe/virtuoso-opensource/blob/develop/7/binsrc/rdf4j/virt_rdf4.jar), [FreePastry-2.1.jar](http://www.freepastry.org/FreePastry/FreePastry-2.1.jar) jars, and add them to your local Maven repo with the following commands:
-   - `mvn install:install-file -Dfile=<path-to-virtjdbc.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-jdbc4 -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
-   - `mvn install:install-file -Dfile=<path-to-virt_rdf4j.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-rdf4j -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
-   - `mvn install:install-file -Dfile=<path-to-FreePastry-2.1.jar> -DgroupId=rice.pastry -DartifactId=freepastry -Dversion=2.1 -Dpackaging=jar -DgeneratePom=true`
+   - `mvn install:install-file -Dfile=<path/to/virtjdbc.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-jdbc4 -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
+   - `mvn install:install-file -Dfile=<path/to/virt_rdf4j.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-rdf4j -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
+   - `mvn install:install-file -Dfile=<path/to/FreePastry-2.1.jar> -DgroupId=rice.pastry -DartifactId=freepastry -Dversion=2.1 -Dpackaging=jar -DgeneratePom=true`
 5. `cd` to the root of the rudi-adaptors project directory and run `mvn clean install`
 
 ## RDF Universal Distributed Index (RUDI) Overview

@@ -13,10 +13,8 @@ import rice.p2p.commonapi.NodeHandle;
 import rice.p2p.commonapi.RouteMessage;
 import rice.p2p.scribe.Scribe;
 import rice.p2p.scribe.ScribeContent;
-import rice.p2p.scribe.ScribeImpl;
 import rice.p2p.scribe.ScribeMultiClient;
 import rice.p2p.scribe.Topic;
-import rice.pastry.commonapi.PastryIdFactory;
 
 /**
  * Listens to packets from the network using the Socket Protocol.
@@ -42,12 +40,12 @@ public class OverlaySensor implements ScribeMultiClient, Application {
 		// We are only going to use one instance of this application on each PastryNode
 		this.endpoint = node.buildEndpoint(this, OverlaySensor.INSTANCE_ID_OVERLAY);
 
-		// construct Scribe
-		scribe = new ScribeImpl(node, OverlaySensor.INSTANCE_ID_SCRIBE);
-
-		// construct the topic
-		topic = new Topic(new PastryIdFactory(node.getEnvironment()), OverlaySensor.TOPIC_EVENTS);
-		logger.debug("Topic = " + topic);
+		// // construct Scribe
+		// scribe = new ScribeImpl(node, OverlaySensor.INSTANCE_ID_SCRIBE);
+		//
+		// // construct the topic
+		// topic = new Topic(new PastryIdFactory(node.getEnvironment()), OverlaySensor.TOPIC_EVENTS);
+		// logger.debug("Topic = " + topic);
 
 		// now we can receive messages
 		this.endpoint.register();
@@ -69,7 +67,7 @@ public class OverlaySensor implements ScribeMultiClient, Application {
 		}
 		if (pkt.getTo() instanceof NodeHandle) {
 			logger.debug(this + " sending directly to " + pkt.getTo());
-			endpoint.route(((NodeHandle) pkt.getTo()).getId(), pkt, null);
+			endpoint.route(null, pkt, (NodeHandle) pkt.getTo());
 		}
 	}
 
@@ -79,7 +77,7 @@ public class OverlaySensor implements ScribeMultiClient, Application {
 	public void deliver(Id id, Message message) {
 		if (message instanceof Packet) {
 			Packet pkt = (Packet) message;
-			logger.debug(this + " packet received " + pkt.getEvent());
+			logger.debug(this + " packet received '" + pkt.getEvent().getLabel() + "'");
 		}
 	}
 

@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 
 import ai.vacuity.rudi.adaptors.bo.IndexableInput;
 import ai.vacuity.rudi.adaptors.types.Transaction;
@@ -80,7 +79,8 @@ public class Packet implements Message, ScribeContent {
 	}
 
 	public String toString() {
-		return ToStringBuilder.reflectionToString(this);
+		// return ToStringBuilder.reflectionToString(this);
+		return "From: " + this.getFrom() + "; To: " + this.getTo() + "; Message: " + this.getEvent().getLabel();
 	}
 
 	public Map<String, Object> getAdditionalProperties() {
