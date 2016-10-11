@@ -1,9 +1,12 @@
 package ai.vacuity.rudi.adaptors.bo;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -12,6 +15,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +24,7 @@ import com.google.api.client.http.GenericUrl;
 import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
 import ai.vacuity.rudi.sensor.Router;
+import ai.vacuity.utils.OSValidator;
 
 public class Config {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Config.class);
@@ -77,9 +82,59 @@ public class Config {
 	private int[][] limit = new int[0][0];
 
 	static {
+
 		ClassLoader cLoader = Config.class.getClassLoader();
-		InputStream is = cLoader.getResourceAsStream(Config.FILE_NAME);
 		try {
+			InputStream is = cLoader.getResourceAsStream(Config.FILE_NAME);
+			File file = new File(System.getProperty("user.home") + File.separator + ".rudi" + File.separator + Config.FILE_NAME);
+			if (file.exists()) {
+				is = new FileInputStream(file);
+			}
+			else {
+				try {
+					FileUtils.forceMkdir(file.getParentFile());
+				}
+				catch (IOException ex) {
+					logger.error(ex.getMessage(), ex);
+				}
+
+				if (OSValidator.isWindows()) {
+					logger.debug("This is Windows");
+					if (!file.exists()) {
+						try {
+							Files.setAttribute(file.getParentFile().toPath(), "dos:hidden", true);
+						}
+						catch (IOException ex) {
+							logger.error(ex.getMessage(), ex);
+						}
+					}
+				}
+
+				else if (OSValidator.isMac()) {
+					logger.debug("This is Mac");
+				}
+				else if (OSValidator.isUnix()) {
+					logger.debug("This is Unix");
+				}
+				else if (OSValidator.isSolaris()) {
+					logger.debug("This is Solaris");
+				}
+
+				file.createNewFile();
+
+				try (FileOutputStream output = new FileOutputStream(file)) {
+					int len;
+					byte[] buffer = new byte[8 * 1024];
+					InputStream input = cLoader.getResourceAsStream(Config.FILE_NAME);
+					while ((len = input.read(buffer, 0, buffer.length)) > 0) {
+						output.write(buffer, 0, len);
+					}
+				}
+				catch (Exception ex) {
+					logger.error(ex.getMessage(), ex);
+				}
+			}
+
 			Config.getSettings().load(is);
 			Config.load();
 		}
@@ -178,33 +233,36 @@ public class Config {
 	}
 
 	public static final void load() {
-		StringTokenizer st = new StringTokenizer(getSettings().getProperty(Config.PROPERTY_P2P_PEERS));
-		InetSocketAddress[] peers = new InetSocketAddress[st.countTokens()];
-		while (st.hasMoreTokens()) {
-			String peer = st.nextToken();
-			String host = getSettings().getProperty(peer + "." + "host");
-			int port = Router.PORT_DEFAULT;
-			try {
-				port = Integer.parseInt(getSettings().getProperty(peer + "." + "port"));
-			}
-			catch (NumberFormatException nfex) {
+		String peersStr = getSettings().getProperty(Config.PROPERTY_P2P_PEERS);
+		if (StringUtils.isNotEmpty(peersStr)) {
+			StringTokenizer st = new StringTokenizer(getSettings().getProperty(Config.PROPERTY_P2P_PEERS));
+			InetSocketAddress[] peers = new InetSocketAddress[st.countTokens()];
+			while (st.hasMoreTokens()) {
+				String peer = st.nextToken();
+				String host = getSettings().getProperty(peer + "." + "host");
+				int port = Router.PORT_DEFAULT;
+				try {
+					port = Integer.parseInt(getSettings().getProperty(peer + "." + "port"));
+				}
+				catch (NumberFormatException nfex) {
 
+				}
+				Router.add(new InetSocketAddress(host, port));
 			}
-			Router.add(new InetSocketAddress(host, port));
-		}
-		if (peers.length > 0) {
-			int localPort = Router.PORT_DEFAULT;
-			try {
-				localPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
-			}
-			catch (NumberFormatException nfex) {
+			if (peers.length > 0) {
+				int localPort = Router.PORT_DEFAULT;
+				try {
+					localPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
+				}
+				catch (NumberFormatException nfex) {
 
-			}
-			try {
-				new Router(localPort, peers);
-			}
-			catch (Exception e) {
-				logger.error(e.getMessage(), e);
+				}
+				try {
+					new Router(localPort, peers);
+				}
+				catch (Exception e) {
+					logger.error(e.getMessage(), e);
+				}
 			}
 		}
 		Enumeration<Object> keys = getSettings().keys();
