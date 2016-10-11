@@ -6,7 +6,7 @@
 
 ## How to Install
 
-1. Edit the `./src/main/resources/api.config` file
+1. Edit the `./src/main/resources/settings.ini` file (this file is automatically moved to `<user.home>/.rudi/settings.ini` after first startup)
 2. Set the `rudi.repo.{via,alerts,responses}` properties to point to read/write SPARQL endpoints
 3. Add some API properties, e.g.:
    `example.url=api.example.com/profiles`
@@ -15,7 +15,7 @@
    `example.token=your API secret`
 4. Add a listener for an API, see `./src/main/webapp/WEB-INF/resources/listeners` for examples (details below)
 5. Add some peers, see `./src/main/webapp/WEB-INF/resources/api.config` for examples
-6. Build `rudi-adaptors.war` (see below)
+6. Build `rudi-adaptors.war` (instructions below)
 7. Deploy the `rudi-adaptors.war` file to a web application container
 8. Start the web application container (assuming it's listening on port 8080)
 9. Visit localhost:8080/rudi-adaptors?q=some+keywords
@@ -28,7 +28,8 @@
    - `mvn install:install-file -Dfile=<path/to/virtjdbc.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-jdbc4 -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
    - `mvn install:install-file -Dfile=<path/to/virt_rdf4j.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-rdf4j -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
    - `mvn install:install-file -Dfile=<path/to/FreePastry-2.1.jar> -DgroupId=rice.pastry -DartifactId=freepastry -Dversion=2.1 -Dpackaging=jar -DgeneratePom=true`
-5. `cd` to the root of the rudi-adaptors project directory and run `mvn clean install`
+5. `cd` to the root of the `rudi-core` project directory and run `mvn clean install`
+6. The war file is located at `./rudi-core/target/rudi-adaptors.war`
 
 ## RDF Universal Distributed Index (RUDI) Overview
 
@@ -140,7 +141,7 @@ select ?0 ?1 ?2 ?context where {
 
 ## Placeholders
 
-EventHandlers describe responses that are triggered by an event. The handler's hyperdata is a template that may contain placeholders. These placeholders are swapped for their values just before the event is dispatched to the `<via:notify>`. The `${number}` placeholder, where "number" is an integer value, is reserved and is swapped for the groups captured by the event. The placeholders `${id}`, `${key}`, `${url}`, and `${token}` are also reserved and are swapped for the config values associated with the `<via:config>` API identity string. The API configuration settings are located in the api.config file.
+EventHandlers describe responses that are triggered by an event. The handler's hyperdata is a template that may contain placeholders. These placeholders are swapped for their values just before the event is dispatched to the `<via:notify>`. The `${number}` placeholder, where "number" is an integer value, is reserved and is swapped for the groups captured by the event. The placeholders `${id}`, `${key}`, `${url}`, and `${token}` are also reserved and are swapped for the config values associated with the `<via:config>` API identity string. The API configuration settings are located in the settings.ini file.
 
 Custom placeholders may be used, and are swapped by custom TemplateProcessors, which are Java plugins that are called to process the EventHandler descriptions just prior to dispatch. See the JavaDoc for details.
 
