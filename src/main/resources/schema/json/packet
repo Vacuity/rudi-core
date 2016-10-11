@@ -9,6 +9,15 @@
 		"channelId": {
 			"type": "string"
 		},
+		"to": {
+			"type": "string"
+		},
+		"from": {
+			"type": "string"
+		},
+		"priority": {
+			"type": "integer"
+		},
 		"ttl": {
 			"type": "integer"
 		},

@@ -41,6 +41,7 @@ import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.SPARQLHao;
 import ai.vacuity.rudi.adaptors.interfaces.IEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
+import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import ai.vacuity.rudi.adaptors.types.Match;
 import ai.vacuity.rudi.adaptors.types.Report;
 
@@ -85,13 +86,13 @@ public class DispatchService extends Thread {
 		Report report = new Report();
 		List<AbstractHAO> haos = new ArrayList<AbstractHAO>();
 
-		InputProtocol[] protocols = GraphManager.getTypedPatterns();
+		InputProtocol[] protocols = GraphMaster.getTypedPatterns();
 		find_matches: for (int i = 0; i < protocols.length; i++) {
 			InputProtocol ip = protocols[i];
 			// try regex patterns only if no typed patterns matched
 			if (ip == null) {
-				if (protocols.equals(GraphManager.getTypedPatterns())) {
-					protocols = GraphManager.getRegexPatterns();
+				if (protocols.equals(GraphMaster.getTypedPatterns())) {
+					protocols = GraphMaster.getRegexPatterns();
 					continue;
 				}
 				else break;
@@ -149,7 +150,7 @@ public class DispatchService extends Thread {
 	// TODO need to merge this with the other dispatch() method
 	public static void process(int id, Resource context) throws IOException, IllegalArgumentException {
 		ArrayList<String> logs = new ArrayList<String>();
-		find_matches: for (InputProtocol ip : GraphManager.getQueryPatterns()) {
+		find_matches: for (InputProtocol ip : GraphMaster.getQueryPatterns()) {
 			if (ip == null) break;
 			if (ip.getEventHandler() != null || ip.hasSparqlQuery()) { // assume the event notifies an eventhandler
 				String procedure = ip.getEventHandler().getCall(), log = ip.getEventHandler().getLog();

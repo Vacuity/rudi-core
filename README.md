@@ -1,27 +1,44 @@
 # Getting Started
 
-    1. Edit the /src/main/resources/api.config file
-    2. Set the rudi.repo.{via,alerts,responses} properties to point to read/write SPARQL endpoints
-    3. Add some API properties, e.g.:
-    	example.url=api.example.com/profiles
-    	example.id=your API consumer id
-    	example.key=your API key
-    	example.token=your API secret
-    4. Add a listener for an API, see /src/main/webapp/WEB-INF/resources/listeners for examples	(details below)
-    5. Run mvn package
-    6. Deploy the rudi-adaptors.war file to a web application container
-    7. Start the web application container (assuming it's listening on port 8080)
-    7. Visit localhost:8080/rudi-adaptors?q=enter+some+keywords
+## Requirements
+
+- [Java 8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
+- [Java Servlet Container](https://en.wikipedia.org/wiki/Web_container#List_of_Servlet_containers)
+- Read/Write access to a [SPARQL Endpoint](https://en.wikipedia.org/wiki/List_of_SPARQL_implementations)
+
+## How to Install
+
+1. Edit the `./src/main/resources/api.config` file
+2. Set the `rudi.repo.{via,alerts,responses}` properties to point to read/write SPARQL endpoints
+3. Add some API properties, e.g.:
+   `example.url=api.example.com/profiles`
+   `example.id=your API consumer id`
+   `example.key=your API key`
+   `example.token=your API secret`
+   4. Add a listener for an API, see `./src/main/webapp/WEB-INF/resources/listeners` for examples(details below)
+4. Build `rudi-adaptors.war` (see below)
+5. Deploy the `rudi-adaptors.war` file to a web application container
+6. Start the web application container (assuming it's listening on port 8080)
+7. Visit localhost:8080/rudi-adaptors?q=some+keywords
+
+### How to Build RUDI
+1. Install [Maven](http://maven.apache.org/download.cgi)
+2. Install [Git](https://git-scm.com/downloads)
+3. Run `git clone https://github.com/Vacuity/rudi-core`
+4. Download the [virtjdbc4.jar](http://opldownload.s3.amazonaws.com/uda/virtuoso/7.2/jdbc/virtjdbc4.jar) and [virt_rdf4j.jar](https://github.com/sdmonroe/virtuoso-opensource/blob/develop/7/binsrc/rdf4j/virt_rdf4.jar) jars, and add them to your local Maven repo with the following commands:
+   `mvn install:install-file -Dfile=<path-to-virtjdbc.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-jdbc4 -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
+   `mvn install:install-file -Dfile=<path-to-virt_rdf4j.jar> -DgroupId=virtuoso.rdf4j -DartifactId=virtuoso-rdf4j -Dversion=4 -Dpackaging=jar -DgeneratePom=true`
+5. `cd` to the root of the rudi-adaptors project directory and run `mvn clean install`
 
 ## RDF Universal Distributed Index (RUDI) Overview
 
-RUDI is a distributed index of event listeners and handlers coupled with an event relay, or router. The event enters the disparate index via a RUDI node and is routed through the index in the form of a *packet* (a body and a header). Event handlers capture data from the event which is then passed as parameters to web services or other communication endpoints (e.g. a mail inbox). The process of identifying which events an endpoint can handle is called dispatching. When the endpoint is a RUDI peer, the dispatch is referred to as routing: 
+RUDI is a distributed index of event listeners and handlers coupled with an event relay, or router. The event enters the disparate index via a RUDI node and is routed through the index in the form of a *packet* (a body and a header). Event handlers capture data from the event which is then passed as parameters to web services or other communication endpoints (e.g. a mail inbox). The process of identifying which events an endpoint can handle is called dispatching. When the endpoint is a RUDI peer, the dispatch is referred to as routing:
 
 ![RUDI sequence diagram](https://docs.google.com/drawings/d/14kma-KSoN8SgVgZfJqqoiRnvB24INC3bHRP9m5T3yIw/pub?w=1380&h=919)  
 
-Each router collects and indexes endpoint hyperdata, and uses this information to dispatch events to appropriate handlers. Response channels within the index are then subscibed to by the agents who trigger the events. Each response channel corresponds to a unique event identifier which is given to the agent at the time RUDI is invoked.
+Routers are implemented as nodes in a [Pastry overlay network](http://www.freepastry.org/). Each router collects and indexes endpoint hyperdata, and uses this information to dispatch events to appropriate handlers. Response channels within the index are then subscibed to by the agents who trigger the events. Each response channel corresponds to a unique event identifier which is given to the agent at the time RUDI is invoked.
 
-At its core, RUDI is a platform for marshalling and federating linked data from dynamic sources (e.g. web service APIs) in response to open ended user queries. This is trivial with [RDF and SPARQL](https://www.informatik.hu-berlin.de/de/forschung/gebiete/wbi/research/publications/2008/DARQ-FINAL.pdf). The introduction of heterogenous APIs as data source endpoints solicits the development of specialized adaptors as well as the provisioning/maintanance of credentials for each API. One approach is to crowdsource the adaptor development and maintain the API credentials in a centralized store. This index would in turn collect the adaptor descriptions. A better approach is to decentralize the index of adaptors and their associated credentials, and route the user's query to the node housing the appropriate handler. Event routing is achieved when a RUDI instance subscribes to another RUDI. Members of a peer group simply pass their queries along to their peers in addition to dispatching the queries. A node selectively tunes in to its peers' broadcasts and dispatches the events which it can handle. The response is then published to the caller via an ephemeral listener wherein the caller is the handler.
+At its core, RUDI is a platform for marshalling and federating linked data from dynamic sources (e.g. web service APIs) in response to open ended user queries. This is trivial with [RDF and SPARQL](https://www.informatik.hu-berlin.de/de/forschung/gebiete/wbi/research/publications/2008/DARQ-FINAL.pdf). The introduction of heterogenous APIs as data source endpoints solicits the development of specialized adaptors as well as the provisioning/maintanance of credentials for each API. One approach is to crowdsource the adaptor development and maintain the API credentials in a centralized store. This index would in turn be the central collector and consumer of adaptor descriptions. A better approach is to decentralize the index of adaptors and their associated credentials, and route the user's query to the node housing the appropriate handler. Event routing is achieved by broadcast, or when a RUDI instance subscribes to another RUDI. Members of a peer group simply pass their queries along to their peers in addition to dispatching the queries. A node selectively tunes in to peer broadcasts and dispatches the events which it can handle. The response is then published to the origin via an ephemeral `<via:Listener>` wherein the origin is the `<via:notify>`.
 
 ## Routing and Caching
 A RUDI query is broadcasted to its list of peers, and peers send their requests to their list of peers, and so on, in addition to dispatching the request to any web service associated with matched listeners. Web service replies (that result from listener matches at a certain node) are directed to the origin peer. The nodes also send the origin the regex pattern they matched. This pattern is cached by the recipient node and mapped to the responder node. On every input, the cache is checked before RUDI broadcasts the request to its peers. If a match is found in the cache, that node is used instead of the broadcast. Broadcasts should be a last resort to reduce network chatter. The goal minimized broadcasts by having queries sent directly to the nodes that can handle it as often as possible. The broadcast is chiefly an avenue to build up a good cache of peers at each node. The cache should therefore reflect the interests of the node's end-users.
@@ -31,7 +48,7 @@ The dispatch algorithm rewards event patterns based on *specificity*. The intuit
 
 ## Sensors
 
-A sensor monitors a 'physical channel' for events. The current implementation supports an HTTPSensor.
+A sensor monitors a 'physical channel' for events. The current implementation supports HTTPSensor (web traffic) and OverlaySensor (P2P traffic).
 
 ## Listeners
 

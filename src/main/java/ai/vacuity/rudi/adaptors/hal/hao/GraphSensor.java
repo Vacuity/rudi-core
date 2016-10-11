@@ -45,8 +45,8 @@ import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
  * @author In Lak'ech.
  *
  */
-public class GraphListener extends Thread implements RepositoryConnectionListener {
-	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphListener.class);
+public class GraphSensor extends Thread implements RepositoryConnectionListener {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(GraphSensor.class);
 
 	final static String indexDir = Config.DIR_ALERTS + "index" + File.separator;
 	final static String queueDir = Config.DIR_ALERTS + "queue" + File.separator;
@@ -56,13 +56,13 @@ public class GraphListener extends Thread implements RepositoryConnectionListene
 
 	Vector<Tuple> tuples = new Vector<Tuple>();
 
-	public GraphListener() {
+	public GraphSensor() {
 		start(); // start observing the index
 	}
 
 	static {
-		GraphListener.getRepository().initialize();
-		try (RepositoryConnection con = GraphListener.getRepository().getConnection()) {
+		GraphSensor.getRepository().initialize();
+		try (RepositoryConnection con = GraphSensor.getRepository().getConnection()) {
 			Resource context = con.getValueFactory().createIRI(Constants.CONTEXT_DEMO);
 			// TODO careful, the listeners were in there
 			con.clear(context);
