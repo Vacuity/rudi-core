@@ -37,9 +37,11 @@ advised of the possibility of such damage.
 package ai.vacuity.rudi.sensor;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
+import ai.vacuity.rudi.adaptors.bo.Config;
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
 import rice.pastry.NodeHandle;
@@ -67,7 +69,17 @@ public class DistTutorial {
 	 * @param env
 	 *            the environment for these nodes
 	 */
-	public DistTutorial(int bindport, InetSocketAddress bootaddress, Environment env) throws Exception {
+
+	private static final List<InetSocketAddress> peers = new ArrayList<InetSocketAddress>();
+	// // Loads pastry settings
+	static Environment env = new Environment();
+
+	static {
+		// disable the UPnP setting (in case you are testing this on a NATted LAN)
+		env.getParameters().setString("nat_search_policy", "never");
+	}
+
+	public DistTutorial(int bindport, InetSocketAddress bootaddress) throws Exception {
 
 		// Generate the NodeIds Randomly
 		NodeIdFactory nidFactory = new RandomNodeIdFactory(env);
@@ -137,30 +149,36 @@ public class DistTutorial {
 	 * Usage: java [-cp FreePastry-<version>.jar] rice.tutorial.lesson3.DistTutorial localbindport bootIP bootPort example java rice.tutorial.DistTutorial 9001 pokey.cs.almamater.edu 9001
 	 */
 	public static void main(String[] args) throws Exception {
-		// Loads pastry settings
-		Environment env = new Environment();
+		Config.get("");
 
-		// disable the UPnP setting (in case you are testing this on a NATted LAN)
-		env.getParameters().setString("nat_search_policy", "never");
+		// // Loads pastry settings
+		// Environment env = new Environment();
+		//
+		// // disable the UPnP setting (in case you are testing this on a NATted LAN)
+		// env.getParameters().setString("nat_search_policy", "never");
+		//
+		// try {
+		// // the port to use locally
+		// int bindport = Integer.parseInt(args[0]);
+		//
+		// // build the bootaddress from the command line args
+		// InetAddress bootaddr = InetAddress.getByName(args[1]);
+		// int bootport = Integer.parseInt(args[2]);
+		// InetSocketAddress bootaddress = new InetSocketAddress(bootaddr, bootport);
+		//
+		// // launch our node!
+		// DistTutorial dt = new DistTutorial(bindport, bootaddress, env);
+		// }
+		// catch (Exception e) {
+		// // remind user how to use
+		// System.out.println("Usage:");
+		// System.out.println("java [-cp FreePastry-<version>.jar] rice.tutorial.lesson3.DistTutorial localbindport bootIP bootPort");
+		// System.out.println("example java rice.tutorial.DistTutorial 9001 pokey.cs.almamater.edu 9001");
+		// throw e;
+		// }
+	}
 
-		try {
-			// the port to use locally
-			int bindport = Integer.parseInt(args[0]);
-
-			// build the bootaddress from the command line args
-			InetAddress bootaddr = InetAddress.getByName(args[1]);
-			int bootport = Integer.parseInt(args[2]);
-			InetSocketAddress bootaddress = new InetSocketAddress(bootaddr, bootport);
-
-			// launch our node!
-			DistTutorial dt = new DistTutorial(bindport, bootaddress, env);
-		}
-		catch (Exception e) {
-			// remind user how to use
-			System.out.println("Usage:");
-			System.out.println("java [-cp FreePastry-<version>.jar] rice.tutorial.lesson3.DistTutorial localbindport bootIP bootPort");
-			System.out.println("example java rice.tutorial.DistTutorial 9001 pokey.cs.almamater.edu 9001");
-			throw e;
-		}
+	public static List<InetSocketAddress> getPeers() {
+		return peers;
 	}
 }
