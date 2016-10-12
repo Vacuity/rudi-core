@@ -36,81 +36,129 @@ advised of the possibility of such damage.
 *******************************************************************************/
 /*
  * Created on Feb 15, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
  */
 package ai.vacuity.rudi.sensor;
 
-import rice.p2p.commonapi.Application;
-import rice.p2p.commonapi.Endpoint;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import ai.vacuity.rudi.adaptors.bo.p2p.Input;
+import ai.vacuity.rudi.adaptors.bo.p2p.Response;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
-import rice.p2p.commonapi.Node;
-import rice.p2p.commonapi.NodeHandle;
-import rice.p2p.commonapi.RouteMessage;
 
 /**
- * A very simple application.
+ * An example message.
  * 
  * @author Jeff Hoye
  */
-public class MyApp implements Application {
+public class Packet implements Message {
+	private static final long serialVersionUID = 265675863194010712L;
+	private static final double VERSION_1_0 = 1.0;
+
+	private Input event;
+	private Response response;
+	private Integer priority = Message.LOW_PRIORITY;
+
+	private double version = Packet.VERSION_1_0;
+	private Serializable more;
+
+	private Integer ttl;
+	private List<Serializable> transactions = new ArrayList<Serializable>();
 	/**
-	 * The Endpoint represents the underlieing node. By making calls on the Endpoint, it assures that the message will be delivered to a MyApp on whichever node the message is intended for.
+	 * Where the Message came from.
 	 */
-	protected Endpoint endpoint;
-
-	public MyApp(Node node) {
-		// We are only going to use one instance of this application on each PastryNode
-		this.endpoint = node.buildEndpoint(this, "myinstance");
-
-		// the rest of the initialization code could go here
-
-		// now we can receive messages
-		this.endpoint.register();
-	}
-
+	Id from;
 	/**
-	 * Called to route a message to the id
+	 * Where the Message is going.
 	 */
-	public void routeMyMsg(Id id) {
-		System.out.println(this + " sending to " + id);
-		Message msg = new MyMsg(endpoint.getId(), id);
-		endpoint.route(id, msg, null);
-	}
+	Serializable to;
 
 	/**
-	 * Called to directly send a message to the nh
+	 * Constructor.
 	 */
-	public void routeMyMsgDirect(NodeHandle nh) {
-		System.out.println(this + " sending direct to " + nh);
-		Message msg = new MyMsg(endpoint.getId(), nh.getId());
-		endpoint.route(null, msg, nh);
-	}
-
-	/**
-	 * Called when we receive a message.
-	 */
-	public void deliver(Id id, Message message) {
-		System.out.println(this + " received " + message);
-	}
-
-	/**
-	 * Called when you hear about a new neighbor. Don't worry about this method for now.
-	 */
-	public void update(NodeHandle handle, boolean joined) {
-	}
-
-	/**
-	 * Called a message travels along your path. Don't worry about this method for now.
-	 */
-	public boolean forward(RouteMessage message) {
-		return true;
+	public Packet(Id from, Serializable to) {
+		this.from = from;
+		this.to = to;
 	}
 
 	public String toString() {
-		return "MyApp " + endpoint.getId();
+		return "MyMsg from " + from + " to " + to;
 	}
 
+	/**
+	 * Use low priority to prevent interference with overlay maintenance traffic.
+	 */
+	public int getPriority() {
+		return Message.LOW_PRIORITY;
+	}
+
+	public Input getEvent() {
+		return event;
+	}
+
+	public void setEvent(Input event) {
+		this.event = event;
+	}
+
+	public Response getResponse() {
+		return response;
+	}
+
+	public void setResponse(Response response) {
+		this.response = response;
+	}
+
+	public double getVersion() {
+		return version;
+	}
+
+	public void setVersion(double version) {
+		this.version = version;
+	}
+
+	public Serializable getMore() {
+		return more;
+	}
+
+	public void setMore(Serializable more) {
+		this.more = more;
+	}
+
+	public Id getFrom() {
+		return from;
+	}
+
+	public void setFrom(Id from) {
+		this.from = from;
+	}
+
+	public Serializable getTo() {
+		return to;
+	}
+
+	public void setTo(Serializable to) {
+		this.to = to;
+	}
+
+	public void setPriority(Integer priority) {
+		this.priority = priority;
+	}
+
+	public List<Serializable> getTransactions() {
+		return transactions;
+	}
+
+	public void setTransactions(List<Serializable> transactions) {
+		this.transactions = transactions;
+	}
+
+	public Integer getTtl() {
+		return ttl;
+	}
+
+	public void setTtl(Integer ttl) {
+		this.ttl = ttl;
+	}
 }
