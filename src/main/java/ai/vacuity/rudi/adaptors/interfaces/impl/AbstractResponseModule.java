@@ -1,6 +1,6 @@
 package ai.vacuity.rudi.adaptors.interfaces.impl;
 
-import ai.vacuity.rudi.adaptors.interfaces.IEvent;
+import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
 import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 
 /**
@@ -12,10 +12,10 @@ import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 public abstract class AbstractResponseModule implements IResponseModule {
 
 	protected String response;
-	protected IEvent event;
+	protected IndexableEvent event;
 
 	@Override
-	public void process(String response, IEvent event) {
+	public void process(String response, IndexableEvent event) {
 		this.response = response;
 		this.event = event;
 	}
@@ -26,7 +26,7 @@ public abstract class AbstractResponseModule implements IResponseModule {
 	}
 
 	@Override
-	public IEvent getEvent() {
+	public IndexableEvent getEvent() {
 		return this.event;
 	}
 

@@ -4,23 +4,22 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.Dataset;
-import org.eclipse.rdf4j.query.Query;
 
-import ai.vacuity.rudi.adaptors.interfaces.IEvent;
+import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
 
-public class IndexableQuery implements Query, IEvent {
+public class Query implements org.eclipse.rdf4j.query.Query, IndexableEvent {
 
-	Query delegate = null;
+	org.eclipse.rdf4j.query.Query delegate = null;
 	int id = 0;
 	String label = "";
 	IRI iri = null;
 	IRI notifies = null;
 
-	public IndexableQuery(Query delegate) {
+	public Query(org.eclipse.rdf4j.query.Query delegate) {
 		this.delegate = delegate;
 	}
 
-	public Query getDelegate() {
+	public org.eclipse.rdf4j.query.Query getDelegate() {
 		return delegate;
 	}
 

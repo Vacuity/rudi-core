@@ -1,15 +1,11 @@
 package ai.vacuity.rudi.adaptors.bo;
 
-import java.io.Serializable;
-
 import org.eclipse.rdf4j.model.IRI;
 
-import ai.vacuity.rudi.adaptors.interfaces.IEvent;
+import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
 
-public class IndexableInput implements IEvent, Serializable {
-	private static final long serialVersionUID = -3023170992528454505L;
-
-	private transient IRI ownerIri = null;
+public class Input implements IndexableEvent {
+	private IRI ownerIri = null;
 	/**
 	 * The input channel id
 	 */
@@ -18,7 +14,7 @@ public class IndexableInput implements IEvent, Serializable {
 	private IRI[] called = new IRI[] {};
 	// private SortedSet<Match> matches = new TreeSet<Match>();
 
-	public IndexableInput(IRI userIri, IRI iri, String input) {
+	public Input(IRI userIri, IRI iri, String input) {
 		this.input = input;
 		this.iri = iri;
 		this.ownerIri = userIri;

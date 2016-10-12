@@ -47,9 +47,10 @@ import com.openlink.virtuoso.rdf4j.driver.VirtuosoRepository;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
-import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
+import ai.vacuity.rudi.adaptors.bo.Query;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
+import ai.vacuity.rudi.sensor.GraphSensor;
 
 /**
  * Manages the Index.
@@ -410,7 +411,7 @@ public class GraphManager {
 												if (r3.hasNext()) { // expect a single result
 													BindingSet bs3 = r3.next();
 													String queryStr = bs3.getValue("s").stringValue();
-													IndexableQuery iq = new IndexableQuery(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
+													Query iq = new Query(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
 													iq.setId(bs2.getValue("input").stringValue().hashCode());
 													iq.setLabel(bs2.getValue("i_label").stringValue());
 													iq.setIri((IRI) bs2.getValue("input"));

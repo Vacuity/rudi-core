@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Cache;
 import ai.vacuity.rudi.adaptors.bo.Config;
-import ai.vacuity.rudi.adaptors.bo.IndexableInput;
+import ai.vacuity.rudi.adaptors.bo.p2p.Input;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
@@ -43,7 +43,7 @@ public class Router {
 
 	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(Router.class);
 
-	OverlaySensor[] peerAccess = new OverlaySensor[0];
+	OverlaySensor[] overlayAccess = new OverlaySensor[0];
 
 	/**
 	 * This constructor sets up a PastryNode. It will bootstrap to an existing ring if it can find one at the specified location, otherwise it will start a new ring.
@@ -57,7 +57,7 @@ public class Router {
 	 */
 	public Router(int bindport, InetSocketAddress[] bootaddresses) throws Exception {
 
-		peerAccess = new OverlaySensor[bootaddresses.length];
+		overlayAccess = new OverlaySensor[bootaddresses.length];
 		for (int i = 0; i < bootaddresses.length; i++) {
 			InetSocketAddress boot = bootaddresses[i];
 
@@ -71,15 +71,15 @@ public class Router {
 			PastryNode node = factory.newNode();
 
 			// construct a new MyApp
-			this.peerAccess[i] = new OverlaySensor(node);
+			this.overlayAccess[i] = new OverlaySensor(node);
 
 			node.boot(boot);
-			join(env, nidFactory, node, this.peerAccess[i]);
+			join(env, nidFactory, node, this.overlayAccess[i]);
 		}
 
 	}
 
-	private void join(Environment env, NodeIdFactory nidFactory, PastryNode node, OverlaySensor router) throws InterruptedException, IOException {
+	private void join(Environment env, NodeIdFactory nidFactory, PastryNode node, OverlaySensor access) throws InterruptedException, IOException {
 		// the node may require sending several messages to fully boot into the ring
 		synchronized (node) {
 			while (!node.isReady() && !node.joinFailed()) {
@@ -104,9 +104,9 @@ public class Router {
 			// send to that key
 			Packet msg = new Packet();
 			msg.setTo(randId);
-			msg.setEvent(new IndexableInput(null, null, null));
-			msg.getEvent().setLabel("I joined your overlay id.");
-			router.send(msg);
+			msg.setEvent(new Input());
+			msg.getEvent().setLabel("I have your overlay id.");
+			access.send(msg);
 
 			// wait a sec
 			env.getTimeSource().sleep(1000);
@@ -126,11 +126,11 @@ public class Router {
 				NodeHandle nh = leafSet.get(i);
 				Packet pkt = new Packet();
 				pkt.setTo(nh);
-				pkt.setEvent(new IndexableInput(null, null, null));
-				pkt.getEvent().setLabel("I joined your node host id.");
+				pkt.setEvent(new Input());
+				pkt.getEvent().setLabel("I have your node host id.");
 
 				// send the message directly to the node
-				router.send(pkt);
+				access.send(pkt);
 
 				// wait a sec
 				env.getTimeSource().sleep(1000);
@@ -139,24 +139,25 @@ public class Router {
 	}
 
 	public boolean hasPeers() {
-		return getPeerAccess().length > 0;
+		return getOverlayAccess().length > 0;
 	}
 
-	public void route(IndexableInput event) {
+	public void route(Input event) {
 		if (!hasPeers()) return;
 		boolean found = false;
 		Packet pkt = new Packet();
-		pkt.setEvent(event);
+		pkt.setEvent(new Input());
+		pkt.getEvent().setLabel(event.getLabel());
 		for (Cache c : GraphMaster.getPeerPatterns()) {
 			Matcher matcher = c.getPattern().matcher(event.getLabel());
 			if (matcher.find()) {
 				if (!found) found = true;
 				pkt.setTo(c.getPeer());
-				getPeerAccess()[0].send(pkt); // TODO does this ensure deliver across rings?
+				getOverlayAccess()[0].send(pkt); // TODO does this ensure deliver across rings?
 			}
 		}
 		if (!found) {
-			for (OverlaySensor access : getPeerAccess()) {
+			for (OverlaySensor access : getOverlayAccess()) {
 				access.broadcast(pkt);
 			}
 		}
@@ -167,28 +168,31 @@ public class Router {
 	 */
 	public static void main(String[] args) throws Exception {
 
-		Config.get("test");
+		if (args.length == 0) Config.get("test");
+		else {
+			try {
+				// build the bootaddress from the command line args
+				InetAddress bootaddr = InetAddress.getByName(args[0]);
 
-		try {
-			// build the bootaddress from the command line args
-			InetAddress bootaddr = InetAddress.getByName(args[0]);
+				// the port to use locally
+				int bindport = (args.length > 1) ? Integer.parseInt(args[1]) : Router.PORT_DEFAULT;
 
-			// the port to use locally
-			int bindport = (args.length > 1) ? Integer.parseInt(args[1]) : Router.PORT_DEFAULT;
+				int bootport = (args.length > 2) ? Integer.parseInt(args[2]) : Router.PORT_DEFAULT;
+				InetSocketAddress bootaddress = new InetSocketAddress(bootaddr, bootport);
 
-			int bootport = (args.length > 2) ? Integer.parseInt(args[2]) : Router.PORT_DEFAULT;
-			InetSocketAddress bootaddress = new InetSocketAddress(bootaddr, bootport);
+				// launch our node!
+				Router dt = new Router(bindport, new InetSocketAddress[] { bootaddress });
 
-			// launch our node!
-			Router dt = new Router(bindport, new InetSocketAddress[] { bootaddress });
+			}
+			catch (Exception e) {
+				// remind user how to use
+				logger.error("Usage\n" + //
+						"java [-cp FreePastry-<version>.jar] rice.tutorial.lesson3.DistTutorial localbindport bootIP bootPort\n" + //
+						"example java rice.tutorial.DistTutorial 9001 pokey.cs.almamater.edu 9001");
+				throw e;
+			}
 		}
-		catch (Exception e) {
-			// remind user how to use
-			logger.error("Usage\n" + //
-					"java [-cp FreePastry-<version>.jar] rice.tutorial.lesson3.DistTutorial localbindport bootIP bootPort\n" + //
-					"example java rice.tutorial.DistTutorial 9001 pokey.cs.almamater.edu 9001");
-			throw e;
-		}
+
 	}
 
 	public static List<InetSocketAddress> getPeers() {
@@ -199,12 +203,12 @@ public class Router {
 		getPeers().add(peer);
 	}
 
-	public OverlaySensor[] getPeerAccess() {
-		return peerAccess;
+	public OverlaySensor[] getOverlayAccess() {
+		return overlayAccess;
 	}
 
-	public void setPeerAccess(OverlaySensor[] sensors) {
-		this.peerAccess = sensors;
+	public void setOverlayAccess(OverlaySensor[] overlayAccess) {
+		this.overlayAccess = overlayAccess;
 	}
 
 }
