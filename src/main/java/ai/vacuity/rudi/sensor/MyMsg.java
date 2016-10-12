@@ -39,6 +39,10 @@ advised of the possibility of such damage.
  */
 package ai.vacuity.rudi.sensor;
 
+import java.io.Serializable;
+
+import ai.vacuity.rudi.adaptors.bo.p2p.Input;
+import ai.vacuity.rudi.adaptors.bo.p2p.Response;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
 
@@ -48,6 +52,15 @@ import rice.p2p.commonapi.Message;
  * @author Jeff Hoye
  */
 public class MyMsg implements Message {
+	private static final long serialVersionUID = 265675863194010712L;
+	private static final double VERSION_1_0 = 1.0;
+
+	private Input event;
+	private Response response;
+	private Integer priority = Message.LOW_PRIORITY;
+
+	private double version = MyMsg.VERSION_1_0;
+	private Serializable more;
 	/**
 	 * Where the Message came from.
 	 */
@@ -74,5 +87,57 @@ public class MyMsg implements Message {
 	 */
 	public int getPriority() {
 		return Message.LOW_PRIORITY;
+	}
+
+	public Input getEvent() {
+		return event;
+	}
+
+	public void setEvent(Input event) {
+		this.event = event;
+	}
+
+	public Response getResponse() {
+		return response;
+	}
+
+	public void setResponse(Response response) {
+		this.response = response;
+	}
+
+	public double getVersion() {
+		return version;
+	}
+
+	public void setVersion(double version) {
+		this.version = version;
+	}
+
+	public Serializable getMore() {
+		return more;
+	}
+
+	public void setMore(Serializable more) {
+		this.more = more;
+	}
+
+	public Id getFrom() {
+		return from;
+	}
+
+	public void setFrom(Id from) {
+		this.from = from;
+	}
+
+	public Id getTo() {
+		return to;
+	}
+
+	public void setTo(Id to) {
+		this.to = to;
+	}
+
+	public void setPriority(Integer priority) {
+		this.priority = priority;
 	}
 }
