@@ -24,7 +24,7 @@ import com.google.api.client.http.GenericUrl;
 
 import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
-import ai.vacuity.rudi.sensor.DistTutorial;
+import ai.vacuity.rudi.sensor.Router;
 import ai.vacuity.utils.OSValidator;
 
 public class Config {
@@ -247,8 +247,8 @@ public class Config {
 		String peersStr = getSettings().getProperty(Config.PROPERTY_P2P_PEERS);
 		if (StringUtils.isNotEmpty(peersStr)) {
 			StringTokenizer st = new StringTokenizer(getSettings().getProperty(Config.PROPERTY_P2P_PEERS));
-			InetSocketAddress[] peers = new InetSocketAddress[st.countTokens()];
-			while (st.hasMoreTokens()) {
+			Router.setPeers(new InetSocketAddress[st.countTokens()]);
+			for (int i = 0; st.hasMoreTokens(); i++) {
 				String peer = st.nextToken();
 				String host = getSettings().getProperty(peer + "." + "host");
 				int port = 10100;
@@ -258,26 +258,16 @@ public class Config {
 				catch (NumberFormatException nfex) {
 
 				}
-				DistTutorial.getPeers().add(new InetSocketAddress(host, port));
+				Router.getPeers()[i] = new InetSocketAddress(host, port);
 			}
-			if (peers.length > 0) {
-				int localPort = 10100;
-				try {
-					localPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
-				}
-				catch (NumberFormatException nfex) {
+			int daemonPort = 10100;
+			try {
+				daemonPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
+			}
+			catch (NumberFormatException nfex) {
 
-				}
-				try {
-					for (InetSocketAddress p : DistTutorial.getPeers()) {
-						new DistTutorial(localPort, p);
-					}
-					// new Router(localPort, peers);
-				}
-				catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
 			}
+			Router.init(daemonPort);
 		}
 		Enumeration<Object> keys = getSettings().keys();
 		while (keys.hasMoreElements()) {

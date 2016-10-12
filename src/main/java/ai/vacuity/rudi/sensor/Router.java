@@ -38,10 +38,14 @@ package ai.vacuity.rudi.sensor;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.regex.Matcher;
 
+import org.slf4j.LoggerFactory;
+
+import ai.vacuity.rudi.adaptors.bo.Cache;
 import ai.vacuity.rudi.adaptors.bo.Config;
+import ai.vacuity.rudi.adaptors.bo.p2p.Input;
+import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import rice.environment.Environment;
 import rice.p2p.commonapi.Id;
 import rice.pastry.NodeHandle;
@@ -57,7 +61,8 @@ import rice.pastry.standard.RandomNodeIdFactory;
  * 
  * @author Jeff Hoye
  */
-public class DistTutorial {
+public class Router {
+	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Router.class);
 
 	/**
 	 * This constructor sets up a PastryNode. It will bootstrap to an existing ring if it can find one at the specified location, otherwise it will start a new ring.
@@ -70,16 +75,19 @@ public class DistTutorial {
 	 *            the environment for these nodes
 	 */
 
-	private static final List<InetSocketAddress> peers = new ArrayList<InetSocketAddress>();
+	private static InetSocketAddress[] peers = new InetSocketAddress[0];
+
 	// // Loads pastry settings
-	static Environment env = new Environment();
+	private static Environment env = new Environment();
 
 	static {
 		// disable the UPnP setting (in case you are testing this on a NATted LAN)
 		env.getParameters().setString("nat_search_policy", "never");
 	}
 
-	public DistTutorial(int bindport, InetSocketAddress bootaddress) throws Exception {
+	private static OverlaySensor access = null;
+
+	public Router(int bindport, InetSocketAddress bootaddress) throws Exception {
 
 		// Generate the NodeIds Randomly
 		NodeIdFactory nidFactory = new RandomNodeIdFactory(env);
@@ -90,11 +98,15 @@ public class DistTutorial {
 		// construct a node
 		PastryNode node = factory.newNode();
 
-		// construct a new MyApp
-		MyApp app = new MyApp(node);
+		// construct a new App
+		OverlaySensor access = new OverlaySensor(node);
 
 		node.boot(bootaddress);
 
+		join(nidFactory, node, access);
+	}
+
+	private void join(NodeIdFactory nidFactory, PastryNode node, OverlaySensor app) throws InterruptedException, IOException {
 		// the node may require sending several messages to fully boot into the ring
 		synchronized (node) {
 			while (!node.isReady() && !node.joinFailed()) {
@@ -117,7 +129,11 @@ public class DistTutorial {
 			Id randId = nidFactory.generateNodeId();
 
 			// send to that key
-			app.routeMyMsg(randId);
+			Packet pkt = new Packet(null, null);
+			pkt.setTo(randId);
+			pkt.setEvent(new Input());
+			pkt.getEvent().setLabel("Hi.");
+			app.send(pkt);
 
 			// wait a sec
 			env.getTimeSource().sleep(1000);
@@ -137,11 +153,48 @@ public class DistTutorial {
 				NodeHandle nh = leafSet.get(i);
 
 				// send the message directly to the node
-				app.routeMyMsgDirect(nh);
+				app.send(nh);
 
 				// wait a sec
 				env.getTimeSource().sleep(1000);
 			}
+		}
+	}
+
+	public static void init(int daemonPort) {
+		if (Router.getPeers().length > 0) {
+			try {
+				for (InetSocketAddress p : Router.getPeers()) {
+					new Router(daemonPort, p);
+				}
+				// new Router(localPort, peers);
+			}
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+	}
+
+	public boolean hasPeers() {
+		return Router.peers.length > 0;
+	}
+
+	public void route(Input event) {
+		if (!hasPeers()) return;
+		boolean found = false;
+		Packet pkt = new Packet(null, null);
+		pkt.setEvent(new Input());
+		pkt.getEvent().setLabel(event.getLabel());
+		for (Cache c : GraphMaster.getPeerPatterns()) {
+			Matcher matcher = c.getPattern().matcher(event.getLabel());
+			if (matcher.find()) {
+				if (!found) found = true;
+				pkt.setTo(c.getPeer());
+				getAccess().send(pkt); // TODO does this ensure deliver across rings?
+			}
+		}
+		if (!found) {
+			// getAccess().broadcast(pkt);
 		}
 	}
 
@@ -178,7 +231,19 @@ public class DistTutorial {
 		// }
 	}
 
-	public static List<InetSocketAddress> getPeers() {
-		return peers;
+	public static void setPeers(InetSocketAddress[] peers) {
+		Router.peers = peers;
+	}
+
+	public static InetSocketAddress[] getPeers() {
+		return Router.peers;
+	}
+
+	public static OverlaySensor getAccess() {
+		return access;
+	}
+
+	public static void setAccess(OverlaySensor access) {
+		Router.access = access;
 	}
 }
