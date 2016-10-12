@@ -2,13 +2,10 @@ package ai.vacuity.rudi.sensor;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import ai.vacuity.rudi.adaptors.bo.p2p.Input;
 import ai.vacuity.rudi.adaptors.bo.p2p.Response;
-import ai.vacuity.rudi.adaptors.types.Transaction;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
 
@@ -57,8 +54,7 @@ public class Packet implements Message {
 	}
 
 	private Integer ttl;
-	private List<Transaction> transactions = new ArrayList<Transaction>();
-	private Map<String, Serializable> additionalProperties = new HashMap<String, Serializable>();
+	private List<Serializable> transactions = new ArrayList<Serializable>();
 
 	public Integer getTtl() {
 		return ttl;
@@ -68,25 +64,19 @@ public class Packet implements Message {
 		this.ttl = ttl;
 	}
 
-	public List<Transaction> getTransactions() {
+	public List<Serializable> getTransactions() {
 		return transactions;
 	}
 
-	public void setTransactions(List<Transaction> transactions) {
+	public void setTransactions(List<Serializable> transactions) {
 		this.transactions = transactions;
 	}
 
 	public String toString() {
 		// return ToStringBuilder.reflectionToString(this);
-		return "From: " + this.getFrom() + "; To: " + this.getTo() + "; Message: " + this.getEvent().getLabel();
-	}
-
-	public Map<String, Serializable> getAdditionalProperties() {
-		return this.additionalProperties;
-	}
-
-	public void setAdditionalProperty(String name, Serializable value) {
-		this.additionalProperties.put(name, value);
+		return "From: " + this.getFrom() + //
+				"; To: " + this.getTo() + //
+				((getEvent() != null) ? "; Message: " + this.getEvent().getLabel() : "");
 	}
 
 	public Id getFrom() {

@@ -70,16 +70,16 @@ public class Router {
 			// construct a node
 			PastryNode node = factory.newNode();
 
-			// construct a new MyApp
+			// construct a new App
 			this.overlayAccess[i] = new OverlaySensor(node);
 
 			node.boot(boot);
-			join(env, nidFactory, node, this.overlayAccess[i]);
+			join(nidFactory, node, this.overlayAccess[i]);
 		}
 
 	}
 
-	private void join(Environment env, NodeIdFactory nidFactory, PastryNode node, OverlaySensor access) throws InterruptedException, IOException {
+	private void join(NodeIdFactory nidFactory, PastryNode node, OverlaySensor access) throws InterruptedException, IOException {
 		// the node may require sending several messages to fully boot into the ring
 		synchronized (node) {
 			while (!node.isReady() && !node.joinFailed()) {
