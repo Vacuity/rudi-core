@@ -1,19 +1,16 @@
 package ai.vacuity.rudi.sensor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import ai.vacuity.rudi.adaptors.bo.p2p.Input;
 import ai.vacuity.rudi.adaptors.bo.p2p.Response;
 import ai.vacuity.rudi.adaptors.types.Transaction;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
-import rice.p2p.scribe.ScribeContent;
 
 /**
  * An example message.
@@ -21,25 +18,25 @@ import rice.p2p.scribe.ScribeContent;
  * @author Jeff Hoye
  * @author In Lak'ech.
  */
-public class Packet implements Message, ScribeContent {
+public class Packet implements Message {
 	private static final long serialVersionUID = 265675863194010712L;
 	private static final double VERSION_1_0 = 1.0;
 
 	private Id from;
-	private Object to;
+	private Serializable to;
 
 	private Input event;
 	private Response response;
 	private Integer priority = Message.LOW_PRIORITY;
 
 	private double version = Packet.VERSION_1_0;
-	private Object more;
+	private Serializable more;
 
 	public Packet() {
 
 	}
 
-	public Packet(Id from, Object to) {
+	public Packet(Id from, Serializable to) {
 		this.from = from;
 		this.to = to;
 	}
@@ -61,7 +58,7 @@ public class Packet implements Message, ScribeContent {
 
 	private Integer ttl;
 	private List<Transaction> transactions = new ArrayList<Transaction>();
-	private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+	private Map<String, Serializable> additionalProperties = new HashMap<String, Serializable>();
 
 	public Integer getTtl() {
 		return ttl;
@@ -84,25 +81,12 @@ public class Packet implements Message, ScribeContent {
 		return "From: " + this.getFrom() + "; To: " + this.getTo() + "; Message: " + this.getEvent().getLabel();
 	}
 
-	public Map<String, Object> getAdditionalProperties() {
+	public Map<String, Serializable> getAdditionalProperties() {
 		return this.additionalProperties;
 	}
 
-	public void setAdditionalProperty(String name, Object value) {
+	public void setAdditionalProperty(String name, Serializable value) {
 		this.additionalProperties.put(name, value);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder().append(to).append(from).append(priority).append(ttl).append(transactions).append(additionalProperties).toHashCode();
-	}
-
-	@Override
-	public boolean equals(Object other) {
-		if (other == this) { return true; }
-		if ((other instanceof Packet) == false) { return false; }
-		Packet rhs = ((Packet) other);
-		return new EqualsBuilder().append(to, rhs.to).append(from, rhs.from).append(priority, rhs.priority).append(ttl, rhs.ttl).append(transactions, rhs.transactions).append(additionalProperties, rhs.additionalProperties).isEquals();
 	}
 
 	public Id getFrom() {
@@ -113,11 +97,11 @@ public class Packet implements Message, ScribeContent {
 		this.from = from;
 	}
 
-	public Object getTo() {
+	public Serializable getTo() {
 		return to;
 	}
 
-	public void setTo(Object to) {
+	public void setTo(Serializable to) {
 		this.to = to;
 	}
 
@@ -145,7 +129,7 @@ public class Packet implements Message, ScribeContent {
 		return more;
 	}
 
-	public void setMore(Object more) {
+	public void setMore(Serializable more) {
 		this.more = more;
 	}
 
