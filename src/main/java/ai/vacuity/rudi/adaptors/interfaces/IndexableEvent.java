@@ -2,7 +2,7 @@ package ai.vacuity.rudi.adaptors.interfaces;
 
 import org.eclipse.rdf4j.model.IRI;
 
-public interface IEvent {
+public interface IndexableEvent {
 
 	String getLabel();
 

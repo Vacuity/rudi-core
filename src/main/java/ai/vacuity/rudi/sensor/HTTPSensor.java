@@ -8,6 +8,8 @@ import java.util.UUID;
 import org.bouncycastle.bcpg.Packet;
 import org.eclipse.rdf4j.model.IRI;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,14 +21,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
-import ai.vacuity.rudi.adaptors.bo.IndexableInput;
+import ai.vacuity.rudi.adaptors.bo.Input;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 import ai.vacuity.rudi.adaptors.types.Report;
 
 @Controller
-public class HTTPSensor {
+public class HTTPSensor implements BeanPostProcessor {
 
 	private static int counter = 0;
 	private static final String VIEW_RESULTS = "results";
@@ -50,7 +52,7 @@ public class HTTPSensor {
 			IRI user = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "anon");
 			IRI channel = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
 			long start = System.currentTimeMillis();
-			IndexableInput input = new IndexableInput(user, channel, q);
+			Input input = new Input(user, channel, q);
 			r = DispatchService.process(input, d);
 			long end = System.currentTimeMillis();
 			String describeChannel = String.format("select * from named <%s> where {graph <%s>{?s ?p ?o .}}", channel.stringValue(), channel.stringValue());
@@ -104,6 +106,17 @@ public class HTTPSensor {
 		// fetch object from response stream
 		HttpEntity<Packet> request = new HttpEntity<>(new Packet());
 		Channel reply = restTemplate.postForObject(peer, request, Channel.class);
+	}
+
+	@Override
+	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+		return bean;
+	}
+
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		// GraphManager.getRepository(); // initialize the GraphManager
+		return bean;
 	}
 
 }

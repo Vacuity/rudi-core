@@ -1,4 +1,4 @@
-package ai.vacuity.rudi.adaptors.hal.hao;
+package ai.vacuity.rudi.sensor;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -17,7 +17,6 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.Query;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
@@ -35,8 +34,10 @@ import org.eclipse.rdf4j.repository.event.RepositoryConnectionListener;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
-import ai.vacuity.rudi.adaptors.bo.IndexableQuery;
+import ai.vacuity.rudi.adaptors.bo.Query;
 import ai.vacuity.rudi.adaptors.bo.Tuple;
+import ai.vacuity.rudi.adaptors.hal.hao.Constants;
+import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 
 /**
@@ -52,7 +53,7 @@ public class GraphSensor extends Thread implements RepositoryConnectionListener 
 	final static String queueDir = Config.DIR_ALERTS + "queue" + File.separator;
 
 	final static Repository repository = GraphManager.parseSPARQLRepository(Config.SPARQL_ENDPOINT_ALERTS, Config.SPARQL_ENDPOINT_ALERTS_LABEL);
-	private final static HashMap<Value, Vector<IndexableQuery>> map = new HashMap<Value, Vector<IndexableQuery>>();
+	private final static HashMap<Value, Vector<Query>> map = new HashMap<Value, Vector<Query>>();
 
 	Vector<Tuple> tuples = new Vector<Tuple>();
 
@@ -160,7 +161,7 @@ public class GraphSensor extends Thread implements RepositoryConnectionListener 
 		logger.debug((end - start) / 1000f + " seconds");
 	}
 
-	public static final void register(IndexableQuery q) {
+	public static final void register(Query q) {
 		SPARQLParserFactory factory = new SPARQLParserFactory();
 		QueryParser parser = factory.getParser();
 		ParsedQuery parsedQuery = parser.parseQuery(q.getDelegate().toString(), null);
@@ -180,13 +181,13 @@ public class GraphSensor extends Thread implements RepositoryConnectionListener 
 			index(q, o);
 
 			if (!getMap().containsKey(s)) {
-				getMap().put(s, new Vector<IndexableQuery>());
+				getMap().put(s, new Vector<Query>());
 			}
 			if (!getMap().containsKey(p)) {
-				getMap().put(p, new Vector<IndexableQuery>());
+				getMap().put(p, new Vector<Query>());
 			}
 			if (!getMap().containsKey(o)) {
-				getMap().put(o, new Vector<IndexableQuery>());
+				getMap().put(o, new Vector<Query>());
 			}
 			getMap().get(s).add(q);
 			getMap().get(p).add(q);
@@ -194,7 +195,7 @@ public class GraphSensor extends Thread implements RepositoryConnectionListener 
 		}
 	}
 
-	private static void index(IndexableQuery query, Value value) {
+	private static void index(Query query, Value value) {
 		if (value != null) { // only index Values (i.e. not query variables)
 			// logger.debug("Query: " + query.getId() + "" + query.getLabel() + " for value " + value.hashCode() + ":" + value.stringValue());
 			try {
@@ -372,7 +373,7 @@ public class GraphSensor extends Thread implements RepositoryConnectionListener 
 		}
 	}
 
-	public void query(Query q) {
+	public void query(org.eclipse.rdf4j.query.Query q) {
 		if (q instanceof TupleQuery) {
 			try (TupleQueryResult result = ((TupleQuery) q).evaluate()) {
 				while (result.hasNext()) { // iterate over the result
@@ -416,7 +417,7 @@ public class GraphSensor extends Thread implements RepositoryConnectionListener 
 	public void execute(RepositoryConnection conn, QueryLanguage ql, String update, String baseURI, Update operation) {
 	}
 
-	public static HashMap<Value, Vector<IndexableQuery>> getMap() {
+	public static HashMap<Value, Vector<Query>> getMap() {
 		return map;
 	}
 

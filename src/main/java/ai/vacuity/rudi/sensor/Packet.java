@@ -8,7 +8,8 @@ import java.util.Map;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import ai.vacuity.rudi.adaptors.bo.IndexableInput;
+import ai.vacuity.rudi.adaptors.bo.p2p.Input;
+import ai.vacuity.rudi.adaptors.bo.p2p.Response;
 import ai.vacuity.rudi.adaptors.types.Transaction;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
@@ -27,8 +28,8 @@ public class Packet implements Message, ScribeContent {
 	private Id from;
 	private Object to;
 
-	private IndexableInput event;
-	private Object response;
+	private Input event;
+	private Response response;
 	private Integer priority = Message.LOW_PRIORITY;
 
 	private double version = Packet.VERSION_1_0;
@@ -50,11 +51,11 @@ public class Packet implements Message, ScribeContent {
 		return priority;
 	}
 
-	public IndexableInput getEvent() {
+	public Input getEvent() {
 		return event;
 	}
 
-	public void setEvent(IndexableInput event) {
+	public void setEvent(Input event) {
 		this.event = event;
 	}
 
@@ -128,7 +129,7 @@ public class Packet implements Message, ScribeContent {
 		return response;
 	}
 
-	public void setResponse(Object response) {
+	public void setResponse(Response response) {
 		this.response = response;
 	}
 

@@ -32,14 +32,14 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
-import ai.vacuity.rudi.adaptors.bo.IndexableInput;
+import ai.vacuity.rudi.adaptors.bo.Input;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.SPARQLHao;
-import ai.vacuity.rudi.adaptors.interfaces.IEvent;
+import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import ai.vacuity.rudi.adaptors.types.Match;
@@ -76,11 +76,11 @@ public class DispatchService extends Thread {
 		}
 	}
 
-	public static ai.vacuity.rudi.adaptors.types.Report process(IEvent event) throws IOException, IllegalArgumentException {
+	public static ai.vacuity.rudi.adaptors.types.Report process(IndexableEvent event) throws IOException, IllegalArgumentException {
 		return process(event, true);
 	}
 
-	public static Report process(IEvent event, boolean dispatch) throws IOException, IllegalArgumentException {
+	public static Report process(IndexableEvent event, boolean dispatch) throws IOException, IllegalArgumentException {
 		index(event);
 
 		Report report = new Report();
@@ -196,7 +196,7 @@ public class DispatchService extends Thread {
 	 *            the template associated with the response protocol
 	 * @return
 	 */
-	private static String[] process(InputProtocol ip, IEvent event, Report report, String... templates) {
+	private static String[] process(InputProtocol ip, IndexableEvent event, Report report, String... templates) {
 		// 1. swap captured groups' placeholders first
 		// FIRST MATCH GATE
 		boolean found = false;
@@ -208,7 +208,7 @@ public class DispatchService extends Thread {
 			// TODO for now, only allow one run of the matcher per input, to allow a full run, the added matches will need to correspond to the added HAOs in the process() caller
 			if (matcher.find()) {
 				if (!found) {
-					if (event instanceof IndexableInput) {
+					if (event instanceof Input) {
 						report.getMatches().add(m);
 					}
 					// logger.debug("Match: " + ip.getTrigger().stringValue());
@@ -322,11 +322,11 @@ public class DispatchService extends Thread {
 		return templates;
 	}
 
-	private static String[] begin(InputProtocol ip, IEvent event, Report report, String... templates) {
+	private static String[] begin(InputProtocol ip, IndexableEvent event, Report report, String... templates) {
 		List<String> imports = ip.getEventHandler().getImports();
 		if (ip.getEventHandler().getImports().size() > 0) {
 			try {
-				Method m = DispatchService.class.getDeclaredMethod("process", new Class[] { InputProtocol.class, IEvent.class, Report.class, String[].class });
+				Method m = DispatchService.class.getDeclaredMethod("process", new Class[] { InputProtocol.class, IndexableEvent.class, Report.class, String[].class });
 				m.setAccessible(true);
 				Object[] args = new Object[4];
 				args[0] = ip;
@@ -523,7 +523,7 @@ public class DispatchService extends Thread {
 		return templates;
 	}
 
-	public static void index(IEvent event) {
+	public static void index(IndexableEvent event) {
 		Vector<Statement> tuples = new Vector<Statement>();
 		IRI sioc_owner_of = GraphManager.getValueFactory().createIRI(Constants.NS_SIOC, "owner_of");
 		IRI rdf_type = GraphManager.getValueFactory().createIRI(Constants.NS_RDF, "type");

@@ -13,7 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
-import ai.vacuity.rudi.adaptors.interfaces.IEvent;
+import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
 
 /**
@@ -195,7 +195,7 @@ public class Authenticator extends AbstractTemplateModule {
 	}
 
 	@Override
-	public void process(String template, IEvent event) {
+	public void process(String template, IndexableEvent event) {
 		super.process(template, event);
 		String[] oa = getAuthenticationMaterial();
 		this.template = this.template.replace("${id}", getAccessID());
@@ -210,7 +210,7 @@ public class Authenticator extends AbstractTemplateModule {
 	}
 
 	@Override
-	public IEvent getEvent() {
+	public IndexableEvent getEvent() {
 		return this.event;
 	}
 }

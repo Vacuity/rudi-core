@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -126,8 +127,13 @@ public class Config {
 					int len;
 					byte[] buffer = new byte[8 * 1024];
 					InputStream input = cLoader.getResourceAsStream(Config.FILE_NAME);
-					while ((len = input.read(buffer, 0, buffer.length)) > 0) {
-						output.write(buffer, 0, len);
+					if (input != null) {
+						while ((len = input.read(buffer, 0, buffer.length)) > 0) {
+							output.write(buffer, 0, len);
+						}
+					}
+					else {
+						throw new MissingResourceException("Could not find the start up properties file '" + Config.FILE_NAME + "'", "Program Startup", "Configuration File");
 					}
 				}
 				catch (Exception ex) {
@@ -135,8 +141,13 @@ public class Config {
 				}
 			}
 
-			Config.getSettings().load(is);
-			Config.load();
+			if (is != null) {
+				Config.getSettings().load(is);
+				Config.load();
+			}
+			else {
+				throw new MissingResourceException("Could not find the start up properties file '" + Config.FILE_NAME + "'", "Program Startup", "Configuration File");
+			}
 		}
 		catch (IOException ioex) {
 			logger.error(ioex.getMessage(), ioex);

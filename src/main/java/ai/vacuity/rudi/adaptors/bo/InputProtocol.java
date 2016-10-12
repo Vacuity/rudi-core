@@ -25,7 +25,7 @@ public class InputProtocol {
 	Object pattern = null;
 	double patternScore = 0;
 
-	IndexableQuery query = null;
+	Query query = null;
 	// boolean hasSparqlQuery = false;
 
 	public Object getPattern() {
@@ -76,11 +76,11 @@ public class InputProtocol {
 		this.dataType = dataType;
 	}
 
-	public IndexableQuery getQuery() {
+	public Query getQuery() {
 		return query;
 	}
 
-	public void setQuery(IndexableQuery query) {
+	public void setQuery(Query query) {
 		this.query = query;
 	}
 
