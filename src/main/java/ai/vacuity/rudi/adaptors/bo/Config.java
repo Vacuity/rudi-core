@@ -24,7 +24,7 @@ import com.google.api.client.http.GenericUrl;
 
 import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
-import ai.vacuity.rudi.sensor.Router;
+import ai.vacuity.rudi.sensor.DistTutorial;
 import ai.vacuity.utils.OSValidator;
 
 public class Config {
@@ -251,33 +251,28 @@ public class Config {
 			while (st.hasMoreTokens()) {
 				String peer = st.nextToken();
 				String host = getSettings().getProperty(peer + "." + "host");
-				int port = Router.PORT_DEFAULT;
+				int port = 10100;
 				try {
 					port = Integer.parseInt(getSettings().getProperty(peer + "." + "port"));
 				}
 				catch (NumberFormatException nfex) {
 
 				}
-				Router.add(new InetSocketAddress(host, port));
+				DistTutorial.getPeers().add(new InetSocketAddress(host, port));
 			}
 			if (peers.length > 0) {
-				int localPort = Router.PORT_DEFAULT;
+				int localPort = 10100;
 				try {
 					localPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
 				}
 				catch (NumberFormatException nfex) {
 
 				}
-				// // Loads pastry settings
-				// Environment env = new Environment();
-				//
-				// // disable the UPnP setting (in case you are testing this on a NATted LAN)
-				// env.getParameters().setString("nat_search_policy", "never");
 				try {
-					// for (InetSocketAddress p : Router.getPeers()) {
-					// new DistTutorial(localPort, p, env);
-					// }
-					new Router(localPort, peers);
+					for (InetSocketAddress p : DistTutorial.getPeers()) {
+						new DistTutorial(localPort, p);
+					}
+					// new Router(localPort, peers);
 				}
 				catch (Exception e) {
 					logger.error(e.getMessage(), e);
