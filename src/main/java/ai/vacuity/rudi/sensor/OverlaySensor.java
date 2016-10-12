@@ -52,11 +52,11 @@ public class OverlaySensor implements ScribeMultiClient, Application {
 	}
 
 	public void subscribe() {
-		getScribe().subscribe(getTopic(), this, new Packet(), null);
+		// getScribe().subscribe(getTopic(), this, new Packet(), null);
 	}
 
 	public void broadcast(Packet pkt) {
-		getScribe().publish(getTopic(), pkt);
+		// getScribe().publish(getTopic(), pkt);
 	}
 
 	public void send(Packet pkt) {
