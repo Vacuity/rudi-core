@@ -75,18 +75,24 @@ public class MyApp implements Application {
 	 * Called to route a message to the id
 	 */
 	public void routeMyMsg(Id id) {
+		Packet pkt = new Packet();
+		pkt.setFrom(endpoint.getId());
+		pkt.setTo(id);
 		System.out.println(this + " sending to " + id);
 		Message msg = new MyMsg(endpoint.getId(), id);
-		endpoint.route(id, msg, null);
+		endpoint.route(id, pkt, null);
 	}
 
 	/**
 	 * Called to directly send a message to the nh
 	 */
 	public void routeMyMsgDirect(NodeHandle nh) {
+		Packet pkt = new Packet();
+		pkt.setFrom(endpoint.getId());
+		pkt.setTo(nh.getId());
 		System.out.println(this + " sending direct to " + nh);
 		Message msg = new MyMsg(endpoint.getId(), nh.getId());
-		endpoint.route(null, msg, nh);
+		endpoint.route(null, pkt, nh);
 	}
 
 	/**

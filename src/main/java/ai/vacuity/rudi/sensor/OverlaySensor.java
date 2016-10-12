@@ -65,13 +65,13 @@ public class OverlaySensor implements ScribeMultiClient, Application {
 			MyMsg m = new MyMsg(pkt.getFrom(), (Id) pkt.getTo());
 
 			logger.debug(this + " sending to " + pkt.getTo());
-			endpoint.route((Id) pkt.getTo(), m, null);
+			endpoint.route((Id) pkt.getTo(), pkt, null);
 		}
 		if (pkt.getTo() instanceof NodeHandle) {
 			MyMsg m = new MyMsg(pkt.getFrom(), ((NodeHandle) pkt.getTo()).getId());
 
 			logger.debug(this + " sending directly to " + pkt.getTo());
-			endpoint.route(null, m, (NodeHandle) pkt.getTo());
+			endpoint.route(null, pkt, (NodeHandle) pkt.getTo());
 		}
 	}
 

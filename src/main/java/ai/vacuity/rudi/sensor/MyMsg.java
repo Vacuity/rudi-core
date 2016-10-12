@@ -40,6 +40,8 @@ advised of the possibility of such damage.
 package ai.vacuity.rudi.sensor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import ai.vacuity.rudi.adaptors.bo.p2p.Input;
 import ai.vacuity.rudi.adaptors.bo.p2p.Response;
@@ -61,6 +63,9 @@ public class MyMsg implements Message {
 
 	private double version = MyMsg.VERSION_1_0;
 	private Serializable more;
+
+	private Integer ttl;
+	private List<Serializable> transactions = new ArrayList<Serializable>();
 	/**
 	 * Where the Message came from.
 	 */
@@ -139,5 +144,21 @@ public class MyMsg implements Message {
 
 	public void setPriority(Integer priority) {
 		this.priority = priority;
+	}
+
+	public List<Serializable> getTransactions() {
+		return transactions;
+	}
+
+	public void setTransactions(List<Serializable> transactions) {
+		this.transactions = transactions;
+	}
+
+	public Integer getTtl() {
+		return ttl;
+	}
+
+	public void setTtl(Integer ttl) {
+		this.ttl = ttl;
 	}
 }
