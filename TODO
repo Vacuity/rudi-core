@@ -1,18 +1,23 @@
 TODO Use inferencing to sameAs businesses with the same address or phone number
 TODO Use inferencing to sameAs people with the email address or cell phone number (not numbers that can be shared)
-TODO Channels should support ASK queries only
-TODO Fetch Virtuoso provider jars from maven repo
+TODO Channels should support ASK queries
+TODO Add project and all dependency provider jars to Maven Central
 TODO Add OAuth support
-TODO Add ability to reference <via:o> in <via:Out> (e.g. pull distance and flight times for an event)
+TODO Add ability to reference <via:notify> in <via:Output> (e.g. pull distance and flight times for an event IRI) <-- this can be done by 
+registering a listener for event data, need to create an example 
 TODO Add support for POST body and Headers
-TODO Implement caching of search results
+TODO Implement caching of emission
 TODO Remove hardcoded namespaces, URIs, URLs, filepaths, etc
 TODO Multiple via:label_* elements need to collect in a common InputProtocol, current they each form separate protocols
-TODO Allow multiple <via:notify> per listener
-TODO GraphListener's queue cycle is n seconds, need to ensure this in memory queue can scale
+TODO GraphSensor's queue cycle is n seconds, need to ensure this in memory queue can scale
 TODO Allow client to pass a channel id to be used instead of minting one on each request
 TODO Implement most specific regex match
 TODO Implement XML Signatures
 TODO Consider converting settings.ini to settings.rdf, or at least settings.xml to improve maintainability
-TODO Add boolean arg to DispatchService.dispatch() to allow for match but not dispatch, for Spotlight search auto-complete
 TODO Associate match score with Response and Input bo's, order auto-complete matches by score (allow user to choose & train the engine)
+TODO Implement ServiceLoader for pluggable Interfaces, move pluggable providers to separate project
+TODO Register artifact with Maven Central
+TODO Need to produce a set of stable APIs within the RUDI framework, and work out a versioning scheme to manage transfer object versions in the p2p overlay 
+TODO Implement via:pattern lists, currently only the first non-nil list element is recognized, and only then when it is a typed pattern
+TODO Implement RestfulHao using HttpEntity and ResponseEntity
+TODO Implement DHT-backed namespace provider
