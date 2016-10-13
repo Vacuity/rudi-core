@@ -34,18 +34,20 @@ import org.slf4j.LoggerFactory;
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.Input;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
+import ai.vacuity.rudi.adaptors.bo.Label;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 import ai.vacuity.rudi.adaptors.hal.hao.RestfulHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.SPARQLHao;
+import ai.vacuity.rudi.adaptors.interfaces.IReportProvider;
 import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import ai.vacuity.rudi.adaptors.types.Match;
 import ai.vacuity.rudi.adaptors.types.Report;
 
-public class DispatchService extends Thread {
+public class DispatchService extends Thread implements IReportProvider {
 
 	public DispatchService() {
 		start(); // start dispatching events
@@ -201,7 +203,7 @@ public class DispatchService extends Thread {
 		// FIRST MATCH GATE
 		boolean found = false;
 		Match m = new Match();
-		m.setLabels(ip.getLabels());
+		m.setLabels(ip.getLabelStrings());
 		m.setScore(ip.getPatternScore());
 		if (ip.getDataType() != null && ip.getDataType().equals(InputProtocol.PARSE_TYPE_REGEX) && ip.getPattern() instanceof Pattern) {
 			Matcher matcher = ((Pattern) ip.getPattern()).matcher(event.getLabel());
@@ -215,16 +217,23 @@ public class DispatchService extends Thread {
 					found = true;
 				}
 				int groups = matcher.groupCount();
-				for (int gp = 1; gp <= groups; gp++) {
+				for (int gpidx = 1; gpidx <= groups; gpidx++) {
 					// logger.debug("group " + gp + ": " + matcher.group(gp));
-					for (int i = 0; i < templates.length; i++)
-						templates[i] = templates[i].replace("${" + gp + "}", matcher.group(gp));
+					int zbidx = gpidx - 1;
+					for (int i = 0; i < templates.length; i++) {
+						templates[i] = templates[i].replace("${" + zbidx + "}", matcher.group(gpidx));
+
+						Label label = ip.getLabels().get(zbidx);
+						templates[i] = templates[i].replace("${" + label.getQname() + "}", matcher.group(gpidx));
+
+					}
 				}
 
 				// if ${0} remains, assume no pattern group matched it, so set it to the entire
 				// input event
-				for (int i = 0; i < templates.length; i++)
-					templates[i] = templates[i].replace("${0}", matcher.group());
+				for (int i = 0; i < templates.length; i++) {
+					templates[i] = templates[i].replace("${event}", matcher.group());
+				}
 			}
 		}
 
@@ -474,7 +483,7 @@ public class DispatchService extends Thread {
 			// }
 
 			// if ${0} remains, assume no projection items replaced it, so set 0 = the entire query event
-			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${0}", ip.getQuery().getDelegate().toString());
+			if (StringUtils.isNotBlank(templates[i])) templates[i] = templates[i].replace("${event}", ip.getQuery().getDelegate().toString());
 
 			// 3. swap any remaining reserved placed holders
 			if (ip.getEventHandler().hasEndpointKey()) templates[i] = templates[i].replace("${key}", ip.getEventHandler().getEndpointKey());
@@ -545,6 +554,21 @@ public class DispatchService extends Thread {
 
 	private static void add(AbstractHAO hao) {
 		getQueue().add(hao);
+	}
+
+	@Override
+	public Report getReport(IndexableEvent event) {
+		try {
+			Report report = DispatchService.process(event, false);
+			return report;
+		}
+		catch (IllegalArgumentException e) {
+			logger.error(e.getMessage(), e);
+		}
+		catch (IOException e) {
+			logger.error(e.getMessage(), e);
+		}
+		return null;
 	}
 
 }

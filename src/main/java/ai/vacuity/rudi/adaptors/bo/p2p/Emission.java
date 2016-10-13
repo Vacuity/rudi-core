@@ -2,7 +2,7 @@ package ai.vacuity.rudi.adaptors.bo.p2p;
 
 import java.io.Serializable;
 
-public class Response implements Serializable {
+public class Emission implements Serializable {
 
 	/**
 	 * 

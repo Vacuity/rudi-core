@@ -1,7 +1,7 @@
 package ai.vacuity.rudi.adaptors.interfaces.impl;
 
 import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
-import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
+import ai.vacuity.rudi.adaptors.interfaces.IEmissionModule;
 
 /**
  * Performs transformations on the response and/or input value.
@@ -9,7 +9,7 @@ import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
  * @author In Lak'ech.
  *
  */
-public abstract class AbstractResponseModule implements IResponseModule {
+public abstract class AbstractResponseModule implements IEmissionModule {
 
 	protected String response;
 	protected IndexableEvent event;

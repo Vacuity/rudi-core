@@ -18,7 +18,7 @@ public class InputProtocol {
 	Value trigger = null;
 	IRI dataType = null;
 
-	List<String> labels = new ArrayList<String>();
+	List<Label> labels = new ArrayList<Label>();
 	HashMap<Integer, Literal> labelMap = new HashMap<Integer, Literal>();
 
 	EventHandler eventHandler = null;
@@ -44,12 +44,20 @@ public class InputProtocol {
 		this.trigger = trigger;
 	}
 
-	public List<String> getLabels() {
+	public List<Label> getLabels() {
 		return labels;
 	}
 
-	public void setLabels(List<String> labels) {
+	public void setLabels(List<Label> labels) {
 		this.labels = labels;
+	}
+
+	public List<String> getLabelStrings() {
+		List<String> labels = new ArrayList<String>();
+		for (Label l : getLabels()) {
+			labels.add(l.getLabel());
+		}
+		return labels;
 	}
 
 	public HashMap<Integer, Literal> getLabelMap() {

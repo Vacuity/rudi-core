@@ -26,13 +26,13 @@
  		<via:config>youtube.data</via:config>
  		<via:json rdf:resource="https://www.googleapis.com/youtube/v3/search?part=snippet&amp;type=video&amp;q=${1}&amp;key=${key}"/>
 		<via:translator rdf:resource="http://rudi.endpoint.placeholders.vacuity.ai/a/youtube/youtube-api-results.xsl"/>
- 		<via:log>Checking ${domain} for videos about '${1}'</via:log>
+ 		<via:log>Checking ${domain} for videos about '${0}'</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>
  	
  	<via:Input rdf:about="#youtube_cmd">
  		<via:pattern rdf:datatype="&via;Regex">^youtube\s*(.*)$</via:pattern>
- 		<via:labels>,Youtube Search Terms</via:labels>
+ 		<via:labels>Youtube Search Terms</via:labels>
  	</via:Input>
 
 	 	
