@@ -45,7 +45,7 @@
  		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/links/${1}?TargetCols=2048&amp;Scope=page_to_page&amp;Sort=domains_linking_page&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=${token}"/>
  		<!-- the rdfs:range is a via:Template -->
- 		<via:log>Fetching backlinks for '${1}' from ${domain}.</via:log>
+ 		<via:log>Fetching backlinks for '${0}' from ${domain}.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
 		<via:translator rdf:resource="http://rudi.endpoint.placeholders.vacuity.ai/a/moz/moz-api-results.xsl"/>
  	</via:EventHandler>
@@ -73,7 +73,7 @@ WHERE
  	<via:EventHandler rdf:about="#moz-get-url-stats">
  		<via:config>moz</via:config>
  		<via:json rdf:resource="http://lsapi.seomoz.com/linkscape/url-metrics/${1}?144115188075855876=2048&amp;AccessID=${id}&amp;Expires=${expiry}&amp;Signature=%${token}"/>
- 		<via:log>Fetching freshness and URL canonical form for '${1}' from ${domain}.</via:log>
+ 		<via:log>Fetching freshness and URL canonical form for '${0}' from ${domain}.</via:log>
  		<!-- be sure to add a timestamp before registering the log -->
  	</via:EventHandler>
 

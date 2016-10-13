@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.api.client.http.GenericUrl;
 
-import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
+import ai.vacuity.rudi.adaptors.interfaces.IEmissionModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
 import ai.vacuity.rudi.sensor.Router;
 import ai.vacuity.utils.OSValidator;
@@ -43,7 +43,7 @@ public class Config {
 	private String username = null;
 	private String password = null;
 	private ITemplateModule templateModule = null;
-	private IResponseModule responseModule = null;
+	private IEmissionModule responseModule = null;
 
 	final static HashMap<String, Config> map = new HashMap<String, Config>();
 	final static Properties settings = new Properties();
@@ -330,7 +330,7 @@ public class Config {
 					}
 					try {
 						Class clazz = Class.forName(rpStr);
-						IResponseModule rp = (IResponseModule) clazz.newInstance();
+						IEmissionModule rp = (IEmissionModule) clazz.newInstance();
 						config.setResponseModule(rp);
 					}
 					catch (ClassNotFoundException cnfex) {
@@ -413,11 +413,11 @@ public class Config {
 		this.templateModule = templateModule;
 	}
 
-	public IResponseModule getResponseModule() {
+	public IEmissionModule getResponseModule() {
 		return responseModule;
 	}
 
-	public void setResponseModule(IResponseModule responseModule) {
+	public void setResponseModule(IEmissionModule responseModule) {
 		this.responseModule = responseModule;
 	}
 

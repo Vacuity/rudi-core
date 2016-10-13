@@ -11,7 +11,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.common.net.MediaType;
 
-import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
+import ai.vacuity.rudi.adaptors.interfaces.IEmissionModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
 
 public class EventHandler {
@@ -53,7 +53,7 @@ public class EventHandler {
 		return Config.get(getConfigLabel()).hasResponseModule();
 	}
 
-	public IResponseModule getEndpointResponseModule() {
+	public IEmissionModule getEndpointResponseModule() {
 		return Config.get(getConfigLabel()).getResponseModule();
 	}
 

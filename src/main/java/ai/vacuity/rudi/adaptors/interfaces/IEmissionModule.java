@@ -6,7 +6,7 @@ package ai.vacuity.rudi.adaptors.interfaces;
  * @author In Lak'ech.
  *
  */
-public interface IResponseModule {
+public interface IEmissionModule {
 	public void process(String response, IndexableEvent event);
 
 	public String getResponse();

@@ -18,6 +18,7 @@ import org.eclipse.rdf4j.common.iteration.Iterations;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Namespace;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
@@ -45,10 +46,12 @@ import com.google.api.client.http.GenericUrl;
 import com.google.common.net.MediaType;
 import com.openlink.virtuoso.rdf4j.driver.VirtuosoRepository;
 
+import ai.vacuity.rudi.adaptors.bo.Label;
 import ai.vacuity.rudi.adaptors.bo.Config;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
-import ai.vacuity.rudi.adaptors.bo.Query;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
+import ai.vacuity.rudi.adaptors.bo.Query;
+import ai.vacuity.rudi.adaptors.interfaces.impl.DefaultNamespaceProvider;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import ai.vacuity.rudi.sensor.GraphSensor;
 
@@ -250,10 +253,10 @@ public class GraphManager {
 				while (result.hasNext()) { // iterate over the result
 					BindingSet bindingSet = result.next();
 					Value q = bindingSet.getValue("q");
-					Value label = bindingSet.getValue("l");
+					Value queryLabel = bindingSet.getValue("l");
 					Value sparql = bindingSet.getValue("s");
 					logger.debug("Value: " + q.stringValue());
-					logger.debug("Label: " + label.stringValue());
+					logger.debug("Label: " + queryLabel.stringValue());
 					logger.debug("SPARQL: " + sparql.stringValue());
 
 					TupleQuery data = con.prepareTupleQuery(QueryLanguage.SPARQL, sparql.stringValue());
@@ -312,8 +315,8 @@ public class GraphManager {
 											else if (pattern instanceof IRI) {
 												try {
 													IRI patternIRI = (IRI) pattern;
-													Model captures = Connections.getRDFCollection(getConnection(), patternIRI, new LinkedHashModel());
-													Iterator<Statement> m = captures.iterator();
+													Model patternList = Connections.getRDFCollection(getConnection(), patternIRI, new LinkedHashModel());
+													Iterator<Statement> m = patternList.iterator();
 													List<Value> l = new ArrayList<Value>();
 													collect_list_element: while (m.hasNext()) {
 														Statement st = m.next();
@@ -343,12 +346,42 @@ public class GraphManager {
 										}
 										String labelsStr = bs2.getValue("i_labels").stringValue();
 										if (StringUtils.isNotBlank(labelsStr)) {
-											String COMMA_ESCAPE = "::comma-rudi-replacement::";
+											String COMMA_ESCAPE = "||comma-rudi-replacement||";
+											String SEMI_COLON_ESCAPE = "||semi-colon-rudi-replacement||";
 											labelsStr = labelsStr.replace("\\,", COMMA_ESCAPE);
+											labelsStr = labelsStr.replace("\\:", SEMI_COLON_ESCAPE);
 											StringTokenizer st = new StringTokenizer(labelsStr, ",");
-											List<String> labels = new ArrayList<String>();
-											while (st.hasMoreTokens()) {
-												labels.add(st.nextToken().replace(COMMA_ESCAPE, ","));
+											List<Label> labels = new ArrayList<Label>();
+											for (int idx = 0; st.hasMoreTokens(); idx++) {
+												Label label = new Label();
+												String labelStr = st.nextToken();
+												label.setLabel(labelStr);
+												int scidx = labelStr.indexOf(":");
+												if (scidx > 0) {
+													if (scidx == labelStr.length() - 1) {
+														IllegalArgumentException iaex = new IllegalArgumentException("Label qName missing local part: " + bs2.getValue("input"));
+														logger.error(iaex.getMessage(), iaex);
+													}
+													else {
+														Namespace ns = new DefaultNamespaceProvider().getNamespace(labelStr.substring(0, labelStr.indexOf(":")));
+														if (ns != null) {
+															label.setNamespace(ns);
+															label.setLocalPart(labelStr.substring(labelStr.indexOf(":") + 1));
+															IRI labelIRI = getValueFactory().createIRI(label.getIRI());
+															List<Statement> nsLabels = Iterations.asList(con.getStatements(labelIRI, getValueFactory().createIRI(Constants.NS_RDFS + "label"), null));
+															for (Statement nsl : nsLabels) {
+																label.setLabel(nsl.getObject().stringValue());
+																break;
+															}
+														}
+													}
+												}
+
+												labelStr = label.getLabel();
+												labelStr = labelStr.replace(COMMA_ESCAPE, ",");
+												labelStr = labelStr.replace(SEMI_COLON_ESCAPE, ":");
+												label.setLabel(labelStr);
+												labels.add(label);
 											}
 											i.setLabels(labels);
 										}
