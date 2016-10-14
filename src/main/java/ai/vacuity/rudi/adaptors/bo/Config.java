@@ -244,31 +244,38 @@ public class Config {
 	}
 
 	public static final void load() {
-		String peersStr = getSettings().getProperty(Config.PROPERTY_P2P_PEERS);
-		if (StringUtils.isNotEmpty(peersStr)) {
-			StringTokenizer st = new StringTokenizer(getSettings().getProperty(Config.PROPERTY_P2P_PEERS));
-			Router.setPeers(new InetSocketAddress[st.countTokens()]);
-			for (int i = 0; st.hasMoreTokens(); i++) {
-				String peer = st.nextToken();
-				String host = getSettings().getProperty(peer + "." + "host");
-				int port = 10100;
-				try {
-					port = Integer.parseInt(getSettings().getProperty(peer + "." + "port"));
-				}
-				catch (NumberFormatException nfex) {
+		Thread t = new Thread() {
 
-				}
-				Router.getPeers()[i] = new InetSocketAddress(host, port);
-			}
-			int daemonPort = 10100;
-			try {
-				daemonPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
-			}
-			catch (NumberFormatException nfex) {
+			@Override
+			public void run() {
+				String peersStr = getSettings().getProperty(Config.PROPERTY_P2P_PEERS);
+				if (StringUtils.isNotEmpty(peersStr)) {
+					StringTokenizer st = new StringTokenizer(getSettings().getProperty(Config.PROPERTY_P2P_PEERS));
+					Router.setPeers(new InetSocketAddress[st.countTokens()]);
+					for (int i = 0; st.hasMoreTokens(); i++) {
+						String peer = st.nextToken();
+						String host = getSettings().getProperty(peer + "." + "host");
+						int port = 10100;
+						try {
+							port = Integer.parseInt(getSettings().getProperty(peer + "." + "port"));
+						}
+						catch (NumberFormatException nfex) {
 
+						}
+						Router.getPeers()[i] = new InetSocketAddress(host, port);
+					}
+					int daemonPort = 10100;
+					try {
+						daemonPort = Integer.parseInt(getSettings().getProperty(Config.PROPERTY_P2P_PORT));
+					}
+					catch (NumberFormatException nfex) {
+
+					}
+					Router.init(daemonPort);
+				}
 			}
-			Router.init(daemonPort);
-		}
+		};
+		t.start();
 		Enumeration<Object> keys = getSettings().keys();
 		while (keys.hasMoreElements()) {
 			String key = ((String) keys.nextElement()).toLowerCase();

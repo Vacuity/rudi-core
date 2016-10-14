@@ -5,6 +5,8 @@ import java.util.HashMap;
 
 import org.eclipse.rdf4j.model.IRI;
 
+import ai.vacuity.rudi.adaptors.types.Prompt;
+
 public class Context extends Query {
 
 	public Context(org.eclipse.rdf4j.query.Query delegate) {
@@ -20,7 +22,7 @@ public class Context extends Query {
 	}
 
 	public void addPrompt(Prompt prompt) {
-		this.prompts.put(prompt.getIri().stringValue(), prompt);
+		this.prompts.put(prompt.getIri(), prompt);
 	}
 
 	public Prompt getPrompt(String iri) {

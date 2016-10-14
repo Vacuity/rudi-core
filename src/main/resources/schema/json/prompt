@@ -1,0 +1,18 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"description": "A prompt which elicits data from the user-agent",
+	"type": "object",
+	"properties": {
+		"label": {
+			"description": "The string representation of this prompt, e.g. an interrogative",
+			"type": "string"
+		},
+		"iri": {
+			"description": "The RDF property IRI of the elicited data",
+			"type": "string"
+		}
+	},
+	"required": [
+		"id"
+	]
+}

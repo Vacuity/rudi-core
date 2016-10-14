@@ -59,10 +59,10 @@ import ai.vacuity.rudi.adaptors.bo.Context;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.bo.Label;
-import ai.vacuity.rudi.adaptors.bo.Prompt;
 import ai.vacuity.rudi.adaptors.bo.Query;
 import ai.vacuity.rudi.adaptors.interfaces.impl.DefaultNamespaceProvider;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
+import ai.vacuity.rudi.adaptors.types.Prompt;
 import ai.vacuity.rudi.sensor.GraphSensor;
 
 /**
@@ -113,6 +113,8 @@ public class GraphManager {
 	public final static IRI via_Hit = getValueFactory().createIRI(Constants.NS_VIA, "Hit");
 
 	public final static IRI via_QueryResult = getValueFactory().createIRI(Constants.NS_VIA, "QueryResult");
+
+	public final static IRI via_Results = getValueFactory().createIRI(Constants.NS_VIA, "Results");
 
 	public final static IRI via_Projection = getValueFactory().createIRI(Constants.NS_VIA, "Projection");
 
@@ -238,7 +240,7 @@ public class GraphManager {
 			// remove all listener data
 			List<Statement> listeners = Iterations.asList(con.getStatements(null, subClassOfIRI, listenerContextClassIRI));
 			for (Statement listener : listeners) {
-				con.remove(getValueFactory().createStatement(null, null, null), listener.getSubject());
+				con.remove(null, null, null, new Resource[] { listener.getSubject() });
 			}
 
 			// clear the default RUDI context
@@ -369,14 +371,16 @@ public class GraphManager {
 											}
 										}
 
-										String override = bs2.getValue("override").stringValue();
-										if (StringUtils.isNotBlank(override)) {
-											StringReader sr = new StringReader(override);
-											i.getOverrides().load(sr);
+										if (bs2.getValue("override") != null) {
+											String override = bs2.getValue("override").stringValue();
+											if (StringUtils.isNotBlank(override)) {
+												StringReader sr = new StringReader(override);
+												i.getOverrides().load(sr);
+											}
 										}
 
-										String labelsStr = bs2.getValue("i_labels").stringValue();
-										if (StringUtils.isNotBlank(labelsStr)) {
+										if (bs2.getValue("i_labels") != null) {
+											String labelsStr = bs2.getValue("i_labels").stringValue();
 											String COMMA_ESCAPE = "||comma-rudi-replacement||";
 											String SEMI_COLON_ESCAPE = "||semi-colon-rudi-replacement||";
 											labelsStr = labelsStr.replace("\\,", COMMA_ESCAPE);
@@ -465,7 +469,7 @@ public class GraphManager {
 																				Prompt prompt = new Prompt();
 																				prompt.setLabel(bs3.getValue("prompt").stringValue());
 																				if (bs3.getValue("q") instanceof IRI) {
-																					prompt.setIri((IRI) bs3.getValue("q"));
+																					prompt.setIri(((IRI) bs3.getValue("q")).stringValue());
 																				}
 																				ctx.getPrompts().add(prompt);
 																			}
@@ -630,7 +634,7 @@ public class GraphManager {
 		try {
 			try (RepositoryConnection con = getConnection()) {
 				con.begin();
-				con.add(is, context.stringValue(), null, context);
+				con.add(is, context.stringValue(), RDFFormat.JSONLD, context);
 				con.commit();
 			}
 			catch (Exception e) {
