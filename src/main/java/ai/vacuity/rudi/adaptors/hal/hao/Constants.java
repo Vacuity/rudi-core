@@ -27,12 +27,12 @@ public class Constants {
 	public final static String NS_WN2 = "http://www.w3.org/2006/03/wn/wn20/schema/";
 	public final static String NS_WN3 = "http://purl.org/vocabularies/princeton/wn30/";
 	public final static String NS_NIX = "http://www.vacuity.ai/onto/nix/1.0/";
-	public final static String NS_VIA = "http://www.vacuity.ai/onto/via/1.0/";
 	public final static String NS_MA_ONT = "http://www.w3.org/ns/ma-ont/";
 	public final static String NS_OWL = "http://www.w3.org/2002/07/owl#";
-	public final static String NS_VI = "http://www.vacuity.ai/onto/instances/1.0#";
+	public final static String NS_VIA = "http://www.vacuity.ai/onto/via/1.0/";
+	public final static String NS_VI = "http://www.vacuity.ai/onto/instances#";
 	public final static String NS_FREE = "http://freebase.com/";
 	public static final String CONTEXT_DEMO = "http://tryrudi.io/rdf/demo/";
-	public static final String CONTEXT_VIA = "http://tryrudi.io/rdf/via/";
+	public static final String CONTEXT_RUDI = Constants.NS_VI + "Index";
 
 }

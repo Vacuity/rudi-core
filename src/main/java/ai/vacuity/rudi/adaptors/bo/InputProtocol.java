@@ -3,6 +3,7 @@ package ai.vacuity.rudi.adaptors.bo;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -14,6 +15,9 @@ import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
 public class InputProtocol {
 
 	public final static IRI PARSE_TYPE_REGEX = GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "Regex");
+	public final static String OVERRIDE_PROMPT_POLICY = "prompt.policy";
+	public final static String OVERRIDE_PROMPT_POLICY_RANDOM = "random";
+	public final static String OVERRIDE_PROMPT_POLICY_ALL = "all";
 
 	Value trigger = null;
 	IRI dataType = null;
@@ -26,7 +30,10 @@ public class InputProtocol {
 	double patternScore = 0;
 
 	Query query = null;
+	List<Context> contexts = new ArrayList<Context>();
 	// boolean hasSparqlQuery = false;
+
+	Properties overrides = new Properties();
 
 	public Object getPattern() {
 		return pattern;
@@ -102,6 +109,22 @@ public class InputProtocol {
 
 	public void setPatternScore(double patternScore) {
 		this.patternScore = patternScore;
+	}
+
+	public List<Context> getContexts() {
+		return contexts;
+	}
+
+	public void setContexts(List<Context> contexts) {
+		this.contexts = contexts;
+	}
+
+	public Properties getOverrides() {
+		return overrides;
+	}
+
+	public void setOverrides(Properties overrides) {
+		this.overrides = overrides;
 	}
 
 	// public void hasSparqlQuery(boolean hasSparqlQuery) {

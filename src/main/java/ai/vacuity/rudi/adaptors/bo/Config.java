@@ -25,7 +25,7 @@ import com.google.api.client.http.GenericUrl;
 import ai.vacuity.rudi.adaptors.interfaces.IEmissionModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
 import ai.vacuity.rudi.sensor.Router;
-import ai.vacuity.utils.OSValidator;
+import ai.vacuity.util.OSValidator;
 
 public class Config {
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(Config.class);

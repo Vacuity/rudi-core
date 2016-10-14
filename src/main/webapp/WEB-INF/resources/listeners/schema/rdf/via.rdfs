@@ -2,7 +2,7 @@
  <!DOCTYPE rdf:RDF [
      <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
  ]>
- <rdf:RDF xmlns="http://www.vacuity.ai/onto/via/1.0/rdfs#"
+ <rdf:RDF xmlns="http://www.vacuity.ai/onto/via/1.0/"
      xml:base="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
@@ -12,8 +12,8 @@
  >
 
      <owl:Ontology rdf:about="">
-         <rdfs:comment >Created by Vacuity.</rdfs:comment >
-         <dc:date rdf:datatype="date" >2016-09-23 </dc:date >
+         <rdfs:comment >Vacuous Intermediary Automata Ontology</rdfs:comment >
+         <dc:date rdf:datatype="date" >2016-09-23</dc:date >
          <owl:versionInfo >RC001</owl:versionInfo >
      </owl:Ontology>
      
@@ -81,6 +81,15 @@
          <rdfs:comment></rdfs:comment>
          <rdfs:subClassOf rdf:resource="http://rdfs.org/sioc/ns#"/>
     </owl:Class>
+    
+	<owl:ObjectProperty rdf:about="execute">
+		<rdfs:range rdf:resource="Query" />
+	</owl:ObjectProperty>
+    
+	<owl:ObjectProperty rdf:about="context">
+		<rdfs:range rdf:resource="Query" />
+	</owl:ObjectProperty>
+    
 	
     <owl:Class rdf:about="Query">
          <rdfs:comment></rdfs:comment>

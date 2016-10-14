@@ -21,3 +21,6 @@ TODO Need to produce a set of stable APIs within the RUDI framework, and work ou
 TODO Implement via:pattern lists, currently only the first non-nil list element is recognized, and only then when it is a typed pattern
 TODO Implement RestfulHao using HttpEntity and ResponseEntity
 TODO Implement DHT-backed namespace provider
+TODO Implement Perennial calendar
+TODO Tags are not allowed in Query that are via:event object, this is inconsistent, need to implement tags in Query
+TODO Make string localNames constant in IRI declarations
