@@ -24,7 +24,7 @@
  	
  	<via:Input rdf:about="#catchAll">
  		<via:pattern rdf:datatype="&via;Regex">^([a-zA-Z\s]*)$</via:pattern>
- 		<via:labels>,Keywords</via:labels>
+ 		<via:labels>Keywords</via:labels>
  	</via:Input>
  	
  	<!-- IPs -->

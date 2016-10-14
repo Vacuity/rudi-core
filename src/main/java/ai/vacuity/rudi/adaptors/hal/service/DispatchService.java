@@ -37,7 +37,6 @@ import ai.vacuity.rudi.adaptors.bo.Context;
 import ai.vacuity.rudi.adaptors.bo.Input;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.bo.Label;
-import ai.vacuity.rudi.adaptors.bo.Prompt;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
@@ -48,6 +47,7 @@ import ai.vacuity.rudi.adaptors.interfaces.IndexableEvent;
 import ai.vacuity.rudi.adaptors.interfaces.impl.AbstractTemplateModule;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import ai.vacuity.rudi.adaptors.types.Match;
+import ai.vacuity.rudi.adaptors.types.Prompt;
 import ai.vacuity.rudi.adaptors.types.Report;
 
 public class DispatchService extends Thread implements IReportProvider {
@@ -228,7 +228,7 @@ public class DispatchService extends Thread implements IReportProvider {
 						templates[i] = templates[i].replace("${" + zbidx + "}", matcher.group(gpidx));
 
 						Label label = ip.getLabels().get(zbidx);
-						templates[i] = templates[i].replace("${" + label.getQname() + "}", matcher.group(gpidx));
+						if (label != null) templates[i] = templates[i].replace("${" + zbidx + ".label}", label.getLabel());
 
 					}
 				}
@@ -246,8 +246,8 @@ public class DispatchService extends Thread implements IReportProvider {
 		// SECOND MATCH GATE - Typed Patterns
 		if (ip.getPattern() instanceof List) {
 			List<Value> l = (List<Value>) ip.getPattern();
-			for (int j = 0; j < l.size(); j++) {
-				Value value = l.get(j);
+			for (int lidx = 0; lidx < l.size(); lidx++) {
+				Value value = l.get(lidx);
 				if (value == null) continue;
 				if (value instanceof Literal) {
 					// if()
@@ -299,7 +299,10 @@ public class DispatchService extends Thread implements IReportProvider {
 					// swap the first non-empty capture result
 					for (int i = 0; i < templates.length; i++) {
 						if (StringUtils.isNotBlank(templates[i])) {
-							templates[i] = templates[i].replace("${" + j + "}", event.getLabel());
+							templates[i] = templates[i].replace("${" + lidx + "}", event.getLabel());
+
+							Label label = ip.getLabels().get(lidx);
+							if (label != null) templates[i] = templates[i].replace("${" + lidx + ".label}", label.getLabel());
 						}
 					}
 					break;
@@ -320,16 +323,16 @@ public class DispatchService extends Thread implements IReportProvider {
 					case InputProtocol.OVERRIDE_PROMPT_POLICY_RANDOM:
 						Random randomizer = new Random();
 						Prompt random = prompts.get(randomizer.nextInt(prompts.size()));
-						report.getPrompts().add(random.getLabel());
+						report.getPrompts().add(random);
 						break;
 					case InputProtocol.OVERRIDE_PROMPT_POLICY_ALL:
 						for (Prompt prompt : prompts) {
-							report.getPrompts().add(prompt.getLabel());
+							report.getPrompts().add(prompt);
 						}
 						break;
 					default:
 						for (Prompt prompt : prompts) {
-							report.getPrompts().add(prompt.getLabel());
+							report.getPrompts().add(prompt);
 						}
 				}
 				templates = (String[]) sa[0];
@@ -472,6 +475,7 @@ public class DispatchService extends Thread implements IReportProvider {
 										captureIndex = captureIndex.substring(0, captureIndex.indexOf("_"));
 									}
 									templates[i] = templates[i].replace("${" + captureIndex + "}", value);
+
 								}
 							}
 

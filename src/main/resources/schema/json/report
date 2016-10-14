@@ -24,13 +24,17 @@
 				"$ref": "./match"
 			}
 		},
+		"matches": {
+			"type": "array",
+			"items": {
+				"$ref": "./match"
+			}
+		},
         "prompts": {
             "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "minItems": 0,
-            "uniqueItems": true
+			"items": {
+				"$ref": "./prompt"
+			}
         },
         "logs": {
             "type": "array",
