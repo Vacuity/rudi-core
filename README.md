@@ -46,7 +46,7 @@ mvn install:install-file -Dfile=<path/to/FreePastry-2.1.jar> -DgroupId=rice.past
 2. [Event Routing](#routing)
 3. [Topical Broadcasting](#broadcasting)
 4. [Dispatch Round](#dispatch)
-5. [Distributed Querying](#distributedQuery)
+5. [Distributed Querying](#distroQuery)
 6. [Web Service Reply Cache](#cache)
 
 [VI Programming](#programming)
@@ -80,6 +80,8 @@ At its core, RUDI is a platform for marshalling and federating linked data from 
 
 RUDI features a [SCRIBE](http://www.freepastry.org/PAST/anycast.pdf) message board to which events are broadcast under *topic* IRIs. Topic subscribers  reply with useful behavior in response to posts. In the broadcast procedure, the event is optionally published to the `via:GetTopic` topic prior to routing. This topic is subscribed to by RUDI peers who possess listeners linked to `via:TopicProvider`, which is a `rdf:subClass` of `via:EventHandler` and which emits topics for event patterns. The topic server replies to origin with a list of ranked topics. The origin node then broadcasts the event to the list of topics it received, in accordance with pre-defined selection criteria managed by the node owner. Otherwise, the event is broadcast under topics provided by the origin node itself. In either case, different contextual constraints accompanying the event (a faceted query view element, an LDPath, a #hashtag, etc.) are used to generate the topic. Likewise, nodes who broadcast events to the `via:SPARQLProvider` topic will receive the event in SPARQL format, events broadcast to `via:GetReportProvider` will receive the report for data captured from the event as assigned by `via:Listener` (`via:labels`, match score, match duration, etc), and nodes who broadcast a QueryResultSet packet to `via:GetViewlet` will receive an HTML5 representation of the result set. Typical subscribers simply dispatch the event and relay the raw data to origin.
 
+A user may register a topic which they alone can access. This is done by 
+
 ##<a name="dispatch"/>Dispatch Round
 
 There is a high likelihood that multiple nodes subscribing to the same topic will dispatch the topic's events to the same endpoint. This is paramount to the origin node resubmitting the same request to the endpoint multiple times. This results in superflous results and abusive web API usage. To avoid this, a [virtual token ring](http://dbpedia.org/page/Token_ring) is formed by the subscribers. More specifically, for every web service endpoint ENPT handled by a node, the node registers to the token ring by sending a PUT message to the ring key.  The key a node uses to retrieve its downstream peer in the token ring is `ENPT + EVENT + topic`.  The PUT message causes the DHT (more specifically, the node that manages the key/value mapping for `ENPT + EVENT + topic`) to add the client node to the ordered list of nodes who dispatch the topic's events to `ENPT` and have subscribed to the key's topic.  The client node then retrieves from the DHT the node following it in ordered list. The node that creates the mapping holds the token initially. It therefore waits several seconds then pulls the list and checks its claim against any added nodes by sending all nodes in the list a message. If its claim is contested, the node whose nodeId is highest in the 128-bit address space wins. Prior to dispatch, each topic subscriber checks whether it possesses the token. If not, then the dispatch is not executed. Once a node dispatches the event it passes the token to its downstream neighbor in the ring, along with the non-sensitive list of parameters and values it passed to the endpoint, and a flag indicated whether the resulting raw data is empty. The receiving node will refrain from dispatching the event unless 1) the raw data from the previous dispatch was empty, and 2) the parameters it received are different from the ones it plans to dispatch. After reaching a decision, it passes the token. The last node in the ring passes the token to the first node, and the round is over. The first node holds the token until the next event under `ENPT + EVENT + topic` enters its queue. The origin node can check response collisions and unauthorized replies by inspecting the DHT for the previous token owner. The key is available to the origin node so long as at least one of the repliers sends the valid `ENPT`. To increase accountability, the token ring key manager can notify the topic key manager of its hosts list, and the origin can retrieve the list of token rings from the topic key manager. The absence of a replier from any of these list can then be checked by origin. The dispatch round is intended to facilitate coordination between repliers who must access a shared resource. The impact of a bad actor is superfluous API calls, which one assumes is undesirable for the replier since most APIs impose call rationing. Blatant spam is addressed with PKI. Nevertheless, the node id, public key, etc of dipatch round violators can then receive a nix from the origin node. These nixes can be stored in the local Index and used by all nodes as a reply filter via distributed querying.
@@ -90,7 +92,7 @@ RUDI distributes SPARQL queries only to nodes which emit results for the query. 
 
 ### Implementation Details
 
-On each Index update and remove *event*, RUDI normalizes and queues the set of incomming triples, along with the event type, and metadata for each node in the set of triples (e.g. triple slot). Part of normailization is the generating of a generalized model by substituting individuals (or instances, that is, IRI subjects and objects which are not classes) for their `owl:Class` types, the nullification of objects where the subject is an individual IRI, and the removal of any triples that contain a node linked to false by `via:indexable`. A cron process then stores the events in the DHT by mapping each IRI or Literal to that peer's node id. A counter, which increments for each update and decrements for each remove, is associated with each mapped value in the DHT. The map for each entry in the DHT is embodied as a [Properties](https://docs.oracle.com/javase/tutorial/essential/environment/properties.html) file P (contained within a directory whose name is  S, P or O) whose name is a hash of the IRI or Literal (the key) and which contains the property `hosts` which is the list of host, and `host.prop` where `prop` is a property for host whose value is specfic to the triple node represented by P.
+On each Index update and remove *event*, RUDI normalizes and queues the set of incomming triples, along with the event type, and metadata for each node in the set of triples (e.g. triple slot). Part of normailization is the generating of a generalized model by substituting individuals (or instances, that is, IRI subjects and objects which are not classes) for their `owl:Class` types, the nullification of objects where the subject is an individual IRI, and the removal of any triples that contain a node linked to false by `via:indexable`. A cron process then stores the events in the DHT by mapping each IRI or Literal to that peer's node id. A counter, which increments for each update and decrements for each remove, is associated with each mapped value in the DHT. A [Properties](https://docs.oracle.com/javase/tutorial/essential/environment/properties.html) file P (contained within a directory whose name is  S, P or O) whose name is a hash of the IRI or Literal (the key) and which contains the property `hosts` (the list of host) and `host.prop` where `prop` is a property for host whose value is specfic to the triple node represented by P, encapsulates the map for each entry in the DHT.
 
 To distribute a SPARQL query, RUDI tokenizes the SPARQL into triples to produce a set of IRIs and a set of constraints (e.g. REQUIRED) for each. Let these be variables:
 
@@ -122,7 +124,7 @@ There is a territory of phenomena whose manifestations are caused by indetermina
 
 ##<a name="regex"/>Regex Ranking
 
-The dispatch algorithm rewards event patterns for *specificity*. The intuition is that the more specific the pattern, the more semantics are understood by it, and thus, the more appropriate the response of its event handler. So, the pattern `^youtube .*` will be ranked higher than `^.*$`. Since a node is designed to rely heavily on its local cache of mapped regexes, authors will need to work at making the regex's they publish very specific. Otherwise they will be outranked in a nodes' cache. A published list of ranking rules is provided to help authors. For example, the current algorithm removes `[]`-groups and the ranking = the length of the residual regex. A `^` at the start of the pattern gets a point boost, as does a `$` at the end of a pattern. Wildcards get points deducted, and so on. This approach requires linear time matching and therefore does not scale. A matcher [similar to setfiles in SELinux](https://www.csee.umbc.edu/wp-content/uploads/2014/03/Miner-Pairing-Strings-RegExps.pdf) is now being investigated. The algorithm uses a graph-based matching approach to achieve matches in constant polynomial time.
+The dispatch algorithm rewards event patterns for *specificity*. The intuition is that the more specific the pattern, the more semantics are understood by it, and thus, the more appropriate the response of its event handler. So, the pattern `^youtube .*` will be ranked higher than `^.*$`. Since a node is designed to rely heavily on its local cache of mapped regexes, authors will need to work at making the regex's they publish very specific. Otherwise they will be outranked in a nodes' cache. A published list of ranking rules is provided to help authors. For example, the current algorithm removes `[]`-groups and the ranking = the length of the residual regex. A `^` at the start of the pattern gets a point boost, as does a `$` at the end of a pattern. Wildcards get points deducted, and so on. This approach requires linear time matching and therefore does not scale. A matcher [similar to setfiles in SELinux](https://www.csee.umbc.edu/wp-content/uploads/2014/03/Miner-Pairing-Strings-RegExps.pdf) is currently being investigated. The algorithm uses a graph-based matching approach to achieve matches in constant polynomial time.
 
 ##<a name="sensors"/>Sensors
 
@@ -217,7 +219,7 @@ select ?0 ?1 ?2 ?context where {
 
 ##<a name="placeholders"/>Placeholders
 
-EventHandlers describe responses that are triggered by an event. The handler's hyperdata is a template that may contain placeholders. These placeholders are swapped for their values just before the event is dispatched to the `via:notify`. The `${number}` placeholder, where "number" is an integer value, is reserved and is swapped for the groups captured by the event. The placeholders `${id}`, `${key}`, `${url}`, and `${token}` are also reserved and are swapped for the config values associated with the `via:config` API identity string. The API configuration settings are located in the settings.ini file. The `${channel}` tag is replaced for the event's IRI.
+EventHandlers describe responses that are triggered by an event. The handler's hyperdata is a template that may contain placeholders. These placeholders are swapped for their values just before the event is dispatched to the `via:notify`. The `${number}` placeholder, where "number" is an integer value, is reserved and is swapped for the groups captured by the event. The placeholders `${id}`, `${key}`, `${url}`, and `${token}` are also reserved and are swapped for the config values associated with the `via:config` API identity string. The API configuration settings are located in the settings.ini file. The `${channel}` tag is replaced for the event or response IRI, depending on the context.
 
 Custom placeholders may be used, and are swapped by custom TemplateProcessors, which are [Java Service Providers](https://docs.oracle.com/javase/tutorial/ext/basics/spi.html) that are called to process the EventHandler descriptions just prior to dispatch.
 
@@ -248,7 +250,7 @@ Events may be handled by a sponsor node which is configured by the RUDI peer. On
 | - rdfs:comment       | brief documentation                      |          false           |      n      |
 | - rdf:label          | human-readable name                      |          false           |      n      |
 | - via:event          | event to monitor; can be of type `via:Input` or `via:Query` |           true           |      n      |
-| - via:notify         | A `via:EventHandler`, the URI of an entity with `via:cep` (communication endpoint) properties, such as a [LDN URI](https://www.w3.org/TR/2016/WD-ldn-20160726/), a SMS phone number, or an email inbox, to which the `via:event` is passed |           true           |      n      |
+| - via:notify         | A `via:EventHandler`, the URI of an entity with `via:cep` (communication endpoint) properties, such as a [LDN URI](https://www.w3.org/TR/2016/WD-ldn-20160726/), a SMS phone number, a RUDI broadcast topic, or an email inbox, to which the `via:event` is passed |           true           |      n      |
 | **via:EventHandler** | accepts an event to disptach; the captured data is passed to via:call values via ${index} placeholders, where 'index' is the index of the captured datum |                          |             |
 | - via:config         | the config in the settings.ini file which registers the custom `${tags}` to be used in this handler, and the endpoint attributes by which the via:call properties are sandboxed (the domain, port, and protocol assigned by the `via:config` must match thosed used in the `via:call` or a Security violation is thrown) |           true           |      1      |
 | - via:json           | a `via:call` property whose value is the web service call to which the captured data is dispatched, and which produces JSON; the JSON is RDFized and stored in the Index |          false           |      n      |
@@ -284,7 +286,7 @@ The local Graph is designed to be RESTfully navigated. Here is a diagram of the 
 
 ## <a name="dialog"/>Dialog
 
-The previous examples used `via:Input` to capture data from events and pass that data to `via:EventHandler` for dispatch. We can add to the constraint that certain statements be present in the Index at the time the event matches. This is achieved by linking a `via:Input` to a SPARQL query using `via:isNotEmpty`. The query is tested after the `via:event` matches. If the query result set is empty, the event is dropped, save where the `via:ListenerContext` links one or more nodes in the query to `via:prompt`, in which case RUDI will queue the event, and emit the prompts in accordance with the `prompt.policy` setting. Here is how the event queue works. If the event is accompanied by an RDF model, then the model is added to the graph matching the event (i.e. channel) IRI. The event IRI is linked to `rdf:List` via `rdfs:subClassOf`. After an event has exited the dispatch decision gate, RUDI fetches the event list and fires the first element if one is present, then removes the event from the list. RUDI then adds its queued event to the end of the list. Here is an example:
+The previous examples used `via:Input` to capture data from events and pass that data to `via:EventHandler` for dispatch. We can add to the match logic the constraint that certain statements be present in the Index at the time the event matches. If the event is accompanied by an RDF model, then the model is added to the Index under the graph context IRI matching the event (i.e. channel) IRI. The input model can, for example, provide contextual information. The input graph (and the Index in general) is probed by linking a `via:Input` to a SPARQL query using `via:isNotEmpty`. The object is a `via:TupleQuery` which is tested after the `via:event` matches. If the query result set is empty, the event is dropped, save where the `via:ListenerContext` links one or more nodes in the query to `via:prompt`, in which case RUDI will queue the event and emit the prompts in accordance with the `prompt.policy` setting. The event IRI is linked to `rdf:List` via `rdfs:subClassOf`. After an event has exited the dispatch decision gate, RUDI fetches the event list and fires the first element if one is present, then removes the event from the list. RUDI then adds its queued event to the end of the list. Here is an example:
 
 ```xml
 	<via:Input rdf:about="#email">
@@ -337,7 +339,7 @@ The VI author may need to detect the absence of certain statements. This is achi
 		<rdfs:subPropertyOf rdf:resource="userInfoProperty"/>
 	</owl:ObjectProperty>
 ```
-Now the listener can test whether all the information required to complete the interaction has been provided. 
+Now the listener can now use `via:isEmpty` to test whether any information required to complete the interaction has not yet been provided. 
 
 ```xml
 	<via:TupleQuery rdf:about="#userInfo">
@@ -373,4 +375,27 @@ WHERE {
 
 The `via:override` property allows a node setting to be overridden in the `via:ListenerContext`, and in this example, the way RUDI handles prompts is declared for the current `via:ListenerContext` by overriding the `prompt.policy`. 
 
-The event handler in this case is a query that inserts a set of triples under the graph context `${channel}`. Since the `${channel}` is linked to the original response via `sioc:has_reply`, the user can register listeners that detect `sioc:has_reply`. When responding, it includes a statement `${response_channel} sioc:has_reply []`, where `[]` is substituted for the RUDI-generated channel id.
+The event handler in this case is a query that inserts a set of triples under the graph context `${channel}`. Since the `${channel}` is linked to the original response via `sioc:has_reply`, the user can register listeners that detect `sioc:has_reply`. When responding, it includes a statement `${response_channel} sioc:has_reply []`, where `[]` is substituted for the RUDI-generated channel id. The resources `via:StringInput`, `via:Response`, `via:QueryResults`, and `via:Alert` are linked to `via:Channel` via `rdfs:subClassOf`. The input `via:Channel` history can thus be probed using SPARQL Path Property expression on `sioc:has_reply`, like so:
+
+```xml
+    <rdf:Resource rdf:about="#currentAndPreviousContexts">
+<![CDATA[
+SELECT ?email
+WHERE {
+	graph ?channel{
+		?user foaf:mbox ?email .
+		?user sioc:owner_of ?channel
+		OPTIONAL {
+			${channel} sioc:has_reply+ ?channel
+			{
+				{${channel} rdf:type via:InputString}
+				UNION
+				{${channel} rdf:type/rdfs:subClassOf* via:Query}
+			}
+		}
+	}
+}
+]]>
+    </rdf:Resource>
+```
+

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  <!DOCTYPE rdf:RDF [
      <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+     <!ENTITY sioc "http://rdfs.org/sioc/ns#">
  ]>
  <rdf:RDF xmlns="http://www.vacuity.ai/onto/via/1.0/"
      xml:base="http://www.vacuity.ai/onto/via/1.0/"
@@ -9,7 +10,8 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
- >
+     xmlns:sioc="http://rdfs.org/sioc/ns#"
+>
 
      <owl:Ontology rdf:about="">
          <rdfs:comment >Vacuous Intermediary Automata Ontology</rdfs:comment >
@@ -90,6 +92,20 @@
 		<rdfs:range rdf:resource="Query" />
 	</owl:ObjectProperty>
     
+    <owl:Class rdf:about="Channel">
+         <rdfs:comment></rdfs:comment>
+         <rdfs:subClassOf rdf:resource="&sioc;Item"/>
+    </owl:Class>
+	
+    <owl:Class rdf:about="StringInput">
+         <rdfs:comment></rdfs:comment>
+         <rdfs:subClassOf rdf:resource="Channel"/>
+    </owl:Class>
+    
+    <owl:Class rdf:about="Response">
+         <rdfs:comment></rdfs:comment>
+         <rdfs:subClassOf rdf:resource="Channel"/>
+    </owl:Class>
 	
     <owl:Class rdf:about="Query">
          <rdfs:comment></rdfs:comment>
@@ -98,6 +114,11 @@
     <owl:Class rdf:about="TupleQuery">
          <rdfs:comment></rdfs:comment>
          <rdfs:subClassOf rdf:resource="Query"/>
+    </owl:Class>
+	
+    <owl:Class rdf:about="Results">
+         <rdfs:comment></rdfs:comment>
+         <rdfs:subClassOf rdf:resource="Channel"/>
     </owl:Class>
 	
     <owl:Class rdf:about="QueryResult">

@@ -123,7 +123,7 @@ public class RestfulHAO extends AbstractHAO {
 		IRI responseIRI = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "r-" + responseId);
 		GraphManager.addToRepository(response, responseIRI);
 		Vector<Statement> tuples = new Vector<Statement>();
-		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "Item")));
+		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "Response")));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_RDF + "type"), GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "Communication_response")));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "response"), replyIRI));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
