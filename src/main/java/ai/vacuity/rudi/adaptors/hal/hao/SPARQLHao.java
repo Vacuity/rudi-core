@@ -35,6 +35,7 @@ public class SPARQLHao extends AbstractHAO {
 					IRI reply = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "r-" + ruuid);
 					if (r.hasNext()) {
 						results.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply));
+						results.add(GraphManager.getValueFactory().createStatement(reply, GraphManager.rdf_type, GraphManager.via_Results));
 					}
 					while (r.hasNext()) { // iterate over the result
 						BindingSet bindingSet = r.next();
