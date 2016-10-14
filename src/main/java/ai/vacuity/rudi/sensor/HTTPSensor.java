@@ -10,8 +10,6 @@ import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.bcpg.Packet;
 import org.eclipse.rdf4j.model.IRI;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -31,7 +29,7 @@ import ai.vacuity.rudi.adaptors.hal.service.DispatchService;
 import ai.vacuity.rudi.adaptors.types.Report;
 
 @Controller
-public class HTTPSensor implements BeanPostProcessor {
+public class HTTPSensor {
 
 	private static int counter = 0;
 	private static final String VIEW_RESULTS = "results";
@@ -106,16 +104,6 @@ public class HTTPSensor implements BeanPostProcessor {
 		// fetch object from response stream
 		HttpEntity<Packet> request = new HttpEntity<>(new Packet());
 		Channel reply = restTemplate.postForObject(peer, request, Channel.class);
-	}
-
-	@Override
-	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-		return bean;
-	}
-
-	@Override
-	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		return bean;
 	}
 
 }
