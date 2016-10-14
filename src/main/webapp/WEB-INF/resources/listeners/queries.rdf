@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances/1.0"
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
      xmlns:via="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
@@ -11,15 +11,16 @@
 		<rdfs:label>Get Listeners</rdfs:label>
  		<via:sparql>
  		
-# via:imports are pulled in a separate fetch
+# via:imports, and via:contexts are pulled in a separate fetch
  		
 <![CDATA[
 PREFIX via: <http://www.vacuity.ai/onto/via/1.0/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select distinct ?listener ?input ?pattern ?i_labels ?qtype ?output ?config ?translator ?log ?replyTypeProp ?endpoint ?mediaType ?query where {
+select distinct ?listener ?override ?input ?pattern ?i_labels ?qtype ?context ?output ?config ?translator ?log ?replyTypeProp ?endpoint ?mediaType ?query where {
   
   ?listener rdf:type via:Listener .
   ?listener via:event ?input .
+  OPTIONAL {?listener via:override ?override .}
   ?input via:labels ?i_labels .
   {
   	# rdf:first patterns are collected in a separate fetch using rdf4j's Connections.getRDFCollection

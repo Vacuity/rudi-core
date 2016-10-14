@@ -1,10 +1,12 @@
 package ai.vacuity.rudi.sensor;
 
+import java.io.ByteArrayInputStream;
 import java.net.URLEncoder;
 import java.nio.channels.Channel;
 import java.text.DecimalFormat;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.bcpg.Packet;
 import org.eclipse.rdf4j.model.IRI;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,13 +47,27 @@ public class HTTPSensor implements BeanPostProcessor {
 
 	@RequestMapping(value = "/json", method = RequestMethod.GET)
 	public @ResponseBody Report get(@RequestParam(value = "q", required = false) String q, @RequestParam(value = "d", required = false) boolean d) {
-		// logger.debug("Reached the controller.");
+		try {
+			return post(q, d, null);
+		}
+		catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
+		return null;
+	}
+
+	@RequestMapping(value = "/json", method = RequestMethod.POST, consumes = "application/json")
+	public @ResponseBody Report post(@RequestParam(value = "q", required = false) String q, @RequestParam(value = "d", required = false) boolean d, @RequestBody String contextStr) {
 		try {
 			Report r = new Report();
-
 			UUID channelId = UUID.randomUUID();
 			IRI user = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "anon");
 			IRI channel = GraphManager.getValueFactory().createIRI(Constants.NS_VI + "c-" + channelId);
+
+			if (StringUtils.isNotBlank(contextStr)) {
+				GraphManager.addToRepository(new ByteArrayInputStream(contextStr.getBytes("UTF-8")), channel);
+			}
+
 			long start = System.currentTimeMillis();
 			Input input = new Input(user, channel, q);
 			r = DispatchService.process(input, d);
@@ -76,24 +93,7 @@ public class HTTPSensor implements BeanPostProcessor {
 		}
 
 		return null;
-		// return welcomeName("<h3>Channel ID: <a href=\"" + channel.stringValue() + "\"/>" + channel.stringValue() + "</a></h3><br/>Explore the <a href=\"" + link + "\">Index</a> for data linked to your channel id.", model);
-
-		// logger.debug("[welcome] counter : {}", counter);
-		//
-		// // Spring uses InternalResourceViewResolver and return back index.jsp
-		// return VIEW_RESULTS;
-
 	}
-
-	// @RequestMapping(value = "/{name}", method = RequestMethod.GET)
-	// public String welcomeName(@PathVariable String name, ModelMap model) {
-	//
-	// model.addAttribute("test", name);
-	// // model.addAttribute("counter", ++counter);
-	// // logger.debug("[welcomeName] counter : {}", counter);
-	// return VIEW_RESULTS;
-	//
-	// }
 
 	public void main(String[] args) {
 		RestTemplate restTemplate = new RestTemplate();
@@ -115,7 +115,6 @@ public class HTTPSensor implements BeanPostProcessor {
 
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		// GraphManager.getRepository(); // initialize the GraphManager
 		return bean;
 	}
 

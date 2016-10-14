@@ -14,6 +14,7 @@ public class Query implements org.eclipse.rdf4j.query.Query, IndexableEvent {
 	String label = "";
 	IRI iri = null;
 	IRI notifies = null;
+	boolean hasIsEmpty = false;
 
 	public Query(org.eclipse.rdf4j.query.Query delegate) {
 		this.delegate = delegate;
@@ -140,6 +141,14 @@ public class Query implements org.eclipse.rdf4j.query.Query, IndexableEvent {
 	@Override
 	public void setOwnerIri(IRI notifies) {
 		this.notifies = notifies;
+	}
+
+	public boolean hasIsEmpty() {
+		return hasIsEmpty;
+	}
+
+	public void setHasIsEmpty(boolean negate) {
+		this.hasIsEmpty = negate;
 	}
 
 }

@@ -1,4 +1,4 @@
-package ai.vacuity.utils;
+package ai.vacuity.util;
 
 public class OSValidator {
 	private static String OS = System.getProperty("os.name").toLowerCase();

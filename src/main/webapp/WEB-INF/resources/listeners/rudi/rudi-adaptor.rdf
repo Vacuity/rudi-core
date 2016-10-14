@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE rdf:RDF [
 	<!ENTITY via "http://www.vacuity.ai/onto/via/1.0/">
-	<!ENTITY vi "http://www.vacuity.ai/onto/instances/1.0#">
+	<!ENTITY vi "http://www.vacuity.ai/onto/instances#">
     <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
 ]>
-<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances/1.0"
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
      xmlns:via="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -119,8 +119,8 @@
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-select ?0 ?1 ?2 ?context where {
-	graph ?context {
+select ?0 ?1 ?2 ?channel where {
+	graph ?channel {
 		?0 rdf:type <http://www.w3.org/ns/ma-ont/VideoTrack> .
 		?0 dc:title ?1 .
 		?0 dc:description ?2 .

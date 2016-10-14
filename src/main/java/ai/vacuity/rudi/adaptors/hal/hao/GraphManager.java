@@ -1,6 +1,8 @@
 package ai.vacuity.rudi.adaptors.hal.hao;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +34,12 @@ import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.algebra.StatementPattern;
+import org.eclipse.rdf4j.query.algebra.TupleExpr;
+import org.eclipse.rdf4j.query.algebra.helpers.StatementPatternCollector;
+import org.eclipse.rdf4j.query.parser.ParsedQuery;
+import org.eclipse.rdf4j.query.parser.QueryParser;
+import org.eclipse.rdf4j.query.parser.sparql.SPARQLParserFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
@@ -46,10 +54,12 @@ import com.google.api.client.http.GenericUrl;
 import com.google.common.net.MediaType;
 import com.openlink.virtuoso.rdf4j.driver.VirtuosoRepository;
 
-import ai.vacuity.rudi.adaptors.bo.Label;
 import ai.vacuity.rudi.adaptors.bo.Config;
+import ai.vacuity.rudi.adaptors.bo.Context;
 import ai.vacuity.rudi.adaptors.bo.EventHandler;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
+import ai.vacuity.rudi.adaptors.bo.Label;
+import ai.vacuity.rudi.adaptors.bo.Prompt;
 import ai.vacuity.rudi.adaptors.bo.Query;
 import ai.vacuity.rudi.adaptors.interfaces.impl.DefaultNamespaceProvider;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
@@ -219,17 +229,31 @@ public class GraphManager {
 
 	static void loadRepository() {
 		try (RepositoryConnection con = getConnection()) {
-			String[] extensions = new String[] { "rdf", "rdfs" };
-			// IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
-			Iterator<File> iter = FileUtils.iterateFiles(new File(Config.DIR_LISTENERS), extensions, true);
-			Resource context = getValueFactory().createIRI(Constants.CONTEXT_VIA);
-			con.clear(context);
+
+			IRI listenerContextClassIRI = getValueFactory().createIRI(Constants.NS_VIA + "ListenerContext");
+			IRI subClassOfIRI = getValueFactory().createIRI(Constants.NS_RDFS + "subClassOf");
+
 			con.begin();
+
+			// remove all listener data
+			List<Statement> listeners = Iterations.asList(con.getStatements(null, subClassOfIRI, listenerContextClassIRI));
+			for (Statement listener : listeners) {
+				con.remove(getValueFactory().createStatement(null, null, null), listener.getSubject());
+			}
+
+			// clear the default RUDI context
+			String[] extensions = new String[] { "rdf", "rdfs" };
+			Iterator<File> iter = FileUtils.iterateFiles(new File(Config.DIR_LISTENERS), extensions, true);
+			Resource context = getValueFactory().createIRI(Constants.CONTEXT_RUDI);
+			con.clear(context);
+
 			while (iter.hasNext()) {
 				File f = iter.next();
 				logger.debug("Loading file: " + f.getName());
 				try {
-					con.add(f, null, RDFFormat.RDFXML, context);
+					IRI listenerContext = getValueFactory().createIRI("file://" + f.getAbsolutePath());
+					con.add(f, null, RDFFormat.RDFXML, listenerContext);
+					con.add(listenerContext, subClassOfIRI, listenerContextClassIRI, context);
 				}
 				catch (RDF4JException e) {
 					logger.error(e.getMessage(), e);
@@ -325,7 +349,7 @@ public class GraphManager {
 														Value o = st.getObject();
 
 														// ignore non list related properties
-														// don't use the GraphManager constants in this method, since we're still in the static block of the class scope, which occurs prior to the loading of the static IRI fields
+														// do not use GraphManager IRI constants in this method, since we're still in the static block of the class scope, which occurs prior to the loading of the static IRI fields
 														// check via:pattern, even though right now rdf4j isn't recognizing via:pattern as a sub property of rdf:first (perhaps later they will)
 														if (p.equals(getValueFactory().createIRI(Constants.NS_VIA, "pattern")) || p.equals(getValueFactory().createIRI(Constants.NS_RDF, "first"))) {
 															if (o.equals(getValueFactory().createIRI(Constants.NS_RDF, "nil"))) {
@@ -344,6 +368,13 @@ public class GraphManager {
 												}
 											}
 										}
+
+										String override = bs2.getValue("override").stringValue();
+										if (StringUtils.isNotBlank(override)) {
+											StringReader sr = new StringReader(override);
+											i.getOverrides().load(sr);
+										}
+
 										String labelsStr = bs2.getValue("i_labels").stringValue();
 										if (StringUtils.isNotBlank(labelsStr)) {
 											String COMMA_ESCAPE = "||comma-rudi-replacement||";
@@ -384,6 +415,77 @@ public class GraphManager {
 												labels.add(label);
 											}
 											i.setLabels(labels);
+										}
+
+										// load contexts
+
+										IRI[] tests = new IRI[] { getValueFactory().createIRI(Constants.NS_VIA + "isEmpty"), getValueFactory().createIRI(Constants.NS_VIA + "isNotEmpty") };
+
+										for (IRI test : tests) {
+											if (bs2.getValue("input") instanceof IRI) {
+												IRI inputIRI = (IRI) bs2.getValue("input");
+												List<Statement> contexts = Iterations.asList(con.getStatements(inputIRI, test, null));
+												for (Statement context : contexts) {
+													if (context.getObject() instanceof Resource) {
+														Resource qiri = (Resource) context.getObject();
+														TupleQuery ctxq = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?q ?l ?s ?listener WHERE { ?q rdf:type <" + Constants.NS_VIA + "TupleQuery> . ?q <" + Constants.NS_VIA + "sparql> ?s . ?input <" + Constants.NS_VIA + "context> ?q . ?listener <" + Constants.NS_VIA + "event> ?input.}");
+														ctxq.setBinding("q", qiri);
+														try (TupleQueryResult r3 = ctxq.evaluate()) {
+															while (r3.hasNext()) {
+																BindingSet bs3 = r3.next();
+																String queryStr = bs3.getValue("s").stringValue();
+																Context ctx = new Context(con.prepareTupleQuery(QueryLanguage.SPARQL, queryStr));
+																ctx.setId(bs3.getValue("q").stringValue().hashCode());
+																ctx.setLabel(bs3.getValue("l").stringValue());
+																ctx.setIri((IRI) bs3.getValue("q"));
+																if (test.equals(getValueFactory().createIRI(Constants.NS_VIA + "isEmpty"))) ctx.setHasIsEmpty(true);
+																if (bs3.getValue("listener") instanceof IRI) ctx.setListenerContext((IRI) bs3.getValue("listener"));
+																ctx.setOwnerIri(inputIRI);
+
+																Iterator bnames = bs3.getBindingNames().iterator();
+																while (bnames.hasNext()) {
+																	SPARQLParserFactory factory = new SPARQLParserFactory();
+																	QueryParser parser = factory.getParser();
+																	ParsedQuery parsedQuery = parser.parseQuery(queryStr, null);
+
+																	StatementPatternCollector collector = new StatementPatternCollector();
+																	TupleExpr tupleExpr = parsedQuery.getTupleExpr();
+																	tupleExpr.visit(collector);
+
+																	for (StatementPattern pt : collector.getStatementPatterns()) {
+																		logger.debug(pt.toString());
+																		// Value s = pt.getSubjectVar().getValue();
+																		Value p = pt.getPredicateVar().getValue();
+																		// Value o = pt.getObjectVar().getValue();
+
+																		TupleQuery pq = con.prepareTupleQuery(QueryLanguage.SPARQL, "SELECT ?prompt WHERE { ?q ?listener <" + Constants.NS_VIA + "prompt> ?prompt . }");
+																		pq.setBinding("q", p);
+																		try (TupleQueryResult r4 = pq.evaluate()) {
+																			while (r4.hasNext()) {
+																				Prompt prompt = new Prompt();
+																				prompt.setLabel(bs3.getValue("prompt").stringValue());
+																				if (bs3.getValue("q") instanceof IRI) {
+																					prompt.setIri((IRI) bs3.getValue("q"));
+																				}
+																				ctx.getPrompts().add(prompt);
+																			}
+																		}
+																		catch (QueryEvaluationException qex) {
+																			logger.error(qex.getMessage(), qex);
+																		}
+																	}
+
+																}
+
+																i.getContexts().add(ctx);
+															}
+														}
+														catch (QueryEvaluationException qex) {
+															logger.error(qex.getMessage(), qex);
+														}
+													}
+												}
+											}
 										}
 
 										// event handlers are loaded only if they are called by a listeners, see the vi:get_listener SPARQL query
@@ -448,7 +550,6 @@ public class GraphManager {
 													iq.setId(bs2.getValue("input").stringValue().hashCode());
 													iq.setLabel(bs2.getValue("i_label").stringValue());
 													iq.setIri((IRI) bs2.getValue("input"));
-													iq.setOwnerIri((IRI) bs2.getValue("notifies"));
 													GraphSensor.register(iq);
 													i.setQuery(iq);
 													// i.hasSparqlQuery(true);
@@ -523,6 +624,25 @@ public class GraphManager {
 	}
 
 	public static void main(String[] args) {
+	}
+
+	public static void addToRepository(InputStream is, Resource context) {
+		try {
+			try (RepositoryConnection con = getConnection()) {
+				con.begin();
+				con.add(is, context.stringValue(), null, context);
+				con.commit();
+			}
+			catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+		catch (RDF4JException e) {
+			logger.error(e.getMessage(), e);
+		}
+		catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
 	}
 
 	public static void addToRepository(Iterable<Statement> i, Resource context) {

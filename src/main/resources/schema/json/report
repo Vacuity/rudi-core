@@ -12,6 +12,9 @@
 		"msg": {
 			"type": "string"
 		},
+		"timestamp": {
+			"type": "string"
+		},
 		"duration": {
 			"type": "string"
 		},
@@ -21,6 +24,14 @@
 				"$ref": "./match"
 			}
 		},
+        "prompts": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 0,
+            "uniqueItems": true
+        },
         "logs": {
             "type": "array",
             "items": {

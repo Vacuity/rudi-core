@@ -5,7 +5,7 @@
     <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
     <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 ]>
-<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances/1.0"
+<rdf:RDF xml:base="http://www.vacuity.ai/onto/instances"
      xmlns:via="http://www.vacuity.ai/onto/via/1.0/"
      xmlns:ma-ont="http://www.w3.org/ns/ma-ont/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"

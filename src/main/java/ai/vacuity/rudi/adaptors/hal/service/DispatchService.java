@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -32,9 +33,11 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 import org.slf4j.LoggerFactory;
 
 import ai.vacuity.rudi.adaptors.bo.Config;
+import ai.vacuity.rudi.adaptors.bo.Context;
 import ai.vacuity.rudi.adaptors.bo.Input;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.bo.Label;
+import ai.vacuity.rudi.adaptors.bo.Prompt;
 import ai.vacuity.rudi.adaptors.hal.hao.AbstractHAO;
 import ai.vacuity.rudi.adaptors.hal.hao.Constants;
 import ai.vacuity.rudi.adaptors.hal.hao.GraphManager;
@@ -48,6 +51,7 @@ import ai.vacuity.rudi.adaptors.types.Match;
 import ai.vacuity.rudi.adaptors.types.Report;
 
 public class DispatchService extends Thread implements IReportProvider {
+	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(DispatchService.class);
 
 	public DispatchService() {
 		start(); // start dispatching events
@@ -56,8 +60,7 @@ public class DispatchService extends Thread implements IReportProvider {
 	/**
 	 * Starts the dispatch service.
 	 */
-	private final static DispatchService dispatcher = new DispatchService(); // this field is required to start the dispatcher, even though it is, for now, never used
-	public final static org.slf4j.Logger logger = LoggerFactory.getLogger(DispatchService.class);
+	private final static DispatchService INSTANCE_DISPATCHER = new DispatchService(); // the instantiation of this field is required to start the dispatcher, even though it is, for now, never used
 	private static final Vector<AbstractHAO> queue = new Vector<AbstractHAO>();
 
 	@Override
@@ -116,7 +119,7 @@ public class DispatchService extends Thread implements IReportProvider {
 				processed = DispatchService.begin(ip, event, report, procedure, log);
 				hao = new RestfulHAO();
 			}
-			if (processed.length == 0) continue find_matches;
+			if (processed == null) continue find_matches;
 
 			report.getLogs().add(processed[1]);
 
@@ -127,6 +130,7 @@ public class DispatchService extends Thread implements IReportProvider {
 				haos.add(hao);
 			}
 		}
+		report.setTimestamp(new Date().toString());
 		double highest = 0;
 		for (Match m : report.getMatches()) {
 			if (m.getScore() > highest) highest = m.getScore();
@@ -168,7 +172,7 @@ public class DispatchService extends Thread implements IReportProvider {
 					processed = DispatchService.process(ip, id, context, procedure, log);
 					hao = new RestfulHAO();
 				}
-				if (processed.length == 0) continue find_matches;
+				if (processed == null) continue find_matches;
 
 				logs.add(processed[1]);
 				logger.debug("[Rudi]: " + processed[1]);
@@ -200,7 +204,7 @@ public class DispatchService extends Thread implements IReportProvider {
 	 */
 	private static String[] process(InputProtocol ip, IndexableEvent event, Report report, String... templates) {
 		// 1. swap captured groups' placeholders first
-		// FIRST MATCH GATE
+		// FIRST MATCH GATE - Free form string patterns
 		boolean found = false;
 		Match m = new Match();
 		m.setLabels(ip.getLabelStrings());
@@ -232,12 +236,14 @@ public class DispatchService extends Thread implements IReportProvider {
 				// if ${0} remains, assume no pattern group matched it, so set it to the entire
 				// input event
 				for (int i = 0; i < templates.length; i++) {
-					templates[i] = templates[i].replace("${event}", matcher.group());
+					templates[i] = templates[i].replace("${channel}", event.getIri().stringValue());
+					templates[i] = templates[i].replace("${channel.label}", matcher.group());
+					templates[i] = templates[i].replace("${channel.owner}", event.getOwnerIri().stringValue());
 				}
 			}
 		}
 
-		// SECOND MATCH GATE
+		// SECOND MATCH GATE - Typed Patterns
 		if (ip.getPattern() instanceof List) {
 			List<Value> l = (List<Value>) ip.getPattern();
 			for (int j = 0; j < l.size(); j++) {
@@ -253,7 +259,7 @@ public class DispatchService extends Thread implements IReportProvider {
 							found = true;
 						}
 						catch (MalformedURLException mfuex) {
-							return new String[0];
+							return null;
 						}
 					}
 					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "anyURI"))) {
@@ -263,7 +269,7 @@ public class DispatchService extends Thread implements IReportProvider {
 							found = true;
 						}
 						catch (IllegalArgumentException iaex) {
-							return new String[0];
+							return null;
 						}
 					}
 					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "integer"))) {
@@ -273,7 +279,7 @@ public class DispatchService extends Thread implements IReportProvider {
 							found = true;
 						}
 						catch (NumberFormatException nfex) {
-							return new String[0];
+							return null;
 						}
 					}
 					if (lit.getDatatype().equals(GraphManager.getValueFactory().createIRI(Constants.NS_XSD + "dateTime"))) {
@@ -284,7 +290,7 @@ public class DispatchService extends Thread implements IReportProvider {
 							found = true;
 						}
 						catch (ParseException e) {
-							return new String[0];
+							return null;
 						}
 					}
 
@@ -301,12 +307,43 @@ public class DispatchService extends Thread implements IReportProvider {
 			}
 		}
 
-		if (!found) return new String[0];
+		// THRID MATCH GATE - Contexts
+		if (event instanceof Input) {
+			Object[] sa = processContext((Input) event, ip.getContexts(), templates);
+			List<Prompt> prompts = (List<Prompt>) sa[1];
+			if (sa[0] == null && prompts.size() == 0) {
+				return null;
+			}
+			else if (prompts.size() > 0) {
+				final String promptPolicy = ip.getOverrides().getProperty(InputProtocol.OVERRIDE_PROMPT_POLICY);
+				switch (promptPolicy) {
+					case InputProtocol.OVERRIDE_PROMPT_POLICY_RANDOM:
+						Random randomizer = new Random();
+						Prompt random = prompts.get(randomizer.nextInt(prompts.size()));
+						report.getPrompts().add(random.getLabel());
+						break;
+					case InputProtocol.OVERRIDE_PROMPT_POLICY_ALL:
+						for (Prompt prompt : prompts) {
+							report.getPrompts().add(prompt.getLabel());
+						}
+						break;
+					default:
+						for (Prompt prompt : prompts) {
+							report.getPrompts().add(prompt.getLabel());
+						}
+				}
+				templates = (String[]) sa[0];
+			}
+		}
+
+		if (!found) return null;
 
 		// 2. run the call processor (give customer processors priority over system processor)
 		// TODO should the log include the unprocessed placeholder value?
 
-		for (int i = 0; i < templates.length; i++) {
+		for (
+
+		int i = 0; i < templates.length; i++) {
 			if (ip.getEventHandler().hasEndpointTemplateModule()) {
 
 				ip.getEventHandler().getEndpointTemplateModule().process(templates[i], event);
@@ -331,6 +368,17 @@ public class DispatchService extends Thread implements IReportProvider {
 		return templates;
 	}
 
+	/**
+	 * The import queries are templates which need to be processed, but which also have variables which can be referenced in the event handler template.
+	 * 
+	 * So process the import queries, then process the templates and include the imported tags.
+	 * 
+	 * @param ip
+	 * @param event
+	 * @param report
+	 * @param templates
+	 * @return
+	 */
 	private static String[] begin(InputProtocol ip, IndexableEvent event, Report report, String... templates) {
 		List<String> imports = ip.getEventHandler().getImports();
 		if (ip.getEventHandler().getImports().size() > 0) {
@@ -352,8 +400,8 @@ public class DispatchService extends Thread implements IReportProvider {
 				args[3] = sa;
 				try {
 					templates = (String[]) m.invoke(new DispatchService(), args);
-					if (templates.length > 0) templates = process(report, len, sa);
-					else return new String[0];
+					if (templates != null) templates = processImportTags(report, len, sa);
+					else return null;
 				}
 				catch (IllegalAccessException e) {
 					logger.error(e.getMessage(), e);
@@ -387,20 +435,20 @@ public class DispatchService extends Thread implements IReportProvider {
 
 		try (RepositoryConnection con = GraphManager.getConnection()) {
 			TupleQuery alertQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
-			alertQuery.setBinding("context", context);
+			alertQuery.setBinding("channel", context);
 			try (TupleQueryResult alerts = alertQuery.evaluate()) {
-				if (!alerts.hasNext()) return new String[0];
+				if (!isEmpty(alerts)) return null;
 				UUID u = UUID.randomUUID();
 				IRI alertIRI = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "alrt-" + u);
 				Vector<Statement> tuples = new Vector<Statement>();
-				if (alerts.hasNext()) {
+				if (isEmpty(alerts)) {
 					Resource owner = ip.getQuery().getOwnerIri();
 					if (owner == null) owner = ip.getEventHandler().getIri();
 					if (owner == null) owner = GraphManager.getRepository().getValueFactory().createIRI(Constants.CONTEXT_DEMO);
 					tuples.add(GraphManager.getValueFactory().createStatement(owner, GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "owner_of"), alertIRI));
 					tuples.add(GraphManager.getValueFactory().createStatement(alertIRI, GraphManager.getValueFactory().createIRI(Constants.NS_VIA + "context"), context));
 				}
-				for (int j = 0; alerts.hasNext(); j++) {
+				for (int j = 0; isEmpty(alerts); j++) {
 					try {
 						UUID uuid = UUID.randomUUID();
 						IRI hit = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "hit-" + uuid);
@@ -453,7 +501,7 @@ public class DispatchService extends Thread implements IReportProvider {
 			}
 			catch (Exception e) {
 				logger.error(e.getMessage(), e);
-				return new String[0];
+				return null;
 			}
 		}
 		catch (RepositoryException rex) {
@@ -500,13 +548,13 @@ public class DispatchService extends Thread implements IReportProvider {
 		return templates;
 	}
 
-	public static String[] process(Report report, int onset, String... templates) {
+	public static String[] processImportTags(Report report, int onset, String... templates) {
 		for (int i = onset; i < templates.length; i++) {
 			String query = templates[i];
 			try (RepositoryConnection con = GraphManager.getConnection()) {
 				TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
 				try (TupleQueryResult r3 = ipQuery.evaluate()) {
-					if (r3.hasNext()) { // expect a single result
+					if (isEmpty(r3)) { // expect a single result
 						BindingSet bindings = r3.next();
 						Iterator<String> binding_names = bindings.getBindingNames().iterator();
 						while (binding_names.hasNext()) {
@@ -530,6 +578,63 @@ public class DispatchService extends Thread implements IReportProvider {
 			}
 		}
 		return templates;
+	}
+
+	public static Object[] processContext(Input input, List<Context> contexts, String... templates) {
+		boolean passed = true;
+		List<Prompt> prompts = new ArrayList<Prompt>();
+		for (Context context : contexts) {
+			String query = context.getDelegate().toString();
+			query = query.replace("${context}", context.getListenerContext().stringValue());
+			query = query.replace("${channel}", input.getIri().stringValue());
+			query = query.replace("${channel.label}", input.getLabel());
+			query = query.replace("${channel.owner}", input.getOwnerIri().stringValue());
+			try (RepositoryConnection con = GraphManager.getConnection()) {
+				TupleQuery ctxq = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
+				try (TupleQueryResult results = ctxq.evaluate()) {
+					if (isEmpty(results)) {
+						if (!context.hasIsEmpty()) passed = false;
+					}
+					else {
+						if (context.hasIsEmpty()) passed = false;
+					}
+					if (!context.hasIsEmpty()) prompts.addAll(context.getPrompts());
+					while (!isEmpty(results)) {
+						if (!passed) {
+							if (!context.hasIsEmpty()) passed = true;
+						}
+						BindingSet bindings = results.next();
+						Iterator<String> binding_names = bindings.getBindingNames().iterator();
+						while (binding_names.hasNext()) {
+							String name = binding_names.next();
+							String value = bindings.getValue(name).stringValue();
+							if (bindings.getValue(name) instanceof IRI && context.hasIsEmpty()) {
+								prompts.add(context.getPrompt(((IRI) bindings.getValue(name)).stringValue()));
+							}
+							if (value == null) value = "-- null value --";
+							for (int j = 0; j < templates.length; j++) {
+								if (StringUtils.isNotBlank(templates[j])) {
+									templates[j] = templates[j].replace("${" + name + "}", value);
+								}
+							}
+						}
+					}
+
+				}
+				catch (QueryEvaluationException qex) {
+					logger.error(qex.getMessage(), qex);
+				}
+			}
+			catch (RepositoryException rex) {
+				logger.error(rex.getMessage(), rex);
+			}
+		}
+		if (!passed) templates = null;
+		return new Object[] { templates, prompts };
+	}
+
+	private static boolean isEmpty(TupleQueryResult results) {
+		return !results.hasNext();
 	}
 
 	public static void index(IndexableEvent event) {
