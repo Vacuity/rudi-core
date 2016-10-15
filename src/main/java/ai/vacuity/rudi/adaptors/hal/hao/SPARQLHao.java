@@ -26,13 +26,15 @@ public class SPARQLHao extends AbstractHAO {
 
 	@Override
 	public void run() {
+		UUID uuid = UUID.randomUUID();
+		IRI reply = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "rst-" + uuid);
 		try (RepositoryConnection con = getInputProtocol().getEventHandler().getRepository().getConnection()) {
 			Query q = con.prepareQuery(QueryLanguage.SPARQL, getCall());
 			if (q instanceof TupleQuery) {
 				try (TupleQueryResult r = ((TupleQuery) q).evaluate()) {
 					Vector<Statement> results = new Vector<Statement>();
-					UUID ruuid = UUID.randomUUID();
-					IRI reply = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "r-" + ruuid);
+					// UUID ruuid = UUID.randomUUID();
+					// IRI reply = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "r-" + ruuid);
 					if (r.hasNext()) {
 						results.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply));
 						results.add(GraphManager.getValueFactory().createStatement(reply, GraphManager.rdf_type, GraphManager.via_Results));
@@ -90,8 +92,6 @@ public class SPARQLHao extends AbstractHAO {
 						// logger.debug("Property: " + p.stringValue());
 						// logger.debug("Value: " + o.stringValue());
 					}
-					UUID uuid = UUID.randomUUID();
-					IRI reply = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "rst-" + uuid);
 					results.add(GraphManager.getValueFactory().createStatement(reply, GraphManager.rdf_type, GraphManager.via_QueryResult));
 					results.add(GraphManager.getValueFactory().createStatement(reply, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
 					results.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply));
@@ -112,6 +112,9 @@ public class SPARQLHao extends AbstractHAO {
 		// FileWriter fw = new FileWriter(fxml);
 		// fw.write(resp);
 		// fw.close();
+		if (inputProtocol.getEventHandler().getResponseModule() != null) {
+			inputProtocol.getEventHandler().getResponseModule().run(reply, inputProtocol, event);
+		}
 	}
 
 }

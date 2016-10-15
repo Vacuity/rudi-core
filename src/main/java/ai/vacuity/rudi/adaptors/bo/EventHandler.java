@@ -11,7 +11,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.common.net.MediaType;
 
-import ai.vacuity.rudi.adaptors.interfaces.IEmissionModule;
+import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 import ai.vacuity.rudi.adaptors.interfaces.ITemplateModule;
 
 public class EventHandler {
@@ -24,6 +24,7 @@ public class EventHandler {
 	MediaType contentType = null;
 	IRI iri = null;
 	List<String> imports = new ArrayList<String>();
+	IResponseModule responseModule = null;
 
 	// Repository repository = null;
 	String sparql = null;
@@ -53,7 +54,7 @@ public class EventHandler {
 		return Config.get(getConfigLabel()).hasResponseModule();
 	}
 
-	public IEmissionModule getEndpointResponseModule() {
+	public IResponseModule getEndpointResponseModule() {
 		return Config.get(getConfigLabel()).getResponseModule();
 	}
 
@@ -176,6 +177,14 @@ public class EventHandler {
 
 	public void setImports(List<String> imports) {
 		this.imports = imports;
+	}
+
+	public IResponseModule getResponseModule() {
+		return responseModule;
+	}
+
+	public void setResponseModule(IResponseModule responseModule) {
+		this.responseModule = responseModule;
 	}
 
 }

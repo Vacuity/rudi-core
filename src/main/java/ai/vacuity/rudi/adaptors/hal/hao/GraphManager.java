@@ -60,6 +60,7 @@ import ai.vacuity.rudi.adaptors.bo.EventHandler;
 import ai.vacuity.rudi.adaptors.bo.InputProtocol;
 import ai.vacuity.rudi.adaptors.bo.Label;
 import ai.vacuity.rudi.adaptors.bo.Query;
+import ai.vacuity.rudi.adaptors.interfaces.IResponseModule;
 import ai.vacuity.rudi.adaptors.interfaces.impl.DefaultNamespaceProvider;
 import ai.vacuity.rudi.adaptors.regex.GraphMaster;
 import ai.vacuity.rudi.adaptors.types.Prompt;
@@ -302,6 +303,7 @@ public class GraphManager {
 										logger.debug("Event Handler: " + bs2.getValue("output"));
 										logger.debug("Config: " + bs2.getValue("config"));
 										logger.debug("Translator: " + bs2.getValue("translator"));
+										logger.debug("Invoke: " + bs2.getValue("invoke"));
 										logger.debug("Log: " + bs2.getValue("log"));
 										logger.debug("Reply Type Property: " + bs2.getValue("replyTypeProp"));
 										logger.debug("Endpoint: " + bs2.getValue("endpoint"));
@@ -579,6 +581,22 @@ public class GraphManager {
 											}
 											catch (QueryEvaluationException qex) {
 												logger.error(qex.getMessage(), qex);
+											}
+										}
+
+										if (bs2.getValue("invoke") != null) {
+											String invoke = bs2.getValue("invoke").stringValue().trim();
+											if (StringUtils.isNotBlank(invoke)) {
+												if (invoke.toLowerCase().indexOf("java://") == 0) invoke = invoke.substring(7);
+												try {
+													i.getEventHandler().setResponseModule((IResponseModule) Class.forName(invoke).newInstance());
+												}
+												catch (ClassCastException ccex) {
+													logger.error(ccex.getMessage(), ccex);
+												}
+												catch (ClassNotFoundException cnfex) {
+													logger.error(cnfex.getMessage(), cnfex);
+												}
 											}
 										}
 

@@ -133,6 +133,10 @@ public class RestfulHAO extends AbstractHAO {
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "agent"), inputProtocol.getEventHandler().getIri()));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "means"), GraphManager.getValueFactory().createIRI((inputProtocol.getEventHandler().isSecure() ? "https://" : "http://") + inputProtocol.getEventHandler().getEndpointDomain())));
 		GraphManager.addToRepository(tuples, event.getIri());
+
+		if (inputProtocol.getEventHandler().getResponseModule() != null) {
+			inputProtocol.getEventHandler().getResponseModule().run(responseIRI, inputProtocol, event);
+		}
 	}
 
 	// FROM API CLIENT
@@ -178,7 +182,7 @@ public class RestfulHAO extends AbstractHAO {
 		try {
 			String resp = response.parseAsString();
 			if (inputProtocol.getEventHandler().hasEndpointResponseModule()) {
-				inputProtocol.getEventHandler().getEndpointResponseModule().process(resp, event);
+				inputProtocol.getEventHandler().getEndpointResponseModule().process(resp, inputProtocol, event);
 				resp = inputProtocol.getEventHandler().getEndpointResponseModule().getResponse();
 				event = inputProtocol.getEventHandler().getEndpointResponseModule().getEvent();
 			}

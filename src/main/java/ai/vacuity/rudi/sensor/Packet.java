@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ai.vacuity.rudi.adaptors.bo.p2p.Input;
-import ai.vacuity.rudi.adaptors.bo.p2p.Emission;
+import ai.vacuity.rudi.adaptors.bo.p2p.Response;
 import rice.p2p.commonapi.Id;
 import rice.p2p.commonapi.Message;
 
@@ -58,7 +58,7 @@ public class Packet implements Message {
 	private static final double VERSION_1_0 = 1.0;
 
 	private Input event;
-	private Emission response;
+	private Response response;
 	private Integer priority = Message.LOW_PRIORITY;
 
 	private double version = Packet.VERSION_1_0;
@@ -102,11 +102,11 @@ public class Packet implements Message {
 		this.event = event;
 	}
 
-	public Emission getResponse() {
+	public Response getResponse() {
 		return response;
 	}
 
-	public void setResponse(Emission response) {
+	public void setResponse(Response response) {
 		this.response = response;
 	}
 
