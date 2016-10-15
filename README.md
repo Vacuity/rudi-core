@@ -1,4 +1,4 @@
-# <a name="rn"/>RUDI Release Notes
+# <a name="rn"/>RUDI User Guide
 RUDI runs as a web server and persists its data in an RDF [quad store](http://dbpedia.org/page/Triplestore) (the Index). Below are the instructions for setting up the server.
 
 #### <a name="sr"/>System Requirements
@@ -258,7 +258,7 @@ Events may be handled by a sponsor node which is configured by the RUDI peer. On
 | - via:json           | a `via:call` property whose value is the web service call to which the captured data is dispatched, and which produces JSON; the JSON is RDFized and stored in the Index |          false           |      n      |
 | - via:rdf-xml        | a `via:call` property whose value is the web service call to which the captured data is dispatched, and which produces RDF-XML; the RDF is stored in the Index |          false           |      n      |
 | - via:translator     | the URL of an XSLT sheet which translates the XMLized output of a via:json call into RDF+XML. The http://rudi.TAG.placeholders.vacuity.ai is a placeholder URL prefix which is substituted by RUDI for the URL path configured by the `rudi.TAG` property in settings.ini. The property can, for example, point to a resource path on the RUDI host. The path property must be absolute. Trust of the via:translator URL is provided by `via:signature`. | when via:json is present |      1      |
-| - via:execute        | the `via:Query` to which events are passed, the result set is RDFized and added to the Index |          false           |      n      |
+| - via:execute        | the `via:Query` to which events are passed. The result set is RDFized and added to the Index. |          false           |      n      |
 | - via:log            | logs the dispatch                        |          false           |      n      |
 | - via:import         | the `via:Query` whose projection elements may serve as placeholders for their values in this `via:EventHandler` |          false           |      n      |
 | -via:invoke          | the Java implementation of `ai.vacuity.rudi.adaptors.interfaces.IResponseModule` which handles the event and whose `run()` method is called (after the results of the dispatch or query are consumed if a dispatch or query is associated with the `via:invoke`). The resource IRI uses the `java` protocol, e.g. `java://ai.vacuity.rudi.adaptors.interfaces.IResponseModule` |                          |             |

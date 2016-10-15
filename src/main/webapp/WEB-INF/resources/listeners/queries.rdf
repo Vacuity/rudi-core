@@ -15,7 +15,7 @@
 <![CDATA[
 PREFIX via: <http://www.vacuity.ai/onto/via/1.0/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select distinct ?listener ?override ?input ?pattern ?i_labels ?qtype ?context ?output ?config ?translator ?log ?replyTypeProp ?endpoint ?mediaType ?query where {
+select distinct ?listener ?override ?input ?pattern ?i_labels ?qtype ?context ?output ?config ?translator ?invoke ?log ?replyTypeProp ?endpoint ?mediaType ?query where {
   
   ?listener rdf:type via:Listener .
   ?listener via:event ?input .
@@ -40,6 +40,7 @@ select distinct ?listener ?override ?input ?pattern ?i_labels ?qtype ?context ?o
 	  		?replyTypeProp rdfs:subPropertyOf via:serviceReplyType .
 	  		?replyTypeProp rdfs:label ?mediaType .
 	  		OPTIONAL {?output via:translator ?translator .}
+	  		OPTIONAL {?output via:invoke ?invoke .}
   		}	
   		UNION 
   		{
