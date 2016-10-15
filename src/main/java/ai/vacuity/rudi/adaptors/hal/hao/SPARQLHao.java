@@ -36,7 +36,6 @@ public class SPARQLHao extends AbstractHAO {
 					// UUID ruuid = UUID.randomUUID();
 					// IRI reply = GraphManager.getValueFactory().createIRI(Constants.NS_VI, "r-" + ruuid);
 					if (r.hasNext()) {
-						results.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply));
 						results.add(GraphManager.getValueFactory().createStatement(reply, GraphManager.rdf_type, GraphManager.via_Results));
 					}
 					while (r.hasNext()) { // iterate over the result
@@ -94,7 +93,6 @@ public class SPARQLHao extends AbstractHAO {
 					}
 					results.add(GraphManager.getValueFactory().createStatement(reply, GraphManager.rdf_type, GraphManager.via_QueryResult));
 					results.add(GraphManager.getValueFactory().createStatement(reply, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
-					results.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply));
 					GraphManager.addToRepository(results, reply); // index the result under its own graph id
 				}
 				catch (QueryEvaluationException qex) {
@@ -105,15 +103,9 @@ public class SPARQLHao extends AbstractHAO {
 		catch (Exception ex) {
 			logger.error(ex.getMessage(), ex);
 		}
-		// UUID uuid = UUID.randomUUID();
-		// String fxmlStr = "/Users/smonroe/workspace/rudi-adaptors/src/main/webapp/WEB-INF/resources/adaptors/" + new GenericUrl(getInputProtocol().getResponseProtocol().getCall()).getHost() + "-" + uuid + ".rdf";
-		// File fxml = new File(fxmlStr);
-		// fxml.createNewFile();
-		// FileWriter fw = new FileWriter(fxml);
-		// fw.write(resp);
-		// fw.close();
 		if (inputProtocol.getEventHandler().getResponseModule() != null) {
 			inputProtocol.getEventHandler().getResponseModule().run(reply, inputProtocol, event);
+			GraphManager.addToRepository(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), reply), reply); // index the result under its own graph id, only notify user after response module has had an opportunity to modify the graph
 		}
 	}
 

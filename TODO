@@ -25,3 +25,5 @@ TODO Implement Perennial calendar
 TODO Tags are not allowed in Query that are via:event object, this is inconsistent, need to implement tags in Query
 TODO Make string localNames constant in IRI declarations
 TODO Fetch unknown via:Listener, via:Input, via:Query, and via:EventHandlers descriptions from their respective URL sources and add them to any descriptions provided
+TODO Don't allow response data to trigger alerts until via:invoke class is done running, in case it must change the response data in some way
+TODO Implement P2P SPARQL endpoint exposure

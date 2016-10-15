@@ -49,24 +49,6 @@ public class RestfulHAO extends AbstractHAO {
 
 	private float duration = -1;
 
-	/**
-	 * @param args
-	 *            the command line arguments
-	 */
-	public void main(String[] args) {
-		if (args.length != 3) {
-			System.err.println("give command as follows : ");
-			System.err.println("XSLTTest data.xml converted.xsl converted.html");
-			return;
-		}
-
-		String json = "";
-		String xslt = args[1];
-		String rdf = args[2];
-
-		RestfulHAO st = new RestfulHAO();
-	}
-
 	public String transform(String json) {
 		if (json.startsWith("[") && json.endsWith("]")) {
 			json = "{\"items\":\n" + json + "\n}";
@@ -91,7 +73,6 @@ public class RestfulHAO extends AbstractHAO {
 		// logger.debug("The generated XML file is:\n" + xml);
 
 		TransformerFactory factory = TransformerFactory.newInstance();
-		// File f = new File(xslt);
 		URL oracle = new URL(xslt);
 		BufferedReader xslin = new BufferedReader(new InputStreamReader(oracle.openStream()));
 		StreamSource xslStream = new StreamSource(xslin);
@@ -111,7 +92,6 @@ public class RestfulHAO extends AbstractHAO {
 		transformer.transform(in, out);
 
 		index(filePathStr);
-		// QuadStore.main(new String[] {});
 
 	}
 
@@ -128,7 +108,6 @@ public class RestfulHAO extends AbstractHAO {
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "response"), replyIRI));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.via_timestamp, GraphManager.getValueFactory().createLiteral(new Date())));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "duration"), GraphManager.getValueFactory().createLiteral(this.duration)));
-		tuples.add(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), responseIRI));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "trigger"), event.getIri()));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "agent"), inputProtocol.getEventHandler().getIri()));
 		tuples.add(GraphManager.getValueFactory().createStatement(responseIRI, GraphManager.getValueFactory().createIRI(Constants.NS_NIX + "means"), GraphManager.getValueFactory().createIRI((inputProtocol.getEventHandler().isSecure() ? "https://" : "http://") + inputProtocol.getEventHandler().getEndpointDomain())));
@@ -136,6 +115,7 @@ public class RestfulHAO extends AbstractHAO {
 
 		if (inputProtocol.getEventHandler().getResponseModule() != null) {
 			inputProtocol.getEventHandler().getResponseModule().run(responseIRI, inputProtocol, event);
+			GraphManager.addToRepository(GraphManager.getValueFactory().createStatement(event.getIri(), GraphManager.getValueFactory().createIRI(Constants.NS_SIOC + "has_reply"), responseIRI), event.getIri()); // index the result under its own graph id, only notify user after response module has had an opportunity to modify the graph
 		}
 	}
 
@@ -154,8 +134,6 @@ public class RestfulHAO extends AbstractHAO {
 				request.setParser(new JsonObjectParser(JSON_FACTORY));
 			}
 		});
-		// PlusUrl url = PlusUrl.listPublicActivities(USER_ID).setMaxResults(MAX_RESULTS);
-		// url.put("fields", "items(id,url,object(content,plusoners/totalItems))");
 
 		try {
 			GenericUrl gurl = new GenericUrl(new URL(call));
