@@ -301,7 +301,7 @@ public class DispatchService extends Thread implements IReportProvider {
 						if (StringUtils.isNotBlank(templates[i])) {
 							templates[i] = templates[i].replace("${" + lidx + "}", event.getLabel());
 
-							Label label = ip.getLabels().get(lidx);
+							Label label = (lidx < ip.getLabels().size()) ? ip.getLabels().get(lidx) : null;
 							if (label != null) templates[i] = templates[i].replace("${" + lidx + ".label}", label.getLabel());
 						}
 					}
@@ -558,7 +558,7 @@ public class DispatchService extends Thread implements IReportProvider {
 			try (RepositoryConnection con = GraphManager.getConnection()) {
 				TupleQuery ipQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, query);
 				try (TupleQueryResult r3 = ipQuery.evaluate()) {
-					if (isEmpty(r3)) { // expect a single result
+					if (!isEmpty(r3)) {
 						BindingSet bindings = r3.next();
 						Iterator<String> binding_names = bindings.getBindingNames().iterator();
 						while (binding_names.hasNext()) {
