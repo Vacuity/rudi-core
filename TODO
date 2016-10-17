@@ -27,3 +27,4 @@ TODO Make string localNames constant in IRI declarations
 TODO Attempt to dereference via:Listener, via:Input, via:Query, and via:EventHandlers descriptions from their respective URL sources and the data to the index
 TODO Don't allow response data to trigger alerts until via:invoke class is done running, in case it must change the response data in some way
 TODO Implement P2P SPARQL endpoint exposure
+TODO extract listeners from https://github.com/solid-live/extractors/tree/master/extractor, https://rg3.github.io/youtube-dl/supportedsites.html
